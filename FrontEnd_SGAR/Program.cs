@@ -23,7 +23,7 @@ builder.Services.AddCors(options =>
 //CONEXIÓN DE LA API SEGURIDAD
 builder.Services.AddScoped(sp => new HttpClient 
 { 
-    BaseAddress = new Uri("https://sgarseguridad.somee.com/") //API SEGURIDAD
+    BaseAddress = new Uri("https://n6q8s1mb-7149.use.devtunnels.ms/") //API SEGURIDAD
 });
 
 // CONEXIÓN DE LA API DE NAVEGACIÓN
