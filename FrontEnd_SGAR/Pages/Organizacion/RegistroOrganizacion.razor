@@ -1,5 +1,143 @@
-﻿<h3>RegistroOrganizacion</h3>
+﻿@page "/registro-organizacion"
+@using FrontEnd_SGAR.Services
+@inject MunicipioService MunicipioService
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-building me-2"></i>Registrar Organización</h3>
+        <hr />
+
+        <div class="form-group">
+            <label class="required">Nombre de organización</label>
+            <input @bind="nombreOrganizacion" class="form-control" placeholder="Ingresa el nombre" />
+        </div>
+
+        <div class="form-group">
+            <label class="required">Teléfono</label>
+            <input @bind="telefono" class="form-control" placeholder="Ingresa el teléfono" />
+        </div>
+
+        <div class="form-group">
+            <label class="required">Correo electrónico</label>
+            <input @bind="email" type="email" class="form-control" placeholder="ejemplo@correo.com" />
+        </div>
+
+        <div class="form-group">
+            <label class="required">Contraseña</label>
+            <input @bind="password" type="password" class="form-control" placeholder="Ingresa la contraseña" />
+        </div>
+
+        <div class="form-group">
+            <label class="required">Municipio</label>
+            <input list="listaMunicipios" @bind="municipioSeleccionado" class="form-control" placeholder="Escribe o selecciona un municipio" />
+            <datalist id="listaMunicipios">
+                @foreach (var municipio in municipios)
+                {
+                    <option value="@municipio.Nombre"></option>
+                }
+            </datalist>
+        </div>
+
+        <div class="form-group mt-3">
+            <label>Tipos de notificación</label>
+            <div class="form-check-group">
+                <label><input type="checkbox" @bind="notifProximidad" /> Notificación por proximidad</label><br />
+                <label><input type="checkbox" @bind="notifInicioRuta" /> Notificación al iniciar ruta</label><br />
+                <label><input type="checkbox" @bind="notifTiempoReal" /> Seguimiento en tiempo real</label>
+            </div>
+        </div>
+
+        <div class="botones mt-4">
+            <div class="contenedor-boton">
+                <button class="boton-mapacheAceptar" @onclick="Registrar">Registrar</button>
+                <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+            </div>
+            <button class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</div>
 
 @code {
+    private string nombreOrganizacion = "";
+    private string telefono = "";
+    private string email = "";
+    private string password = "";
+    private string municipioSeleccionado = "";
 
+    private bool notifProximidad;
+    private bool notifInicioRuta;
+    private bool notifTiempoReal;
+
+    private List<Municipio> municipios = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            municipios = await MunicipioService.ObtenerMunicipiosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar municipios: {ex.Message}");
+            municipios = new List<Municipio>();
+        }
+    }
+
+    private async Task Registrar()
+    {
+        string tiposNotificacion = $"{(notifProximidad ? "1" : "0")}{(notifInicioRuta ? "1" : "0")}{(notifTiempoReal ? "1" : "0")}";
+
+        var municipio = municipios.FirstOrDefault(m =>
+            m.Nombre.Equals(municipioSeleccionado, StringComparison.OrdinalIgnoreCase));
+
+        int idMunicipio = municipio?.Id ?? 0;
+
+        var data = new
+        {
+            idMunicipio,
+            nombreOrganizacion,
+            telefono,
+            email,
+            password,
+            idRol = 5,
+            tipoNotificacion = tiposNotificacion
+        };
+
+        var response = await Http.PostAsJsonAsync("api/organization", data);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
+            await JS.InvokeVoidAsync("alert", $"Organización creada: {result?.Message ?? "Éxito"}");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Error al registrar la organización");
+        }
+    }
+
+    private void Cancelar()
+    {
+        nombreOrganizacion = telefono = email = password = municipioSeleccionado = "";
+        notifProximidad = notifInicioRuta = notifTiempoReal = false;
+    }
+
+    public class ResponseMessage
+    {
+        public string Message { get; set; } = "";
+        public int Id { get; set; }
+    }
 }
+
+
+
+
+
+
+
+
+
