@@ -7,6 +7,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+//CONEXIÓN DE LA API SEGURIDAD
 builder.Services.AddScoped(sp => new HttpClient 
 { 
     BaseAddress = new Uri("http://sgarseguridad.somee.com/") //API SEGURIDAD
@@ -14,6 +15,7 @@ builder.Services.AddScoped(sp => new HttpClient
 
 //Servicio de autenticacion
 builder.Services.AddScoped<AuthSeguridadService>();
+builder.Services.AddScoped<AuthService>();
 
 
 await builder.Build().RunAsync();
