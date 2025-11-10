@@ -1,0 +1,131 @@
+﻿@page "/registro-asociado"
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<link href="css/registro-usuario.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-people-fill me-2"></i>Registrar Asociado</h3>
+        <hr />
+
+        <div class="form-group">
+            <label class="required">Nombre</label>
+            <input @bind="nombre" class="form-control" placeholder="Ingresa el nombre del asociado" />
+        </div>
+
+        <div class="form-group">
+            <label class="required">Apellido</label>
+            <input @bind="apellido" class="form-control" placeholder="Ingresa el apellido del asociado" />
+        </div>
+
+        <div class="form-group">
+            <label>Teléfono</label>
+            <input @bind="telefono" class="form-control" placeholder="Opcional" />
+        </div>
+
+        <div class="form-group">
+            <label class="required">Correo electrónico</label>
+            <input @bind="email" type="email" class="form-control" placeholder="ejemplo@correo.com" />
+        </div>
+
+        <div class="form-group">
+            <label class="required">DUI</label>
+            <input @bind="dui" class="form-control" placeholder="Ingresa el número de DUI" />
+        </div>
+
+        <div class="form-group">
+            <label>Foto (opcional)</label>
+            <InputFile OnChange="OnFileChange" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label class="required">Contraseña</label>
+            <input @bind="password" type="password" class="form-control" placeholder="Crea una contraseña" />
+        </div>
+
+        <div class="botones mt-4">
+            <div class="contenedor-boton">
+                <button class="boton-mapacheAceptar" @onclick="Registrar">Registrar</button>
+                <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+            </div>
+            <button class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string nombre = "";
+    private string apellido = "";
+    private string telefono = "";
+    private string email = "";
+    private string dui = "";
+    private string password = "";
+    private byte[]? foto;
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024); // 5MB
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            foto = ms.ToArray();
+        }
+    }
+
+    private async Task Registrar()
+    {
+        try
+        {
+            string? fotoBase64 = null;
+            if (foto != null && foto.Length > 0)
+                fotoBase64 = Convert.ToBase64String(foto);
+
+            var data = new
+            {
+                id = 0,
+                nombre,
+                apellido,
+                telefono,
+                email,
+                dui,
+                foto = fotoBase64 ?? "",
+                password,
+                idRol = 3 // Asociado
+            };
+
+            var response = await Http.PostAsJsonAsync("api/user", data);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
+                await JS.InvokeVoidAsync("alert", $"✅ Asociado creado: {result?.Message ?? "Éxito"}");
+                Cancelar();
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("alert", $"❌ Error al registrar asociado:\n{errorText}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"⚠️ Error de conexión: {ex.Message}");
+        }
+    }
+
+    private void Cancelar()
+    {
+        nombre = apellido = telefono = email = dui = password = "";
+        foto = null;
+    }
+
+    public class ResponseMessage
+    {
+        public string Message { get; set; } = "";
+        public int Id { get; set; }
+    }
+}
