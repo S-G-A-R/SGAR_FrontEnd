@@ -13,10 +13,16 @@ builder.Services.AddScoped(sp => new HttpClient
     BaseAddress = new Uri("http://sgarseguridad.somee.com/") //API SEGURIDAD
 });
 
+// CONEXIÓN DE LA API DE NAVEGACIÓN
+builder.Services.AddHttpClient("NavigationAPI", client =>
+{
+    client.BaseAddress = new Uri("https://sgar-navigation.vercel.app/");
+});
 
 //Servicio de autenticacion
 builder.Services.AddScoped<AuthSeguridadService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<MunicipioService>();
 
 
 await builder.Build().RunAsync();
