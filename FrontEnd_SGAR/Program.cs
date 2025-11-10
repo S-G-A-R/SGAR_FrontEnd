@@ -7,10 +7,23 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
+
 //CONEXIÓN DE LA API SEGURIDAD
 builder.Services.AddScoped(sp => new HttpClient 
 { 
-    BaseAddress = new Uri("http://sgarseguridad.somee.com/") //API SEGURIDAD
+    BaseAddress = new Uri("https://sgarseguridad.somee.com/") //API SEGURIDAD
 });
 
 // CONEXIÓN DE LA API DE NAVEGACIÓN
@@ -18,6 +31,8 @@ builder.Services.AddHttpClient("NavigationAPI", client =>
 {
     client.BaseAddress = new Uri("https://sgar-navigation.vercel.app/");
 });
+
+
 
 //Servicio de autenticacion
 builder.Services.AddScoped<AuthSeguridadService>();
