@@ -123,8 +123,8 @@
 
                 <EditForm Model="@credenciales" OnValidSubmit="@IniciarSesion">
                     <DataAnnotationsValidator />
-                    <ValidationSummary />
-
+@*                     <ValidationSummary />
+ *@
                     <!-- Campo Email -->
                     <div class="form-group mb-3 position-relative">
                         <div class="input-group">
@@ -137,7 +137,8 @@
                             </span>
                         </div>
                         <label class="input-label required">Correo</label>
-                    </div>
+                        <ValidationMessage For="@(() => credenciales.Email)" />
+                        </div>
 
                     <!-- Campo Password -->
                     <div class="form-group mb-4 position-relative">
@@ -153,7 +154,8 @@
                             </span>
                         </div>
                         <label class="input-label required">Contraseña</label>
-                    </div>
+                     <ValidationMessage For="@(() => credenciales.Password)" />
+                   </div>
 
                     <!-- Botón Login -->
                     <div class="d-flex justify-content-center">
