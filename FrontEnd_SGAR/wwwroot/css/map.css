@@ -1,0 +1,71 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+
+body {
+    background: #f8f9fa;
+    font-family: 'Lilita One', cursive;
+}
+
+/* Contenedor principal del mapa */
+.contenedor-ubicacion {
+    width: 90%;
+    max-width: 1300px; /* ancho máximo */
+    border-radius: 25px;
+    background: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .contenedor-ubicacion:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 30px rgba(0, 123, 255, 0.25);
+    }
+
+/* Título */
+.titulo-ubicacion {
+    font-size: 2rem;
+    color: #212529;
+    font-weight: 700;
+}
+
+/* Mapa grande y limpio */
+.mapa-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.mapa {
+    width: 100%;
+    height: 70vh; /* 70% de la altura de la pantalla */
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Botón rojo */
+.btn-dejar {
+    background-color: #dc3545;
+    color: white;
+    font-size: 1.2rem;
+    padding: 14px 36px;
+    border-radius: 35px;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.35);
+}
+
+    .btn-dejar:hover {
+        background-color: #e85c65;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(220, 53, 69, 0.45);
+    }
+
+/* Botón regresar */
+.btn-regresar {
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+    .btn-regresar:hover {
+        transform: scale(1.15);
+    }

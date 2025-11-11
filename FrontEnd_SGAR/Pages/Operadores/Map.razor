@@ -1,0 +1,38 @@
+﻿@page "/map"
+
+<link href="css/map.css" rel="stylesheet" />
+
+<div class="container-fluid position-relative vh-100 d-flex justify-content-center align-items-center bg-light">
+
+    <!-- Ícono de regresar -->
+    <a href="/" class="position-absolute top-0 start-0 m-3 text-primary fs-2 btn-regresar">
+        <i class="bi bi-arrow-left-circle-fill"></i>
+    </a>
+
+    <!-- Contenedor principal -->
+    <div class="card shadow-lg border-0 text-center p-4 contenedor-ubicacion">
+        <h3 class="titulo-ubicacion mb-4">Ubicación en tiempo real</h3>
+
+        <!-- Mapa embebido -->
+        <div class="mapa-container mb-4">
+            <iframe class="mapa"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3876.7766411704437!2d-89.36131602594324!3d13.70631078669038!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f63305ab89b2c2d%3A0x4a38dfd38c7ce2df!2sLourdes%2C%20Col%C3%B3n!5e0!3m2!1ses!2ssv!4v1700000000000!5m2!1ses!2ssv"
+                    allowfullscreen=""
+                    loading="lazy">
+            </iframe>
+        </div>
+
+        <!-- Botón -->
+        <button class="btn btn-dejar">Dejar de compartir</button>
+    </div>
+
+    <!-- Usuario arriba a la derecha -->
+    <div class="position-absolute top-0 end-0 d-flex align-items-center m-3">
+        <div class="text-end me-2">
+            <div class="fw-semibold">ID/DUI</div>
+            <small class="text-muted">Nombre de Usuario</small>
+        </div>
+        <i class="bi bi-person-circle fs-3"></i>
+    </div>
+
+</div>
