@@ -97,7 +97,7 @@
         var municipio = municipios.FirstOrDefault(m =>
             m.Nombre.Equals(municipioSeleccionado, StringComparison.OrdinalIgnoreCase));
 
-        int idMunicipio = municipio?.Id ?? 0;
+        string idMunicipio = municipio?.Id ?? string.Empty;
 
         var data = new
         {
@@ -109,6 +109,7 @@
             idRol = 5,
             tipoNotificacion = tiposNotificacion
         };
+
 
         var response = await Http.PostAsJsonAsync("api/organization", data);
 
