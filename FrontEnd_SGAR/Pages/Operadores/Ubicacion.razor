@@ -1,0 +1,36 @@
+﻿@page "/ubicacion"
+
+<link href="css/ubicacion.css" rel="stylesheet" />
+
+<div class="container-fluid position-relative vh-100 d-flex justify-content-center align-items-center bg-light">
+
+    <!-- Ícono de regresar -->
+    <a href="#" class="position-absolute top-0 start-0 m-3 text-primary fs-3">
+        <i class="bi bi-arrow-left-circle"></i>
+    </a>
+
+    <!-- Contenedor principal -->
+    <div class="card contenedor-ubicacion shadow-lg border-0 text-center">
+        <h3 class="titulo-ubicacion mb-4">Ubicación en tiempo real</h3>
+
+        <!-- Icono animado -->
+        <div class="mb-4">
+            <img src="Img/mapas.gif"
+                 alt="Icono de mapa"
+                 class="icono-mapa">
+        </div>
+
+        <!-- Botón -->
+        <button class="btn btn-primary btn-lg px-4 boton-flotante">Activar Ubicación</button>
+    </div>
+
+    <!-- Usuario arriba a la derecha -->
+    <div class="position-absolute top-0 end-0 d-flex align-items-center m-3">
+        <div class="text-end me-2">
+            <div class="fw-semibold">ID/DUI</div>
+            <small class="text-muted">Nombre de Usuario</small>
+        </div>
+        <i class="bi bi-person-circle fs-3"></i>
+    </div>
+
+</div>
