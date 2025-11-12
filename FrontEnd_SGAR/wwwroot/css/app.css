@@ -1,5 +1,6 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color:lightgrey;
 }
 
 h1:focus {
@@ -100,4 +101,171 @@ a, .btn-link {
 
 code {
     color: #c02d76;
+}
+
+
+/* --- OREJAS PARA LAS TARJETAS --- */
+.contenedor-tarjeta {
+    position: relative;
+    display: inline-block;
+    min-height: 220px; /* Altura uniforme */
+    margin: 10px;
+}
+
+.oreja {
+    position: absolute;
+    width: 30px; /* tamaño de las orejas */
+    height: 30px;
+    display: none;
+    transition: transform 0.2s; /* hace que las orejas se muevan junto a la tarjeta */
+}
+
+.oreja-izquierda {
+    top: -25px;
+    left: 10px;
+}
+
+.oreja-derecha {
+    top: -25px;
+    right: 10px;
+}
+
+.contenedor-tarjeta:hover .oreja {
+    display: block;
+    transform: translateY(-5px); /* sube con la tarjeta */
+}
+
+/* --- TARJETA --- */
+.card {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.08); /* sombra leve */
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* tipografía más bonita */
+    text-align: center;
+    cursor: pointer;
+}
+
+.contenedor-tarjeta:hover .card {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    border: 3px solid black;
+    font-weight: bold;
+}
+
+/* Icono dentro de la tarjeta */
+.card .card-link i {
+    font-size: 3rem;
+    color: #444;
+    margin-bottom: 10px;
+}
+
+/* Título */
+.card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 10px;
+}
+
+/* Flecha que aparece al pasar el cursor */
+.tarjeta-flecha {
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-weight: 500;
+    color: gray;
+}
+
+.contenedor-tarjeta:hover .tarjeta-flecha {
+    opacity: 1;
+}
+
+
+/*BOTON ESTILO OREJAS DE MAPACHE*/
+.contenedor-boton {
+    position: relative;
+    display: inline-block;
+    margin: 15px;
+}
+
+.boton-mapache {
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 10px;
+    height: 50px;
+    width: 250px;
+    background-color: #b0abab;
+}
+
+    .boton-mapache:hover {
+        border: 3px solid black;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+.oreja {
+    position: absolute;
+    width: 30px; /* Ajusta el tamaño de las imágenes */
+    height: 30px;
+    display: none;
+}
+
+.oreja-izquierda {
+    top: -25px;
+    left: 5px;
+}
+
+.oreja-derecha {
+    top: -25px;
+    right: 5px;
+}
+
+.contenedor-boton:hover .oreja {
+    display: block;
+}
+
+/*BOTON MAPACHE: SOLO PARA BOTONES DE ACEPTAR(LOGIN)*/
+.boton-mapacheAceptar {
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 10px;
+    height: 50px;
+    width: 100px;
+    background-color: #b0abab;
+}
+
+    .boton-mapacheAceptar:hover {
+        border: 3px solid black;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+
+/*TARJETA HOME*/
+.home-card {
+    background-color: white;
+    border-radius: 15px;
+    padding: 40px;
+    max-width: 700px;
+    margin: 60px auto;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.home-image {
+    max-width: 200px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-family: 'Poppins', sans-serif;
+    margin-bottom: 15px;
+}
+
+p {
+    font-size: 1.1rem;
+    color: #444;
 }

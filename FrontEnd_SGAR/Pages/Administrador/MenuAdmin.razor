@@ -1,0 +1,127 @@
+﻿@page "/menuAdmin"
+@inject NavigationManager Navigation
+
+<div class="container text-center p-5">
+    <div class="row align-items-center">
+
+        <!-- Categorías -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        @* Aqui va en enlace para la redirigir a la vista correcta *@
+                        <NavLink class="card-link w-25">
+                            <i class="bi bi-tags-fill" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
+                        </NavLink>
+                        <h3>Categorías</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+        <!-- Zonas -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        <NavLink class="card-link w-50">
+                            <i class="bi bi-geo-alt" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
+                        </NavLink>
+                        <h3>Zonas</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+        <!-- Rutas -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        <NavLink class="card-link w-50">
+                            <i class="bi bi-map" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
+                        </NavLink>
+                        <h3>Rutas</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row align-items-center">
+
+        <!-- Clasificar Residuos -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        <NavLink class="card-link w-25">
+                            <i class="bi bi-recycle" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
+                        </NavLink>
+                        <h3>Clasificar Residuos</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+        <!-- Autorizar Administradores -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        <NavLink class="card-link w-50" style="font-size: 3rem; color: ThreeDDarkShadow">
+                            <i class="bi bi-person-check-fill"></i>
+                        </NavLink>
+                        <h3>Autorizar Administradores</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+        <!-- Planes -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        <NavLink class="card-link w-50">
+                            <i class="bi bi-coin" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
+                        </NavLink>
+                        <h3>Planes</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+    </div>   
+
+</div>
+
+
+
+@code {
+
+    private void Error()
+    {
+        Navigation.NavigateTo("/sgarMantenimiento");
+    }
+
+}
