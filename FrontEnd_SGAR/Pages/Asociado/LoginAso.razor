@@ -1,4 +1,4 @@
-﻿@page "/login-ciudadano"
+﻿@page "/login-asociado"
 @using FrontEnd_SGAR.Models
 @using FrontEnd_SGAR.Services
 @inject AuthSeguridadService AuthSeguridadService
@@ -109,7 +109,6 @@
         transform: translateY(-5px);
     }
 
-
 </style>
 
 <div class="row mb-4">
@@ -123,7 +122,7 @@
 
                 <EditForm Model="@credenciales" OnValidSubmit="@IniciarSesion">
                     <DataAnnotationsValidator />
-@*                     <ValidationSummary />
+                    @*                     <ValidationSummary />
  *@
                     <!-- Campo Email -->
                     <div class="form-group mb-3 position-relative">
@@ -138,7 +137,7 @@
                         </div>
                         <label class="input-label required">Correo</label>
                         <ValidationMessage For="@(() => credenciales.Email)" />
-                        </div>
+                    </div>
 
                     <!-- Campo Password -->
                     <div class="form-group mb-4 position-relative">
@@ -154,8 +153,8 @@
                             </span>
                         </div>
                         <label class="input-label required">Contraseña</label>
-                     <ValidationMessage For="@(() => credenciales.Password)" />
-                   </div>
+                        <ValidationMessage For="@(() => credenciales.Password)" />
+                    </div>
 
                     <!-- Botón Login -->
                     <div class="d-flex justify-content-center">
@@ -175,7 +174,7 @@
                 <div class="d-flex justify-content-center mt-3">
                     <p>
                         ¿No tienes cuenta?
-                        <NavLink href="/registro-usuario" class="text-decoration-none fw-bold" style="color:#000;">
+                        <NavLink href="/registro-asociado" class="text-decoration-none fw-bold" style="color:#000;">
                             Regístrate
                         </NavLink>
                     </p>
