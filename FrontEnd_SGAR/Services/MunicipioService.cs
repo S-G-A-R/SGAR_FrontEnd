@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 
 namespace FrontEnd_SGAR.Services
 {
@@ -19,17 +20,27 @@ namespace FrontEnd_SGAR.Services
         }
     }
 
+    //Modelo del municipio
     public class Municipio
     {
-        public int Id { get; set; }
-        public string Nombre { get; set; } = "";
+        [JsonPropertyName("_id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("nombre")]
+        public string Nombre { get; set; } = string.Empty;
+
+        [JsonPropertyName("idDepartamento")]
         public Departamento? IdDepartamento { get; set; }
     }
 
+    //Modelo del departamento
     public class Departamento
     {
-        public int Id { get; set; }
-        public string Nombre { get; set; } = "";
+        [JsonPropertyName("_id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("nombre")]
+        public string Nombre { get; set; } = string.Empty;
     }
 }
 
