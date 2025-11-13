@@ -214,6 +214,19 @@
         await JS.InvokeVoidAsync("localStorage.setItem", "orgRole", rol ?? "");
         await JS.InvokeVoidAsync("localStorage.setItem", "orgId", orgId ?? "");
 
+        //alerta personalizada 
+        await JS.InvokeVoidAsync("Swal.fire", new
+        {
+            title = "¡Ingreso Exitoso! ✅",
+            html = $"<p>Bienvenido/a<br><strong>{email}</strong></p>",
+            imageUrl = "/css/Iniciomapachito.png", 
+            showConfirmButton = false,
+            timer = 3000,
+            timerProgressBar = true
+        });
+
+        await Task.Delay(3000);
+
         Navigation.NavigateTo("/home", true);
     }
 }
