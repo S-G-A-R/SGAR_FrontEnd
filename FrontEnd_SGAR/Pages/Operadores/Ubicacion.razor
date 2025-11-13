@@ -1,6 +1,9 @@
 ﻿@page "/ubicacion"
+@implements IAsyncDisposable
 
 <link href="css/ubicacion.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <div class="container-fluid position-relative vh-100 d-flex justify-content-center align-items-center bg-light">
 
@@ -14,27 +17,172 @@
         <h3 class="titulo-ubicacion mb-4">Ubicación en tiempo real</h3>
 
         <!-- Icono animado -->
-        <div class="mb-4">
+        <div id="mapIcon" class="mb-4">
             <img src="Img/mapas.gif"
                  alt="Icono de mapa"
                  class="icono-mapa">
         </div>
 
+        <div id="leafletMap"></div>
+        <p>Última actualización recibida: @ultimoMensaje</p>
+
         <!-- Botón -->
-        <NavLink href="/map" class="btn btn-primary btn-lg px-4 boton-flotante">
+        <button id="activateBtn" @onclick="ActivarUbi" class="btn btn-primary btn-lg px-4 boton-flotante">
             Activar Ubicación
-        </NavLink>
+        </button>
 
-@*         <button class="btn btn-primary btn-lg px-4 boton-flotante">Activar Ubicación</button>
- *@    </div>
-
-    <!-- Usuario arriba a la derecha -->
-    <div class="position-absolute top-0 end-0 d-flex align-items-center m-3">
-        <div class="text-end me-2">
-            <div class="fw-semibold">ID/DUI</div>
-            <small class="text-muted">Nombre de Usuario</small>
-        </div>
-        <i class="bi bi-person-circle fs-3"></i>
+        @if (isConnectingOrConnected)
+        {
+            <button id="stopBtn" @onclick="DetenerEnvio" class="btn btn-danger btn-lg px-4 boton-flotante-stop">
+                Detener Ubicación
+            </button>
+        }
     </div>
 
+
 </div>
+
+
+@code{
+    private string ultimoMensaje = "Ubicación desactivada. Presiona 'Activar Ubicación' para comenzar.";
+    public DotNetObjectReference<Ubicacion> objRef;
+    public double latitude = 0;
+    public double longitude = 0;
+    public UbicacionData datos;
+    private IJSObjectReference? module;
+    public bool isConnectingOrConnected = false;
+    [Inject] IJSRuntime JSRuntime { get; set; }
+
+    protected override void OnInitialized()
+    {
+        objRef = DotNetObjectReference.Create(this);
+        datos = new UbicacionData
+        {
+            Location = new Location
+            {
+                Coordinates = new double[2] { 0, 0 }
+            }
+        };
+    }
+
+    public async Task ActivarUbi()
+    {
+
+        try
+        {
+            if (module == null)
+            {
+                module = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./js/operadorUbicaciones.js");
+            }
+
+            await ObtenerUbicacion();
+
+            await module.InvokeVoidAsync("conectarSocket", objRef);
+        }
+        catch (Exception ex)
+        {
+            ultimoMensaje = $"Error al conectar: {ex.Message}";
+        }
+    }
+
+    [JSInvokable]
+    public Task SetearUbicacion(double[] data)
+    {
+
+        datos.Location.Coordinates = data;
+        datos.FechaActualizacion = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        var datosParaEmitir = new
+        {
+            idOperador = datos.IdOperador,
+            idHorario = datos.IdHorario,
+            lon = data[0],
+            lat = data[1]
+        };
+
+        if (module != null)
+        {
+            // ¡Ya no usamos 'client.EmitAsync'!
+            module.InvokeVoidAsync("emitirUbicacion", datosParaEmitir);
+        }
+
+        return Task.FromResult("OK");
+    }
+
+    private async Task ObtenerUbicacion()
+    {
+        //Provisional, cambiar cuando haya datos reales
+        datos.IdHorario = 200;
+        datos.IdOperador = 500;
+
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("sendUbication", objRef, datos.IdOperador);
+        }
+    }
+
+    private async Task DetenerEnvio()
+    {
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("stopUbicationTracking");
+            isConnectingOrConnected = false;
+            ultimoMensaje = "Ubicación desactivada. Presiona 'Activar Ubicación' para comenzar.";
+        }
+    }
+
+    [JSInvokable]
+    public void OnSocketConnected()
+    {
+        ultimoMensaje = "¡Socket JS conectado exitosamente!";
+        isConnectingOrConnected = true;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnSocketDataReceived(UbicacionData ubicacion)
+    {
+
+        ultimoMensaje = $"Operador {ubicacion.IdOperador} está en {ubicacion.Location.Coordinates[1]}, {ubicacion.Location.Coordinates[0]}";
+
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("leafletFunctions.actualizarMarcador",
+                ubicacion.Location.Coordinates[1],
+                ubicacion.Location.Coordinates[0],
+                ubicacion.IdOperador);
+        }
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnSocketError(string error)
+    {
+        ultimoMensaje = $"Error de Socket JS: {error}";
+        StateHasChanged();
+    }
+
+
+    public class UbicacionData
+    {
+        public int IdHorario { get; set; }
+        public int IdOperador { get; set; }
+        public Location Location { get; set; }
+        public string? FechaActualizacion { get; set; }
+    }
+
+    public class Location
+    {
+        public double[] Coordinates { get; set; }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        objRef?.Dispose();
+        if (module != null)
+        {
+            await module.DisposeAsync();
+        }
+    }
+}
