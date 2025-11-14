@@ -1,4 +1,4 @@
-﻿@page "/login"
+﻿@page "/login-organizacion"
 @using FrontEnd_SGAR.Models
 @using FrontEnd_SGAR.Services
 @inject AuthService AuthService
@@ -214,12 +214,12 @@
         await JS.InvokeVoidAsync("localStorage.setItem", "orgRole", rol ?? "");
         await JS.InvokeVoidAsync("localStorage.setItem", "orgId", orgId ?? "");
 
-        //alerta personalizada 
-        await JS.InvokeVoidAsync("Swal.fire", new
+        //alerta personalizada
+        await JS.InvokeVoidAsync("MostrarAlerta", new
         {
             title = "¡Ingreso Exitoso! ✅",
             html = $"<p>Bienvenido/a<br><strong>{email}</strong></p>",
-            imageUrl = "/css/Iniciomapachito.png", 
+            imageUrl = "/css/Iniciomapachito.png",
             showConfirmButton = false,
             timer = 3000,
             timerProgressBar = true

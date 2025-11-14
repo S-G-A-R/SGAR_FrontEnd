@@ -208,7 +208,7 @@
         await JS.InvokeVoidAsync("localStorage.setItem", "userId", userId ?? "");
 
         //alerta personalizada
-        await JS.InvokeVoidAsync("Swal.fire", new
+        await JS.InvokeVoidAsync("MostrarAlerta", new
         {
             title = "¡Ingreso Exitoso! ✅",
             html = $"<p>Bienvenido/a<br><strong>{email}</strong></p>",
