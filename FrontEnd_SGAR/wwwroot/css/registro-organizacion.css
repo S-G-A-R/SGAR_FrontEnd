@@ -1,0 +1,206 @@
+﻿html {
+    font-size: 14px;
+}
+
+.required:after {
+    content: " *";
+    color: red;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    border-color: #258cfb;
+}
+
+body {
+    background-color: #f7f7f7;
+}
+
+/* Tarjeta de formulario */
+.registro-card {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e1e1e1;
+}
+
+/* BOTONES MAPACHE */
+.contenedor-boton {
+    position: relative;
+    display: inline-block;
+    margin: 10px;
+}
+
+.boton-mapacheAceptar {
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 10px;
+    height: 50px;
+    width: 130px;
+    background-color: #b0abab;
+}
+
+    .boton-mapacheAceptar:hover {
+        border: 3px solid black;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+.oreja {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    display: none;
+}
+
+.oreja-izquierda {
+    top: -25px;
+    left: 5px;
+}
+
+.oreja-derecha {
+    top: -25px;
+    right: 5px;
+}
+
+.contenedor-boton:hover .oreja {
+    display: block;
+}
+
+/* Botón cancelar */
+.btn-cancelar {
+    background-color: #dcdada;
+    border: 1px solid #999;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+    .btn-cancelar:hover {
+        background-color: #b0abab;
+        border: 2px solid black;
+        font-weight: bold;
+    }
+
+
+/* FORMULARIO REGISTRO ORGANIZACIÓN - ESTILO ALCALDÍA MAPACHE 🦝 */
+
+.registro-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.registro-card {
+    background-color: #f8f9fa;
+    border-radius: 15px;
+    padding: 2rem 3rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.15);
+    max-width: 600px;
+    width: 100%;
+}
+
+h3 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-control {
+    border: 1px solid #ced4da;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 15px;
+}
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+
+label {
+    font-weight: 600;
+    color: #333;
+}
+
+.required::after {
+    content: " *";
+    color: red;
+}
+
+.form-check-group label {
+    color: #333;
+}
+
+/* BOTONES */
+.boton-mapacheAceptar {
+    background-color: #b0abab;
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    height: 45px;
+    width: 120px;
+    transition: 0.2s;
+}
+
+    .boton-mapacheAceptar:hover {
+        border: 3px solid black;
+        font-weight: bold;
+    }
+
+.btn-cancelar {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    margin-left: 15px;
+    height: 45px;
+    transition: 0.2s;
+}
+
+    .btn-cancelar:hover {
+        background-color: #5a6268;
+    }
+
+/* OREJAS DE MAPACHE */
+.contenedor-boton {
+    position: relative;
+    display: inline-block;
+}
+
+.oreja {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    display: none;
+}
+
+.oreja-izquierda {
+    top: -25px;
+    left: 5px;
+}
+
+.oreja-derecha {
+    top: -25px;
+    right: 5px;
+}
+
+.contenedor-boton:hover .oreja {
+    display: block;
+}

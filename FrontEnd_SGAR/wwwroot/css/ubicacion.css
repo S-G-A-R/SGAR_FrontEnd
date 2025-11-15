@@ -1,0 +1,73 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+
+#leafletMap {
+    height: 400px;
+    width: 100%;
+    display: none; 
+}
+
+body {
+    background: linear-gradient(180deg, #f5f6fa 0%, #e9ecef 100%);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Contenedor principal */
+.contenedor-ubicacion {
+    background-color: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    max-width: 720px; /* más grande que antes */
+    padding: 6rem; /* más espacio interno */
+    border-radius: 24px;
+    transition: all 0.3s ease-in-out;
+}
+
+    /* Hover del contenedor */
+    .contenedor-ubicacion:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 25px rgba(0, 123, 255, 0.25);
+    }
+
+/* Título */
+.titulo-ubicacion {
+    font-family: 'Lilita One', cursive;
+    color: #333;
+    font-size: 2rem;
+    letter-spacing: 0.5px;
+}
+
+/* Icono animado */
+.icono-mapa {
+    width: 250px;
+    height: 250px;
+    animation: flotar 2.5s ease-in-out infinite;
+}
+
+/* Animación del ícono */
+@keyframes flotar {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Botón flotante */
+.boton-flotante {
+    transition: all 0.3s ease-in-out;
+    background-color: #007bff;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    font-weight: 600;
+}
+
+    .boton-flotante:hover {
+        background-color: #3a9dff;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 18px rgba(0, 123, 255, 0.4);
+    }
