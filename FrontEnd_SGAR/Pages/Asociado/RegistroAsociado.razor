@@ -1,6 +1,905 @@
 ﻿@page "/registro-asociado"
 @inject HttpClient Http
 @inject IJSRuntime JS
+@inject NavigationManager NavManager
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<!-- ✅ Notificación tipo campana -->
+<div id="successAlert" class="success-alert hidden">
+    <div class="alert-box">
+        <div class="alert-icon">🔔</div>
+        <div class="alert-text" id="alertMessage">Asociado registrado con éxito</div>
+    </div>
+</div>
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-people-fill me-2"></i>Registrar Asociado</h3>
+        <hr />
+
+        <!-- Nombre -->
+        <div class="form-group">
+            <label class="required">Nombre</label>
+            <input value="@nombre" @oninput="ValidarNombre" class="form-control" placeholder="Ingresa el nombre del asociado" />
+            <div class="error-message">@errorNombre</div>
+        </div>
+
+        <!-- Apellido -->
+        <div class="form-group">
+            <label class="required">Apellido</label>
+            <input value="@apellido" @oninput="ValidarApellido" class="form-control" placeholder="Ingresa el apellido del asociado" />
+            <div class="error-message">@errorApellido</div>
+        </div>
+
+        <!-- Teléfono -->
+        <div class="form-group">
+            <label>Teléfono (opcional)</label>
+            <input id="telefonoInput" value="@telefono" @oninput="ValidarTelefono" class="form-control" placeholder="0000 0000" maxlength="9" />
+            <div class="error-message">@errorTelefono</div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+            <label class="required">Correo electrónico</label>
+            <input value="@email" @oninput="ValidarEmail" class="form-control" placeholder="ejemplo@correo.com" />
+            <div class="error-message">@errorEmail</div>
+        </div>
+
+        <!-- DUI -->
+        <div class="form-group">
+            <label class="required">DUI</label>
+            <input value="@dui" @oninput="FormatearDui" maxlength="10" class="form-control" placeholder="00000000-0" />
+            <div class="error-message">@errorDui</div>
+        </div>
+
+        <!-- Foto -->
+        <div class="form-group">
+            <label>Foto (opcional)</label>
+            <InputFile OnChange="OnFileChange" class="form-control" accept=".jpg,.jpeg,.png" />
+            @if (!string.IsNullOrEmpty(fotoPreview))
+            {
+                <div class="preview-container">
+                    <img src="@fotoPreview" class="preview-img" alt="Vista previa de la imagen" />
+                </div>
+            }
+        </div>
+
+        <!-- Contraseña -->
+        <div class="form-group">
+            <label class="required">Contraseña</label>
+            <input type="password" value="@password" @oninput="ValidarPassword" class="form-control" placeholder="Crea una contraseña (5–6 caracteres)" />
+            <div class="error-message">@errorPassword</div>
+        </div>
+
+        <!-- Botones -->
+        <div class="botones mt-4">
+            <div class="contenedor-boton">
+                <button class="boton-mapacheAceptar" @onclick="Registrar">Registrar</button>
+                <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+            </div>
+            <button class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    //NUEVO
+    // Alerta personalizada con mensaje dinámico
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    function showSuccessAlert() {
+        const alert = document.getElementById("successAlert");
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const telInput = document.getElementById("telefonoInput");
+
+        // ✅ Solo permite números y espacio (sin letras ni símbolos)
+        telInput.addEventListener("input", function (e) {
+            let val = e.target.value.replace(/[^0-9 ]/g, ""); // elimina letras y símbolos
+
+            // Elimina espacios extras y mantiene formato 0000 0000
+            val = val.replace(/\s+/g, "");
+            if (val.length > 8) val = val.substring(0, 8);
+            if (val.length > 4)
+                val = val.substring(0, 4) + " " + val.substring(4);
+            e.target.value = val.trim();
+
+            // Actualizar bind de Blazor
+            const inputEvent = new Event('input', { bubbles: true });
+            e.target.dispatchEvent(inputEvent);
+        });
+    });
+</script>
+@* <!-- ✅ Script para alerta y formato de teléfono -->
+<script>
+    // ✅ Alerta de éxito animada
+    function showSuccessAlert() {
+        const alert = document.getElementById("successAlert");
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    // ✅ Autoformato del teléfono 0000 0000
+    document.addEventListener("DOMContentLoaded", function () {
+        const telInput = document.getElementById("telefonoInput");
+        if (!telInput) return;
+
+        telInput.addEventListener("input", function (e) {
+            let val = e.target.value.replace(/[^0-9]/g, ""); // Solo números
+            if (val.length > 8) val = val.substring(0, 8);
+            if (val.length > 4) val = val.substring(0, 4) + " " + val.substring(4);
+            e.target.value = val.trim();
+            const inputEvent = new Event('input', { bubbles: true });
+            e.target.dispatchEvent(inputEvent);
+        });
+    });
+</script> *@
+
+<!-- ✅ CSS adicional (note el @@keyframes abajo) -->
+<style>
+    .error-message {
+        color: #d9534f;
+        font-size: 0.85rem;
+        margin-top: 4px;
+        min-height: 18px;
+    }
+
+    .preview-container {
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    .preview-img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #ccc;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    .preview-img:hover {
+        transform: scale(1.05);
+    }
+
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        opacity: 0;
+    }
+
+    .success-alert.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(10px);
+    }
+
+    .success-alert.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    @@keyframes ring {
+        0% { transform: rotate(0); }
+        25% { transform: rotate(10deg); }
+        50% { transform: rotate(-10deg); }
+        75% { transform: rotate(10deg); }
+        100% { transform: rotate(0); }
+    }
+</style>
+
+@code {
+    private string nombre = "";
+    private string apellido = "";
+    private string telefono = "";
+    private string email = "";
+    private string dui = "";
+    private string password = "";
+    private byte[]? foto;
+    private string fotoPreview = "";
+
+    private string errorNombre = "";
+    private string errorApellido = "";
+    private string errorTelefono = "";
+    private string errorEmail = "";
+    private string errorDui = "";
+    private string errorPassword = "";
+
+    // ✅ Validaciones en tiempo real
+    private void ValidarNombre(ChangeEventArgs e)
+    {
+        nombre = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(nombre))
+            errorNombre = "El nombre es obligatorio.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(nombre, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+            errorNombre = "Solo se permiten letras.";
+        else
+            errorNombre = "";
+    }
+
+    private void ValidarApellido(ChangeEventArgs e)
+    {
+        apellido = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(apellido))
+            errorApellido = "El apellido es obligatorio.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(apellido, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+            errorApellido = "Solo se permiten letras.";
+        else
+            errorApellido = "";
+    }
+
+
+    private void ValidarTelefono(ChangeEventArgs e)
+    {
+        string input = e.Value?.ToString() ?? "";
+        // Si está vacío, borrar errores y valor (es opcional)
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            telefono = "";
+            errorTelefono = "";
+            return;
+        }
+
+        string soloNumeros = new string(input.Where(char.IsDigit).ToArray());
+
+        if (soloNumeros.Length > 8)
+            soloNumeros = soloNumeros.Substring(0, 8);
+
+        if (soloNumeros.Length > 4)
+            telefono = $"{soloNumeros.Substring(0, 4)} {soloNumeros.Substring(4)}";
+        else
+            telefono = soloNumeros;
+
+        if (input.Any(c => !char.IsDigit(c) && c != ' '))
+            errorTelefono = "Solo se permiten números.";
+        else if (soloNumeros.Length < 8)
+            errorTelefono = "Número de teléfono incompleto.";
+        else
+            errorTelefono = "";
+    }
+
+
+    // // ✅ NUEVA validación de teléfono: solo números, formato 0000 0000
+    // private void ValidarTelefono(ChangeEventArgs e)
+    // {
+    //     string input = e.Value?.ToString() ?? "";
+    //     string soloNumeros = new string(input.Where(char.IsDigit).ToArray());
+
+    //     if (soloNumeros.Length > 8)
+    //         soloNumeros = soloNumeros.Substring(0, 8);
+
+    //     if (soloNumeros.Length > 4)
+    //         telefono = $"{soloNumeros.Substring(0, 4)} {soloNumeros.Substring(4)}";
+    //     else
+    //         telefono = soloNumeros;
+
+    //     if (input.Any(c => !char.IsDigit(c) && c != ' '))
+    //         errorTelefono = "Solo se permiten números.";
+    //     else if (soloNumeros.Length < 8)
+    //         errorTelefono = "Número de teléfono incompleto.";
+    //     else
+    //         errorTelefono = "";
+    // }
+
+    private void ValidarEmail(ChangeEventArgs e)
+    {
+        email = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(email))
+            errorEmail = "El correo es obligatorio.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            errorEmail = "Formato de correo no válido.";
+        else
+            errorEmail = "";
+    }
+
+    private void FormatearDui(ChangeEventArgs e)
+    {
+        dui = e.Value?.ToString() ?? "";
+        dui = new string(dui.Where(char.IsDigit).ToArray());
+        if (dui.Length > 8)
+            dui = dui.Insert(8, "-");
+        if (dui.Length > 10)
+            dui = dui.Substring(0, 10);
+
+        if (dui.Length < 10)
+            errorDui = "Formato inválido (usa 00000000-0).";
+        else
+            errorDui = "";
+    }
+
+    private void ValidarPassword(ChangeEventArgs e)
+    {
+        password = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(password))
+            errorPassword = "La contraseña es obligatoria.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"^[A-Za-z0-9]{5,6}$"))
+            errorPassword = "Debe tener 5–6 caracteres alfanuméricos.";
+        else
+            errorPassword = "";
+    }
+
+    // 🖼️ Vista previa y validación de imagen
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        var extension = Path.GetExtension(file.Name).ToLower();
+
+        if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
+        {
+            errorPassword = "⚠️ Solo se permiten imágenes JPG o PNG.";
+            return;
+        }
+
+        if (file.Size > 5 * 1024 * 1024)
+        {
+            errorPassword = "⚠️ La imagen no puede superar los 5 MB.";
+            return;
+        }
+
+        using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        foto = ms.ToArray();
+        fotoPreview = $"data:image/{extension.Replace(".", "")};base64,{Convert.ToBase64String(foto)}";
+    }
+
+
+    private async Task Registrar()
+{
+    // Si hay errores ya detectados o campos obligatorios vacíos -> mostrar alerta y no enviar
+    if (!string.IsNullOrEmpty(errorNombre) || !string.IsNullOrEmpty(errorApellido) ||
+        !string.IsNullOrEmpty(errorTelefono) || !string.IsNullOrEmpty(errorEmail) ||
+        !string.IsNullOrEmpty(errorDui) || !string.IsNullOrEmpty(errorPassword) ||
+        string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido) ||
+        string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(dui) ||
+        string.IsNullOrWhiteSpace(password))
+    {
+        // Mostrar alerta animada con mensaje personalizado
+        await JS.InvokeVoidAsync("showCustomAlert", "⚠️ Faltan o hay campos inválidos. Revisa los mensajes.");
+
+        // Mensaje de texto (mantener para UX en el form)
+        errorPassword = "⚠️ Corrige los campos antes de continuar.";
+        return;
+    }
+
+    try
+    {
+        string? fotoBase64 = foto != null && foto.Length > 0 ? Convert.ToBase64String(foto) : null;
+
+        var data = new
+        {
+            id = 0,
+            nombre,
+            apellido,
+            telefono,
+            email,
+            dui,
+            foto = fotoBase64 ?? "",
+            password,
+            idRol = 3
+        };
+
+        var response = await Http.PostAsJsonAsync("api/user", data);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Registro OK: mostrar alerta de éxito (usa showSuccessAlert que ya existe)
+            await JS.InvokeVoidAsync("showSuccessAlert");
+            await Task.Delay(3000);
+            NavManager.NavigateTo("/login-asociado");
+        }
+        else
+        {
+            // Error del servidor: mostrar alerta de error personalizada
+            await JS.InvokeVoidAsync("showCustomAlert", "❌ Error al registrar asociado.");
+            errorPassword = "❌ Error al registrar asociado.";
+        }
+    }
+    catch
+    {
+        // Error de conexión
+        await JS.InvokeVoidAsync("showCustomAlert", "⚠️ Error de conexión con el servidor.");
+        errorPassword = "⚠️ Error de conexión con el servidor.";
+    }
+}
+
+
+    // private async Task Registrar()
+    // {
+    //     if (!string.IsNullOrEmpty(errorNombre) || !string.IsNullOrEmpty(errorApellido) ||
+    //         !string.IsNullOrEmpty(errorTelefono) || !string.IsNullOrEmpty(errorEmail) ||
+    //         !string.IsNullOrEmpty(errorDui) || !string.IsNullOrEmpty(errorPassword) ||
+    //         string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido) ||
+    //         string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(dui) ||
+    //         string.IsNullOrWhiteSpace(password))
+    //     {
+    //         errorPassword = "⚠️ Corrige los campos antes de continuar.";
+    //         return;
+    //     }
+
+    //     try
+    //     {
+    //         string? fotoBase64 = foto != null && foto.Length > 0 ? Convert.ToBase64String(foto) : null;
+
+    //         var data = new
+    //         {
+    //             id = 0,
+    //             nombre,
+    //             apellido,
+    //             telefono,
+    //             email,
+    //             dui,
+    //             foto = fotoBase64 ?? "",
+    //             password,
+    //             idRol = 3
+    //         };
+
+    //         var response = await Http.PostAsJsonAsync("api/user", data);
+
+    //         if (response.IsSuccessStatusCode)
+    //         {
+    //             await JS.InvokeVoidAsync("showSuccessAlert");
+    //             await Task.Delay(3000);
+    //             NavManager.NavigateTo("/login-asociado");
+    //         }
+    //         else
+    //         {
+    //             errorPassword = "❌ Error al registrar asociado.";
+    //         }
+    //     }
+    //     catch
+    //     {
+    //         errorPassword = "⚠️ Error de conexión con el servidor.";
+    //     }
+
+    //     // NUEVO
+    //     if (!string.IsNullOrEmpty(errorNombre) || !string.IsNullOrEmpty(errorApellido) ||
+    //         !string.IsNullOrEmpty(errorTelefono) || !string.IsNullOrEmpty(errorEmail) ||
+    //         !string.IsNullOrEmpty(errorDui) || !string.IsNullOrEmpty(errorPassword) ||
+    //         string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido) ||
+    //         string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(dui) ||
+    //         string.IsNullOrWhiteSpace(password))
+    //             {
+    //                 // Mensaje en el texto de alerta
+    //                 await JS.InvokeVoidAsync("showCustomAlert", "⚠️ Faltan campos obligatorios.");
+
+    //                 // También el mensaje rojo debajo de contraseña
+    //                 errorPassword = "⚠️ Corrige los campos antes de continuar.";
+
+    //                 return;
+    //             }
+
+    // }
+
+    private void Cancelar()
+    {
+        nombre = apellido = telefono = email = dui = password = "";
+        foto = null;
+        fotoPreview = "";
+        NavManager.NavigateTo("/login-asociado");
+    }
+}
+
+
+
+
+@* @page "/registro-asociado"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<!-- ✅ Notificación tipo campana -->
+<div id="successAlert" class="success-alert hidden">
+    <div class="alert-box">
+        <div class="alert-icon">🔔</div>
+        <div class="alert-text" id="alertMessage">Asociado registrado con éxito</div>
+    </div>
+</div>
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-people-fill me-2"></i>Registrar Asociado</h3>
+        <hr />
+
+        <!-- Nombre -->
+        <div class="form-group">
+            <label class="required">Nombre</label>
+            <input value="@nombre" @oninput="ValidarNombre" class="form-control" placeholder="Ingresa el nombre del asociado" />
+            <div class="error-message">@errorNombre</div>
+        </div>
+
+        <!-- Apellido -->
+        <div class="form-group">
+            <label class="required">Apellido</label>
+            <input value="@apellido" @oninput="ValidarApellido" class="form-control" placeholder="Ingresa el apellido del asociado" />
+            <div class="error-message">@errorApellido</div>
+        </div>
+
+        <!-- Teléfono -->
+        <div class="form-group">
+            <label>Teléfono (opcional)</label>
+            <input id="telefonoInput" value="@telefono" @oninput="ValidarTelefono" class="form-control" placeholder="0000 0000" maxlength="9" />
+            <div class="error-message">@errorTelefono</div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+            <label class="required">Correo electrónico</label>
+            <input value="@email" @oninput="ValidarEmail" class="form-control" placeholder="ejemplo@correo.com" />
+            <div class="error-message">@errorEmail</div>
+        </div>
+
+        <!-- DUI -->
+        <div class="form-group">
+            <label class="required">DUI</label>
+            <input value="@dui" @oninput="FormatearDui" maxlength="10" class="form-control" placeholder="00000000-0" />
+            <div class="error-message">@errorDui</div>
+        </div>
+
+        <!-- Foto -->
+        <div class="form-group">
+            <label>Foto (opcional)</label>
+            <InputFile OnChange="OnFileChange" class="form-control" />
+        </div>
+
+        <!-- Contraseña -->
+        <div class="form-group">
+            <label class="required">Contraseña</label>
+            <input type="password" value="@password" @oninput="ValidarPassword" class="form-control" placeholder="Crea una contraseña (5–6 caracteres)" />
+            <div class="error-message">@errorPassword</div>
+        </div>
+
+        <!-- Botones -->
+        <div class="botones mt-4">
+            <div class="contenedor-boton">
+                <button class="boton-mapacheAceptar" @onclick="Registrar">Registrar</button>
+                <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+            </div>
+            <button class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ JS -->
+<script>
+    function showSuccessAlert() {
+        const alert = document.getElementById("successAlert");
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const telInput = document.getElementById("telefonoInput");
+
+        telInput.addEventListener("input", function (e) {
+            let val = e.target.value.replace(/[^0-9 ]/g, ""); // elimina letras y símbolos
+            val = val.replace(/\s+/g, ""); // elimina espacios extra
+            if (val.length > 8) val = val.substring(0, 8);
+            if (val.length > 4) val = val.substring(0, 4) + " " + val.substring(4);
+            e.target.value = val.trim();
+
+            const inputEvent = new Event('input', { bubbles: true });
+            e.target.dispatchEvent(inputEvent);
+        });
+    });
+</script>
+
+<!-- ✅ CSS -->
+<style>
+    .error-message {
+        color: #d9534f;
+        font-size: 0.85rem;
+        margin-top: 4px;
+        min-height: 18px;
+    }
+
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        opacity: 0;
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    @@keyframes ring {
+        0% {
+            transform: rotate(0);
+        }
+
+        25% {
+            transform: rotate(10deg);
+        }
+
+        50% {
+            transform: rotate(-10deg);
+        }
+
+        75% {
+            transform: rotate(10deg);
+        }
+
+        100% {
+            transform: rotate(0);
+        }
+    }
+</style>
+
+@code {
+    private string nombre = "";
+    private string apellido = "";
+    private string telefono = "";
+    private string email = "";
+    private string dui = "";
+    private string password = "";
+    private byte[]? foto;
+
+    private string errorNombre = "";
+    private string errorApellido = "";
+    private string errorTelefono = "";
+    private string errorEmail = "";
+    private string errorDui = "";
+    private string errorPassword = "";
+
+    private void ValidarNombre(ChangeEventArgs e)
+    {
+        nombre = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(nombre))
+            errorNombre = "El nombre es obligatorio.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(nombre, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+            errorNombre = "Solo se permiten letras.";
+        else if (nombre.Length < 2)
+            errorNombre = "Debe tener al menos 2 caracteres.";
+        else
+            errorNombre = "";
+    }
+
+    private void ValidarApellido(ChangeEventArgs e)
+    {
+        apellido = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(apellido))
+            errorApellido = "El apellido es obligatorio.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(apellido, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+            errorApellido = "Solo se permiten letras.";
+        else if (apellido.Length < 2)
+            errorApellido = "Debe tener al menos 2 caracteres.";
+        else
+            errorApellido = "";
+    }
+
+    private void ValidarTelefono(ChangeEventArgs e)
+    {
+        telefono = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(telefono))
+            errorTelefono = "";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(telefono, @"^[0-9]{4}\s?[0-9]{4}$"))
+            errorTelefono = "Formato inválido (usa 0000 0000).";
+        else
+            errorTelefono = "";
+    }
+
+    private void ValidarEmail(ChangeEventArgs e)
+    {
+        email = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(email))
+            errorEmail = "El correo es obligatorio.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            errorEmail = "Formato de correo no válido.";
+        else
+            errorEmail = "";
+    }
+
+    private void FormatearDui(ChangeEventArgs e)
+    {
+        dui = e.Value?.ToString() ?? "";
+        dui = new string(dui.Where(char.IsDigit).ToArray());
+
+        if (dui.Length > 8)
+            dui = dui.Insert(8, "-");
+        if (dui.Length > 10)
+            dui = dui.Substring(0, 10);
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(dui.Replace("-", ""), @"^\d+$"))
+            errorDui = "Solo se permiten números.";
+        else if (dui.Length < 10)
+            errorDui = "Formato inválido (usa 00000000-0).";
+        else
+            errorDui = "";
+    }
+
+    private void ValidarPassword(ChangeEventArgs e)
+    {
+        password = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(password))
+            errorPassword = "La contraseña es obligatoria.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"^[A-Za-z0-9]{5,6}$"))
+            errorPassword = "Debe tener 5–6 caracteres alfanuméricos.";
+        else
+            errorPassword = "";
+    }
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var extension = Path.GetExtension(file.Name).ToLower();
+
+            if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
+            {
+                errorPassword = "⚠️ Solo se permiten imágenes JPG o PNG.";
+                return;
+            }
+
+            if (file.Size > 5 * 1024 * 1024)
+            {
+                errorPassword = "⚠️ La imagen no puede superar los 5 MB.";
+                return;
+            }
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            foto = ms.ToArray();
+        }
+    }
+
+    private async Task Registrar()
+    {
+        if (!string.IsNullOrEmpty(errorNombre) || !string.IsNullOrEmpty(errorApellido) ||
+            !string.IsNullOrEmpty(errorTelefono) || !string.IsNullOrEmpty(errorEmail) ||
+            !string.IsNullOrEmpty(errorDui) || !string.IsNullOrEmpty(errorPassword) ||
+            string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido) ||
+            string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(dui) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            errorPassword = "⚠️ Corrige los campos antes de continuar.";
+            return;
+        }
+
+        try
+        {
+            string? fotoBase64 = foto != null && foto.Length > 0 ? Convert.ToBase64String(foto) : null;
+
+            var data = new
+            {
+                id = 0,
+                nombre,
+                apellido,
+                telefono,
+                email,
+                dui,
+                foto = fotoBase64 ?? "",
+                password,
+                idRol = 3 // Asociado
+            };
+
+            var response = await Http.PostAsJsonAsync("api/user", data);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("showSuccessAlert");
+                await Task.Delay(3000);
+                NavManager.NavigateTo("/login-asociado");
+            }
+            else
+            {
+                errorPassword = "❌ Error al registrar asociado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorPassword = $"⚠️ Error de conexión: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        nombre = apellido = telefono = email = dui = password = "";
+        foto = null;
+        NavManager.NavigateTo("/login-asociado");
+    }
+} *@
+
+
+
+
+@* @page "/registro-asociado"
+@inject HttpClient Http
+@inject IJSRuntime JS
 
 <link href="css/registro-organizacion.css" rel="stylesheet" />
 
@@ -130,3 +1029,4 @@
         public int Id { get; set; }
     }
 }
+ *@
