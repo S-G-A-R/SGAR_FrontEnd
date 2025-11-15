@@ -1,0 +1,161 @@
+﻿@page "/mi-cuenta"
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<style>
+    .card {
+        border: 2px solid #ccc !important;
+        box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1) !important;
+        border-radius: 20px !important;
+        padding: 30px;
+    }
+
+    .avatar-container {
+        width: 150px;
+        height: 150px;
+        border: 3px solid #2c7be5;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 25px;
+    }
+
+        .avatar-container img {
+            width: 80px;
+            opacity: 0.8;
+        }
+
+    .title-label {
+        font-weight: bold;
+        font-size: 17px;
+    }
+
+    .dato-box {
+        background: #d9d9d9;
+        border: 2px solid #b5b5b5;
+        border-radius: 10px;
+        padding: 8px 12px;
+        width: 100%;
+        font-size: 17px;
+        pointer-events: none;
+    }
+
+    .form-group label {
+        font-size: 15px;
+        font-weight: bold;
+        color: #000;
+    }
+
+    .btn-volver {
+        background-color: #007bff;
+        color: #fff;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-size: 17px;
+        border: none;
+        font-weight: bold;
+        width: 150px;
+    }
+
+        .btn-volver:hover {
+            background-color: #0062cc;
+        }
+
+    .btn-cerrar {
+        background-color: #6c757d;
+        color: #fff;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-size: 17px;
+        border: none;
+        font-weight: bold;
+        width: 150px;
+    }
+
+        .btn-cerrar:hover {
+            background-color: #555e65;
+        }
+</style>
+
+<div class="row mb-4">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+
+            <!-- HEADER: Avatar + Nombre -->
+            <div class="d-flex align-items-center mb-4">
+                <div class="avatar-container">
+                    <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" />
+                </div>
+
+                <div>
+                    <div class="title-label">Nombre Operador</div>
+                    <div class="text-muted" style="font-size: 16px;">Código Operador</div>
+                </div>
+            </div>
+
+            <!-- DATOS GRID -->
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <label>Zona Asignada</label>
+                    <div class="dato-box">@ZonaAsignada</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>DUI</label>
+                    <div class="dato-box">@Dui</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>Correo Electrónico</label>
+                    <div class="dato-box">@Correo</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>Vehículo Asignado</label>
+                    <div class="dato-box">@Vehiculo</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>Placa</label>
+                    <div class="dato-box">@Placa</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>Código Vehículo</label>
+                    <div class="dato-box">@CodigoVehiculo</div>
+                </div>
+
+            </div>
+
+            <!-- BOTONES -->
+            <div class="d-flex justify-content-center mt-5">
+                <button class="btn-volver me-4" @onclick="Volver">Volver</button>
+                <button class="btn-cerrar" @onclick="CerrarSesion">Cerrar Sesión</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    // Ejemplo de datos (luego los llenás con tu API)
+    private string ZonaAsignada { get; set; } = "Lourdes";
+    private string Dui { get; set; } = "00000000-0";
+    private string Correo { get; set; } = "AJP01@alcaldia.sv";
+    private string Vehiculo { get; set; } = "Tipo 2";
+    private string Placa { get; set; } = "N 239-098";
+    private string CodigoVehiculo { get; set; } = "INT-0001";
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/home");
+    }
+
+    private async Task CerrarSesion()
+    {
+        await JS.InvokeVoidAsync("localStorage.clear");
+        Nav.NavigateTo("/", true);
+    }
+}
