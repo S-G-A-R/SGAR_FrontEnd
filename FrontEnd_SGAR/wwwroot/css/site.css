@@ -1,4 +1,8 @@
-﻿html {
+﻿body{
+    background-color: lightgrey;
+}
+
+html {
     font-size: 14px;
 }
 
@@ -26,18 +30,7 @@ body {
     margin-bottom: 60px;
 }
 
-S
-/* Estilos para los enlaces dentro del offcanvas */
-.offcanvas-body a {
-    transition: background-color 0.3s ease;
-    padding: 5px;
-    display: block; /* Para que el padding y el background-color ocupen todo el ancho */
-}
 
-/* Estilo al pasar el cursor */
-.offcanvas-body a:hover {
-    background-color: #dcdada;
-}
 
 
 

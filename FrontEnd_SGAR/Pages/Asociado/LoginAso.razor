@@ -1,4 +1,4 @@
-﻿@page "/login-asociado"
+﻿@page "/asociado/login-asociado"
 @using FrontEnd_SGAR.Models
 @using FrontEnd_SGAR.Services
 @inject AuthSeguridadService AuthSeguridadService
@@ -228,7 +228,7 @@
 
         await Task.Delay(3000);
 
-        // Redirigir a página principal
-        Navigation.NavigateTo("/home", true);
+        // Redirigir a menú Asociado
+        Navigation.NavigateTo("/menuAso", true);
     }
 }

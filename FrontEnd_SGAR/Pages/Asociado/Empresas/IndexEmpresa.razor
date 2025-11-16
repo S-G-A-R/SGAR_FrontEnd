@@ -1,0 +1,85 @@
+@page "/asociado/empresas/indexEmpresa"
+@inject NavigationManager Navigation
+
+<div class="container mt-5 text-center">
+
+    <!-- Botón crear empresa -->
+    <div class="mb-4">
+        <button class="btn btn-success px-4 py-2" @onclick="CrearEmpresa">
+            <i class="bi bi-building-add me-2"></i> Crear Empresa
+        </button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>NIT</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var empresa in Empresas)
+                {
+                    <tr>
+                        <td>@empresa.Id</td>
+                        <td>@empresa.Nombre</td>
+                        <td>@empresa.Nit</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary me-2" title="Editar" @onclick="() => EditarEmpresa(empresa.Id)">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info me-2" title="Detalles" @onclick="() => VerDetalles(empresa.Id)">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" title="Eliminar" @onclick="() => EliminarEmpresa(empresa.Id)">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    // Simulación temporal de datos hasta conectar con API
+    private List<Empresa> Empresas = new()
+    {
+        new Empresa { Id = 1, Nombre = "EcoAseo S.A.", Nit = "123456-7" },
+        new Empresa { Id = 2, Nombre = "LimpiaPlus", Nit = "987654-3" },
+        new Empresa { Id = 3, Nombre = "ReciColecta", Nit = "456789-0" }
+    };
+
+    private void CrearEmpresa()
+    {
+        Navigation.NavigateTo("/asociados/empresas/crearEmpresa");
+    } 
+
+    private void EditarEmpresa(int id)
+    {
+        Navigation.NavigateTo($"/empresas/editar/{id}");
+    }
+
+    private void VerDetalles(int id)
+    {
+        Navigation.NavigateTo($"/empresas/detalles/{id}");
+    }
+
+    private void EliminarEmpresa(int id)
+    {
+        // Aquí luego irá la lógica para eliminar desde la API
+        Empresas.RemoveAll(e => e.Id == id);
+    }
+
+    public class Empresa
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+        public string Nit { get; set; }
+    }
+}

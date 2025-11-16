@@ -1,4 +1,4 @@
-﻿@page "/login-admin"
+﻿@page "/administrador/login-admin"
 @using FrontEnd_SGAR.Models
 @using FrontEnd_SGAR.Services
 @inject AuthSeguridadService AuthSeguridadService
@@ -221,6 +221,6 @@
         await Task.Delay(3000);
 
         // Redirigir a página principal
-        Navigation.NavigateTo("/home", true);
+        Navigation.NavigateTo("/administrador/menuAdmin", true);
     }
 }

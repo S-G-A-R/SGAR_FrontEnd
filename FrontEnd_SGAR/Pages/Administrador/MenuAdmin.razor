@@ -1,4 +1,4 @@
-﻿@page "/menuAdmin"
+﻿@page "/administrador/menuAdmin"
 @inject NavigationManager Navigation
 
 <div class="container text-center p-5">
@@ -82,8 +82,8 @@
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
                     <div class="card-body" @onclick="Error">
-                        <NavLink class="card-link w-50" style="font-size: 3rem; color: ThreeDDarkShadow">
-                            <i class="bi bi-person-check-fill"></i>
+                        <NavLink class="card-link w-50">
+                            <i class="bi bi-person-check-fill" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
                         </NavLink>
                         <h3>Autorizar Administradores</h3>
                         <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
