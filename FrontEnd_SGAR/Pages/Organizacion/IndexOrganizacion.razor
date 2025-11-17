@@ -23,7 +23,7 @@
         </div>
 
         <!-- BOTONES JUNTOS -->
-        <div class="col-md-4 d-flex align-items-end gap-1">
+        <div class="col-md-4 d-flex align-items-end gap-3">
             <button class="btn btn-buscar" @onclick="BuscarPorId">
                 <i class="bi bi-search"></i> Buscar
             </button>
@@ -35,41 +35,13 @@
 
     </div>
 
-
-   @*  <!-- BUSCADOR -->
-    <div class="row g-3 align-items-end mb-3 search-section">
-        <div class="col-md-4">
-            <label class="form-label">Buscar por ID:</label>
-            <input type="number" class="form-control"
-                   placeholder="Ingrese ID..."
-                   @bind="buscarId" />
-        </div>
-
-        <!-- BOTÓN BUSCAR -->
-        <div class="col-md-2 d-flex justify-content-start">
-            <button class="btn btn-buscar" @onclick="BuscarPorId">
-                <i class="bi bi-search"></i> Buscar
-            </button>
-        </div>
-
-        <!-- BOTÓN LIMPIAR -->
-        <div class="col-md-2 d-flex justify-content-start">
-            <button class="btn btn-limpiar" @onclick="LimpiarBusqueda">
-                <i class="bi bi-eraser"></i> Limpiar
-            </button>
-        </div>
-    </div> *@
-
-    <!-- CREAR (IZQUIERDA) + MOSTRAR (DERECHA) -->
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
 
-        <!-- IZQUIERDA: Crear -->
         <button class="btn btn-crear"
                 @onclick='() => Nav.NavigateTo("/organizaciones/crear")'>
             <i class="bi bi-plus-circle"></i> Crear Organización
         </button>
 
-        <!-- DERECHA: Mostrar -->
         <div class="d-flex align-items-center gap-2">
             <label class="fw-semibold">Mostrar:</label>
             <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
@@ -258,8 +230,8 @@
     }
 
         .btn-buscar:hover {
-            background: #3b3b3b;
-            color: #fff;
+            background: #BABABA;
+            color: black;
             transform: scale(1.05);
         }
 
@@ -276,8 +248,8 @@
     }
 
         .btn-limpiar:hover {
-            background: #8d44ad;
-            color: white;
+            background: #D9C7FF;
+            color: black;
             transform: scale(1.05);
         }
 
@@ -295,7 +267,7 @@
     }
 
         .btn-crear:hover {
-            background: #2e7d32;
+            background: #5C9E77;
             color: white;
             transform: scale(1.05);
         }
