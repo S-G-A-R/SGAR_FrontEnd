@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Collections.Generic;
+using System.Net.Http.Json;
 
 namespace FrontEnd_SGAR.Services
 {
@@ -17,6 +18,7 @@ namespace FrontEnd_SGAR.Services
                 $"api/organization/list?page={page}&pageSize={pageSize}"
             ) ?? new List<OrganizacionDTO>();
         }
+
 
         public async Task<OrganizacionDTO?> ObtenerPorId(int id)
         {
