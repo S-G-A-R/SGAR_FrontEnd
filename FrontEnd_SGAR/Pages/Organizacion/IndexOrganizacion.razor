@@ -14,16 +14,53 @@
     <!-- BUSCADOR -->
     <div class="row g-3 align-items-end mb-3 search-section">
 
-        <!-- INPUT DE BÚSQUEDA -->
-        <div class="col-md-4">
-            <label class="form-label">Buscar por ID:</label>
-            <input type="number" class="form-control"
-                   placeholder="Ingrese ID..."
-                   @bind="buscarId" />
+        <!-- FILTRO NOMBRE -->
+        <div class="col-md-3">
+            <label class="form-label">Nombre:</label>
+            <input class="form-control" placeholder="Nombre..."
+                   @bind="filtros.NombreOrganizacion" />
         </div>
 
+        <!-- FILTRO TELÉFONO -->
+        <div class="col-md-2">
+            <label class="form-label">Teléfono:</label>
+            <input class="form-control" placeholder="Teléfono..."
+                   @bind="filtros.Telefono" />
+        </div>
+
+        <!-- FILTRO EMAIL -->
+        <div class="col-md-3">
+            <label class="form-label">Email:</label>
+            <input type="email" class="form-control"
+                   placeholder="Email..."
+                   @bind="filtros.Email" />
+        </div>
+
+        <!-- FILTRO MUNICIPIO -->
+        <div class="col-md-2">
+            <label class="form-label">Municipio:</label>
+            <select class="form-select"
+                    @bind="filtros.IdMunicipio">
+                <option value="">Todos</option>
+                @foreach (var muni in municipiosDict)
+                {
+                    <option value="@muni.Key">@muni.Value</option>
+                }
+            </select>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="col-md-2 d-flex align-items-end gap-2">
+            <button class="btn btn-buscar w-100" @onclick="BuscarOrganizaciones">
+                <i class="bi bi-search"></i> Buscar
+            </button>
+
+            <button class="btn btn-limpiar w-100" @onclick="LimpiarFiltros">
+                <i class="bi bi-eraser"></i> Limpiar
+            </button>
+        </div>
         <!-- BOTONES JUNTOS -->
-        <div class="col-md-4 d-flex align-items-end gap-3">
+     @*    <div class="col-md-4 d-flex align-items-end gap-3">
             <button class="btn btn-buscar" @onclick="BuscarPorId">
                 <i class="bi bi-search"></i> Buscar
             </button>
@@ -31,7 +68,7 @@
             <button class="btn btn-limpiar" @onclick="LimpiarBusqueda">
                 <i class="bi bi-eraser"></i> Limpiar
             </button>
-        </div>
+        </div> *@
 
     </div>
 
@@ -276,8 +313,19 @@
 </style>
 
 @code {
+    public class FiltroOrganizacion
+    {
+        public string? NombreOrganizacion { get; set; }
+        public string? Telefono { get; set; }
+        public string? Email { get; set; }
+        public string? IdMunicipio { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+    }
+    FiltroOrganizacion filtros = new();
+
+
     private List<Organizacion> organizaciones = new();
-    private string buscarId = "";
     private PaginacionOrgResponse? response;
     private Dictionary<string, string> municipiosDict = new();
 
@@ -291,19 +339,44 @@
         municipiosDict = municipios.ToDictionary(m => m.Id, m => m.Nombre);
     }
 
-    private async Task LimpiarBusqueda()
+    private async Task BuscarOrganizaciones()
     {
-        buscarId = "";
+        pagina = 1;
         await CargarOrganizaciones();
     }
 
+    private async Task LimpiarFiltros()
+    {
+        filtros = new FiltroOrganizacion();
+        pagina = 1;
+        await CargarOrganizaciones();
+    }
 
     private async Task CargarOrganizaciones()
     {
-        response = await Http.GetFromJsonAsync<PaginacionOrgResponse>(
-            $"api/organization/list?page={pagina}&pageSize={pageSize}");
+        filtros.Page = pagina;
+        filtros.PageSize = pageSize;
+
+        // Construir query string
+        var query = $"nombreOrganizacion={filtros.NombreOrganizacion}&telefono={filtros.Telefono}&email={filtros.Email}&idMunicipio={filtros.IdMunicipio}&page={pagina}&pageSize={pageSize}";
+
+        if (!string.IsNullOrWhiteSpace(filtros.NombreOrganizacion) ||
+            !string.IsNullOrWhiteSpace(filtros.Telefono) ||
+            !string.IsNullOrWhiteSpace(filtros.Email) ||
+            !string.IsNullOrWhiteSpace(filtros.IdMunicipio))
+        {
+            // Buscar usando filtros
+            response = await Http.GetFromJsonAsync<PaginacionOrgResponse>($"api/organization/search?{query}");
+        }
+        else
+        {
+            // Sin filtros → listar todos
+            response = await Http.GetFromJsonAsync<PaginacionOrgResponse>($"api/organization/list?page={pagina}&pageSize={pageSize}");
+        }
+
         organizaciones = response?.Items ?? new();
     }
+
 
     private async Task CambiarPageSize(ChangeEventArgs e)
     {
@@ -315,19 +388,6 @@
         }
     }
 
-    private async Task BuscarPorId()
-    {
-        if (string.IsNullOrWhiteSpace(buscarId))
-        {
-            await CargarOrganizaciones();
-            return;
-        }
-
-        var result = await Http.GetFromJsonAsync<Organizacion?>(
-            $"api/organization/{buscarId}");
-
-        organizaciones = result is not null ? new() { result } : new();
-    }
 
     void Ver(int id) => Nav.NavigateTo($"/organizaciones/ver/{id}");
     void Editar(int id) => Nav.NavigateTo($"/organizaciones/editar/{id}");
