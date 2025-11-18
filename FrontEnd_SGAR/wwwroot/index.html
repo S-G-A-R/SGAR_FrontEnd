@@ -24,6 +24,12 @@
         window.MostrarAlerta = function (opciones) {
             Swal.fire(opciones);
         }
+
+        window.ConfirmarSweetAlert = async (opciones) => {
+            const result = await Swal.fire(opciones);
+            // SweetAlert devuelve un objeto, nosotros solo retornamos el booleano 'isConfirmed'
+            return result.isConfirmed;
+        };
     </script>
 
 
