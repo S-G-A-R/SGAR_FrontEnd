@@ -1,0 +1,240 @@
+﻿@page "/organizacion-eliminar/{Id:int}"
+@using FrontEnd_SGAR.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject GOrganizacionService OrganizacionService
+@inject MunicipioService MunicipioService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3 class="text-danger"><i class="bi bi-trash-fill me-2"></i>Eliminar Organización</h3>
+        <hr />
+
+        <p class="alert alert-warning text-center">
+            ⚠️ **¿Está seguro que desea eliminar la siguiente organización de forma permanente?** Esta acción no se puede deshacer.
+        </p>
+
+        @if (organizacionDetalle == null || !municipioCargado)
+        {
+            <p><em>Cargando organización con ID: @Id...</em></p>
+        }
+        else
+        {
+            <div class="form-group">
+                <label>ID: </label>
+                <span>@organizacionDetalle.id</span>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre de organización: </label>
+                <span>@organizacionDetalle.nombreOrganizacion</span>
+            </div>
+
+            <div class="form-group">
+                <label>Correo electrónico: </label>
+                <span>@organizacionDetalle.email</span>
+            </div>
+
+            <div class="form-group">
+                <label>Municipio: </label>
+                <span>@nombreMunicipioDisplay</span>
+            </div>
+
+            <div class="form-group">
+                <label>Rol: </label>
+                <span>@nombreRolDisplay</span>
+            </div>
+
+            <div class="botones mt-4 d-flex gap-2 justify-content-center">
+                <button type="button" class="btn-eliminar" @onclick="ConfirmarEliminar">
+                    <i class="bi bi-trash me-1"></i> Confirmar Eliminación
+                </button>
+
+                <button type="button" class="btn-volver" @onclick="Volver">
+                    <i class="bi bi-arrow-left-circle me-1"></i> Cancelar 
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* Estilo para los títulos de los campos */
+    .form-group label {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .form-group span {
+        font-weight: normal;
+    }
+
+    /* Estilo del botón de Volver (similar a tu btn-limpiar, pero azul para cancelar) */
+    .btn-volver {
+        border: 2px solid #000;
+        background: #fff;
+        color: #124682;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-volver:hover {
+            background: #94BBE9;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* ESTILO NUEVO: Botón de Eliminación (Rojo de peligro) */
+    .btn-eliminar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #520B0B;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-eliminar:hover {
+            background: #AD3440;
+            color: black;
+            transform: scale(1.05);
+        }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private OrganizacionDTO? organizacionDetalle;
+    // Las notificaciones no son necesarias en la vista de eliminación, pero se mantienen las variables.
+    private bool notifProximidad;
+    private bool notifInicioRuta;
+    private bool notifTiempoReal;
+
+    private string nombreMunicipioDisplay = "Cargando...";
+    private string nombreRolDisplay = "Cargando...";
+    private bool municipioCargado = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrganizacionDetalle(Id);
+        await LoadMunicipioNombre();
+
+        // El Rol 5 siempre es Organización
+        if (organizacionDetalle != null && organizacionDetalle.idRol == 5)
+        {
+            nombreRolDisplay = "Organización";
+        }
+        else
+        {
+            nombreRolDisplay = "Rol Desconocido (" + (organizacionDetalle?.idRol.ToString() ?? "N/A") + ")";
+        }
+
+        municipioCargado = true;
+    }
+
+    // --- LÓGICA DE ELIMINACIÓN CORREGIDA ---
+    private async Task ConfirmarEliminar()
+    {
+        if (organizacionDetalle == null) return;
+
+        // Usamos 'confirm' nativo
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"¿Realmente deseas eliminar la organización '{organizacionDetalle.nombreOrganizacion}' (ID: {Id})?");
+
+        if (confirmed)
+        {
+            try
+            {
+                bool exito = await OrganizacionService.Eliminar(Id);
+
+                if (exito)
+                {
+                    // CAMBIO CLAVE 1: Usar la función 'alert' nativa para el éxito.
+                    await JS.InvokeVoidAsync("alert", $"[ÉXITO] La organización con ID {Id} ha sido eliminada exitosamente.");
+                    Nav.NavigateTo("/index-organizacion");
+                }
+                else
+                {
+                    // CAMBIO CLAVE 2: Usar la función 'alert' nativa para el fallo.
+                    await JS.InvokeVoidAsync("alert", $"[ERROR] Error al eliminar la organización con ID {Id}. (Podría no existir)");
+                }
+            }
+            catch (Exception ex)
+            {
+                // CAMBIO CLAVE 3: Usar la función 'alert' nativa para el error de conexión.
+                await JS.InvokeVoidAsync("alert", $"[ERROR DE CONEXIÓN] Error al eliminar: {ex.Message}");
+            }
+        }
+    }
+
+    // --- LÓGICA DE CARGA (Mantenida de la vista Ver) ---
+    private async Task LoadOrganizacionDetalle(int id)
+    {
+        try
+        {
+            organizacionDetalle = await OrganizacionService.ObtenerPorId(id);
+
+            if (organizacionDetalle == null)
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", $"No se encontró la organización con ID {id}.");
+            }
+            // Mapeo de notificaciones (se mantiene para consistencia, aunque no se muestren todas)
+            if (organizacionDetalle != null && !string.IsNullOrEmpty(organizacionDetalle.notificacion))
+            {
+                string notif = organizacionDetalle.notificacion;
+                notifProximidad = notif.Length > 0 && notif[0] == '1';
+                notifInicioRuta = notif.Length > 1 && notif[1] == '1';
+                notifTiempoReal = notif.Length > 2 && notif[2] == '1';
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error al cargar la organización: {ex.Message}");
+            organizacionDetalle = null;
+        }
+    }
+
+    private async Task LoadMunicipioNombre()
+    {
+        if (organizacionDetalle == null || string.IsNullOrEmpty(organizacionDetalle.idMunicipio))
+        {
+            nombreMunicipioDisplay = "ID de Municipio No Disponible";
+            return;
+        }
+
+        try
+        {
+            var municipios = await MunicipioService.ObtenerMunicipiosAsync();
+            var municipioEncontrado = municipios.FirstOrDefault(m =>
+                m.Id.Equals(organizacionDetalle.idMunicipio, StringComparison.OrdinalIgnoreCase));
+
+            if (municipioEncontrado != null)
+            {
+                nombreMunicipioDisplay = $"{municipioEncontrado.Nombre} ({municipioEncontrado.IdDepartamento?.Nombre})";
+            }
+            else
+            {
+                nombreMunicipioDisplay = "Municipio No Encontrado (ID: " + organizacionDetalle.idMunicipio + ")";
+            }
+        }
+        catch (Exception)
+        {
+            nombreMunicipioDisplay = "Error al cargar municipios";
+        }
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/index-organizacion");
+    }
+}
