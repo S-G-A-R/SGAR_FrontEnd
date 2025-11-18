@@ -1,32 +1,29 @@
 ﻿@page "/mi-cuenta"
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject HttpClient Http              // API Seguridad
+@inject IHttpClientFactory ClientFactory  // API Java
 
 <link href="css/registro-organizacion.css" rel="stylesheet" />
 
 <div class="registro-container">
     <div class="registro-card">
 
-        <!-- Título -->
         <h3><i class="bi bi-person-badge me-2"></i>Mi Cuenta</h3>
         <hr />
 
-        <!-- HEADER: Avatar + Nombre -->
         <div class="d-flex align-items-center mb-4" style="gap: 20px;">
-
             <div class="avatar-container">
                 <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" />
             </div>
 
             <div>
-                <div class="title-label">Nombre Operador</div>
-                <div class="text-muted" style="font-size: 16px;">Código Operador</div>
+                <div class="title-label">@NombreCompleto</div>
+                <div class="text-muted" style="font-size: 16px;">@CodigoOperador</div>
             </div>
         </div>
 
-        <!-- DATOS -->
         <div class="row g-4">
-
             <div class="col-md-6">
                 <label>Zona asignada</label>
                 <div class="dato-box">@ZonaAsignada</div>
@@ -56,18 +53,14 @@
                 <label>Código vehículo</label>
                 <div class="dato-box">@CodigoVehiculo</div>
             </div>
-
         </div>
 
-        <!-- BOTONES -->
         <div class="botones mt-5" style="text-align:center;">
-
             <div class="contenedor-boton">
                 <button class="boton-mapacheAceptar" @onclick="Volver">Volver</button>
                 <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
                 <img src="css/orejaIz.png" class="oreja oreja-derecha" />
             </div>
-
             <button class="btn-cancelar" @onclick="CerrarSesion">Cerrar sesión</button>
         </div>
 
@@ -75,8 +68,6 @@
 </div>
 
 <style>
-
-    /* Avatar redondo estilo alcaldía */
     .avatar-container {
         width: 140px;
         height: 140px;
@@ -97,7 +88,6 @@
         font-weight: bold;
     }
 
-    /* Caja gris para mostrar datos */
     .dato-box {
         background: #d9d9d9;
         border: 2px solid #b5b5b5;
@@ -108,7 +98,6 @@
         pointer-events: none;
     }
 
-    /* Botón cancelar estilo alcaldía */
     .btn-cancelar {
         background-color: #6c757d;
         color: white;
@@ -118,32 +107,123 @@
         margin-left: 15px;
         height: 48px;
         cursor: pointer;
-        transition: 0.2s;
+        transition: .2s;
     }
 
         .btn-cancelar:hover {
             background-color: #5a6268;
         }
-
 </style>
 
-@code {
+    @code {
 
-    private string ZonaAsignada { get; set; } = "Lourdes";
-    private string Dui { get; set; } = "00000000-0";
-    private string Correo { get; set; } = "AJP01@alcaldia.sv";
-    private string Vehiculo { get; set; } = "Tipo 2";
-    private string Placa { get; set; } = "N 239-098";
-    private string CodigoVehiculo { get; set; } = "INT-0001";
+        private string NombreCompleto { get; set; } = "Cargando...";
+        private string CodigoOperador { get; set; } = "—";
+        private string ZonaAsignada { get; set; } = "—";
+        private string Dui { get; set; } = "—";
+        private string Correo { get; set; } = "—";
+        private string Vehiculo { get; set; } = "—";
+        private string Placa { get; set; } = "—";
+        private string CodigoVehiculo { get; set; } = "—";
 
-    private void Volver()
-    {
-        Nav.NavigateTo("/home");
-    }
+        public class UserDTO
+        {
+            public int id { get; set; }
+            public string nombre { get; set; }
+            public string apellido { get; set; }
+            public string telefono { get; set; }
+            public string email { get; set; }
+            public string dui { get; set; }
+            public string foto { get; set; }
+            public int idRol { get; set; }
+        }
 
-    private async Task CerrarSesion()
-    {
-        await JS.InvokeVoidAsync("localStorage.clear");
-        Nav.NavigateTo("/", true);
-    }
-}
+        public class OperadorDTO
+        {
+            public int id { get; set; }
+            public int idUser { get; set; }
+            public string codigoOperador { get; set; }
+            public string licenciaDoc { get; set; }
+            public int idOrganizacion { get; set; }
+        }
+
+        public class VehiculoDTO
+        {
+            public int id { get; set; }
+            public string placa { get; set; }
+            public string codigo { get; set; }
+            public string nombreMarca { get; set; }
+            public string modeloMarca { get; set; }
+            public string tipoVehiculoDescripcion { get; set; }
+            public int idOperador { get; set; }
+        }
+
+        public class PageResponse<T>
+        {
+            public List<T> content { get; set; }
+            public int totalPages { get; set; }
+            public int totalElements { get; set; }
+            public int size { get; set; }
+            public int number { get; set; }
+        }
+
+        protected override async Task OnInitializedAsync()
+        {
+            await CargarDatos();
+        }
+
+        private async Task CargarDatos()
+        {
+            try
+            {
+                var userId = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+                if (string.IsNullOrEmpty(userId)) { Nav.NavigateTo("/", true); return; }
+
+                var usuario = await Http.GetFromJsonAsync<UserDTO>($"api/user/{userId}");
+                if (usuario != null)
+                {
+                    NombreCompleto = $"{usuario.nombre} {usuario.apellido}";
+                    Correo = usuario.email;
+                    Dui = usuario.dui;
+                }
+
+                var operador = await Http.GetFromJsonAsync<OperadorDTO>($"api/operador/byUser/{userId}");
+                if (operador != null)
+                {
+                    CodigoOperador = operador.codigoOperador;
+                    ZonaAsignada = operador.idOrganizacion.ToString();
+                }
+
+                var java = ClientFactory.CreateClient("JavaAPI");
+
+                // 🔥 AHORA SI LEEMOS EL FORMATO CORRECTO (PAGINADO)
+                var pageResponse = await java.GetFromJsonAsync<PageResponse<VehiculoDTO>>("api/vehiculos");
+
+                var vehiculos = pageResponse?.content;
+
+                if (vehiculos != null)
+                {
+                    var asignado = vehiculos.FirstOrDefault(v => v.idOperador == operador.id);
+
+                    if (asignado != null)
+                    {
+                        Vehiculo = asignado.tipoVehiculoDescripcion;
+                        Placa = asignado.placa;
+                        CodigoVehiculo = asignado.codigo;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR MiCuenta: " + ex.Message);
+            }
+        }
+
+        private void Volver() => Nav.NavigateTo("/mi-cuenta");
+
+        private async Task CerrarSesion()
+        {
+            await JS.InvokeVoidAsync("localStorage.clear");
+            Nav.NavigateTo("/", true);
+        }
+ }

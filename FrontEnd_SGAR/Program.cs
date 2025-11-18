@@ -32,6 +32,12 @@ builder.Services.AddHttpClient("NavigationAPI", client =>
     client.BaseAddress = new Uri("https://sgar-navigation.onrender.com/api-docs/");
 });
 
+// API JAVA
+builder.Services.AddHttpClient("JavaAPI", client =>
+{
+    client.BaseAddress = new Uri("https://sgar-api-java.onrender.com/");
+});
+
 
 
 //Servicio de autenticacion
