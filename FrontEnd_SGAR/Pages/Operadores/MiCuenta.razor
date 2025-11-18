@@ -1,161 +1,229 @@
 ﻿@page "/mi-cuenta"
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject HttpClient Http              // API Seguridad
+@inject IHttpClientFactory ClientFactory  // API Java
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+
+        <h3><i class="bi bi-person-badge me-2"></i>Mi Cuenta</h3>
+        <hr />
+
+        <div class="d-flex align-items-center mb-4" style="gap: 20px;">
+            <div class="avatar-container">
+                <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" />
+            </div>
+
+            <div>
+                <div class="title-label">@NombreCompleto</div>
+                <div class="text-muted" style="font-size: 16px;">@CodigoOperador</div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label>Zona asignada</label>
+                <div class="dato-box">@ZonaAsignada</div>
+            </div>
+
+            <div class="col-md-6">
+                <label>DUI</label>
+                <div class="dato-box">@Dui</div>
+            </div>
+
+            <div class="col-md-6">
+                <label>Correo electrónico</label>
+                <div class="dato-box">@Correo</div>
+            </div>
+
+            <div class="col-md-6">
+                <label>Vehículo asignado</label>
+                <div class="dato-box">@Vehiculo</div>
+            </div>
+
+            <div class="col-md-6">
+                <label>Placa</label>
+                <div class="dato-box">@Placa</div>
+            </div>
+
+            <div class="col-md-6">
+                <label>Código vehículo</label>
+                <div class="dato-box">@CodigoVehiculo</div>
+            </div>
+        </div>
+
+        <div class="botones mt-5" style="text-align:center;">
+            <div class="contenedor-boton">
+                <button class="boton-mapacheAceptar" @onclick="Volver">Volver</button>
+                <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+            </div>
+            <button class="btn-cancelar" @onclick="CerrarSesion">Cerrar sesión</button>
+        </div>
+
+    </div>
+</div>
 
 <style>
-    .card {
-        border: 2px solid #ccc !important;
-        box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1) !important;
-        border-radius: 20px !important;
-        padding: 30px;
-    }
-
     .avatar-container {
-        width: 150px;
-        height: 150px;
+        width: 140px;
+        height: 140px;
         border: 3px solid #2c7be5;
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-right: 25px;
     }
 
         .avatar-container img {
             width: 80px;
-            opacity: 0.8;
+            opacity: 0.9;
         }
 
     .title-label {
+        font-size: 18px;
         font-weight: bold;
-        font-size: 17px;
     }
 
     .dato-box {
         background: #d9d9d9;
         border: 2px solid #b5b5b5;
         border-radius: 10px;
-        padding: 8px 12px;
+        padding: 10px 15px;
         width: 100%;
-        font-size: 17px;
+        font-size: 16px;
         pointer-events: none;
     }
 
-    .form-group label {
-        font-size: 15px;
-        font-weight: bold;
-        color: #000;
-    }
-
-    .btn-volver {
-        background-color: #007bff;
-        color: #fff;
-        border-radius: 10px;
-        padding: 12px 30px;
-        font-size: 17px;
-        border: none;
-        font-weight: bold;
-        width: 150px;
-    }
-
-        .btn-volver:hover {
-            background-color: #0062cc;
-        }
-
-    .btn-cerrar {
+    .btn-cancelar {
         background-color: #6c757d;
-        color: #fff;
-        border-radius: 10px;
-        padding: 12px 30px;
-        font-size: 17px;
+        color: white;
         border: none;
-        font-weight: bold;
-        width: 150px;
+        border-radius: 10px;
+        padding: 12px 25px;
+        margin-left: 15px;
+        height: 48px;
+        cursor: pointer;
+        transition: .2s;
     }
 
-        .btn-cerrar:hover {
-            background-color: #555e65;
+        .btn-cancelar:hover {
+            background-color: #5a6268;
         }
 </style>
 
-<div class="row mb-4">
-    <div class="col-md-10 mx-auto">
-        <div class="card">
+    @code {
 
-            <!-- HEADER: Avatar + Nombre -->
-            <div class="d-flex align-items-center mb-4">
-                <div class="avatar-container">
-                    <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" />
-                </div>
+        private string NombreCompleto { get; set; } = "Cargando...";
+        private string CodigoOperador { get; set; } = "—";
+        private string ZonaAsignada { get; set; } = "—";
+        private string Dui { get; set; } = "—";
+        private string Correo { get; set; } = "—";
+        private string Vehiculo { get; set; } = "—";
+        private string Placa { get; set; } = "—";
+        private string CodigoVehiculo { get; set; } = "—";
 
-                <div>
-                    <div class="title-label">Nombre Operador</div>
-                    <div class="text-muted" style="font-size: 16px;">Código Operador</div>
-                </div>
-            </div>
+        public class UserDTO
+        {
+            public int id { get; set; }
+            public string nombre { get; set; }
+            public string apellido { get; set; }
+            public string telefono { get; set; }
+            public string email { get; set; }
+            public string dui { get; set; }
+            public string foto { get; set; }
+            public int idRol { get; set; }
+        }
 
-            <!-- DATOS GRID -->
-            <div class="row g-4">
+        public class OperadorDTO
+        {
+            public int id { get; set; }
+            public int idUser { get; set; }
+            public string codigoOperador { get; set; }
+            public string licenciaDoc { get; set; }
+            public int idOrganizacion { get; set; }
+        }
 
-                <div class="col-md-4">
-                    <label>Zona Asignada</label>
-                    <div class="dato-box">@ZonaAsignada</div>
-                </div>
+        public class VehiculoDTO
+        {
+            public int id { get; set; }
+            public string placa { get; set; }
+            public string codigo { get; set; }
+            public string nombreMarca { get; set; }
+            public string modeloMarca { get; set; }
+            public string tipoVehiculoDescripcion { get; set; }
+            public int idOperador { get; set; }
+        }
 
-                <div class="col-md-4">
-                    <label>DUI</label>
-                    <div class="dato-box">@Dui</div>
-                </div>
+        public class PageResponse<T>
+        {
+            public List<T> content { get; set; }
+            public int totalPages { get; set; }
+            public int totalElements { get; set; }
+            public int size { get; set; }
+            public int number { get; set; }
+        }
 
-                <div class="col-md-4">
-                    <label>Correo Electrónico</label>
-                    <div class="dato-box">@Correo</div>
-                </div>
+        protected override async Task OnInitializedAsync()
+        {
+            await CargarDatos();
+        }
 
-                <div class="col-md-4">
-                    <label>Vehículo Asignado</label>
-                    <div class="dato-box">@Vehiculo</div>
-                </div>
+        private async Task CargarDatos()
+        {
+            try
+            {
+                var userId = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+                if (string.IsNullOrEmpty(userId)) { Nav.NavigateTo("/", true); return; }
 
-                <div class="col-md-4">
-                    <label>Placa</label>
-                    <div class="dato-box">@Placa</div>
-                </div>
+                var usuario = await Http.GetFromJsonAsync<UserDTO>($"api/user/{userId}");
+                if (usuario != null)
+                {
+                    NombreCompleto = $"{usuario.nombre} {usuario.apellido}";
+                    Correo = usuario.email;
+                    Dui = usuario.dui;
+                }
 
-                <div class="col-md-4">
-                    <label>Código Vehículo</label>
-                    <div class="dato-box">@CodigoVehiculo</div>
-                </div>
+                var operador = await Http.GetFromJsonAsync<OperadorDTO>($"api/operador/byUser/{userId}");
+                if (operador != null)
+                {
+                    CodigoOperador = operador.codigoOperador;
+                    ZonaAsignada = operador.idOrganizacion.ToString();
+                }
 
-            </div>
+                var java = ClientFactory.CreateClient("JavaAPI");
 
-            <!-- BOTONES -->
-            <div class="d-flex justify-content-center mt-5">
-                <button class="btn-volver me-4" @onclick="Volver">Volver</button>
-                <button class="btn-cerrar" @onclick="CerrarSesion">Cerrar Sesión</button>
-            </div>
+                // 🔥 AHORA SI LEEMOS EL FORMATO CORRECTO (PAGINADO)
+                var pageResponse = await java.GetFromJsonAsync<PageResponse<VehiculoDTO>>("api/vehiculos");
 
-        </div>
-    </div>
-</div>
+                var vehiculos = pageResponse?.content;
 
-@code {
-    // Ejemplo de datos (luego los llenás con tu API)
-    private string ZonaAsignada { get; set; } = "Lourdes";
-    private string Dui { get; set; } = "00000000-0";
-    private string Correo { get; set; } = "AJP01@alcaldia.sv";
-    private string Vehiculo { get; set; } = "Tipo 2";
-    private string Placa { get; set; } = "N 239-098";
-    private string CodigoVehiculo { get; set; } = "INT-0001";
+                if (vehiculos != null)
+                {
+                    var asignado = vehiculos.FirstOrDefault(v => v.idOperador == operador.id);
 
-    private void Volver()
-    {
-        Nav.NavigateTo("/home");
-    }
+                    if (asignado != null)
+                    {
+                        Vehiculo = asignado.tipoVehiculoDescripcion;
+                        Placa = asignado.placa;
+                        CodigoVehiculo = asignado.codigo;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR MiCuenta: " + ex.Message);
+            }
+        }
 
-    private async Task CerrarSesion()
-    {
-        await JS.InvokeVoidAsync("localStorage.clear");
-        Nav.NavigateTo("/", true);
-    }
-}
+        private void Volver() => Nav.NavigateTo("/mi-cuenta");
+
+        private async Task CerrarSesion()
+        {
+            await JS.InvokeVoidAsync("localStorage.clear");
+            Nav.NavigateTo("/", true);
+        }
+ }
