@@ -44,6 +44,7 @@ namespace FrontEnd_SGAR.Services
         }
     }
 
+    // Añade esta clase en el mismo archivo de servicios o en tu carpeta de Models
     public class OrganizacionDTO
     {
         public int id { get; set; }
@@ -51,7 +52,18 @@ namespace FrontEnd_SGAR.Services
         public string telefono { get; set; } = "";
         public string email { get; set; } = "";
         public string idMunicipio { get; set; } = "";
+        // Nuevas propiedades requeridas
+        public string notificacion { get; set; } = "";
+        public int idRol { get; set; }
     }
+    //public class OrganizacionDTO
+    //{
+    //    public int id { get; set; }
+    //    public string nombreOrganizacion { get; set; } = "";
+    //    public string telefono { get; set; } = "";
+    //    public string email { get; set; } = "";
+    //    public string idMunicipio { get; set; } = "";
+    //}
 
     public class OrganizationRequest
     {
