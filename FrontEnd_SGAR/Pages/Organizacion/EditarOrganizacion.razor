@@ -41,7 +41,9 @@
 
                 <div class="form-group">
                     <label class="required">Teléfono</label>
-                    <InputText @bind-Value="modelo.Telefono" class="form-control" placeholder="8 dígitos (ej: 1234 5678)" />
+                    <InputText @bind-Value="modelo.Telefono"
+                               class="form-control"
+                               placeholder="8 dígitos (ej: 1234 5678)" />
                     <ValidationMessage For="@(() => modelo.Telefono)" />
                 </div>
 
@@ -57,15 +59,32 @@
                     <ValidationMessage For="@(() => modelo.Password)" />
                 </div>
 
-                <div class="form-group">
+                <div class="form-group position-relative">
                     <label class="required">Municipio</label>
-                    <InputText list="listaMunicipios" @bind-Value="modelo.MunicipioSeleccionado" class="form-control" placeholder="Escribe o selecciona un municipio" />
-                    <datalist id="listaMunicipios">
-                        @foreach (var municipio in municipios)
-                        {
-                            <option value="@municipio.Nombre"></option>
-                        }
-                    </datalist>
+
+                    <InputText class="form-control"
+                               placeholder="Escribe o selecciona un municipio"
+                               @bind-Value="modelo.MunicipioSeleccionado"
+                               @oninput="OnInputMunicipio"
+                               @onfocus="MostrarDropdown"
+                               @onblur="OnBlurCerrar" />
+
+
+                    @if (mostrarDropdown && municipiosFiltrados.Any())
+                    {
+                        <ul class="list-group position-absolute w-100 shadow"
+                            style="z-index: 2000; max-height: 200px; overflow-y: auto;">
+
+                            @foreach (var m in municipiosFiltrados)
+                            {
+                                <li class="list-group-item list-group-item-action"
+                                    @onmousedown="(() => SeleccionarMunicipio(m.Nombre))">
+                                    @m.Nombre
+                                </li>
+                            }
+                        </ul>
+                    }
+
                     <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
                 </div>
 
@@ -240,31 +259,76 @@
 
     private List<Municipio> municipios = new();
 
-    // --- CLASES DE SOPORTE (Asume que existen en tu proyecto) ---
-    // (Debes tener OrganizacionDTO, Municipio y las clases de servicio definidas en tu proyecto)
+    // --- AUTOCOMPLETE MUNICIPIOS ---
+    private List<Municipio> municipiosFiltrados = new();
+    private bool mostrarDropdown = false;
 
-    // Modelo de datos para el formulario de edición
+    // Cuando escribe en el input
+    private void OnInputMunicipio(ChangeEventArgs e)
+    {
+        if (modelo == null) return;
+
+        modelo.MunicipioSeleccionado = e.Value?.ToString() ?? "";
+        FiltrarMunicipios();
+        mostrarDropdown = true;
+    }
+
+    // Filtro dinámico
+    private void FiltrarMunicipios()
+    {
+        var texto = modelo?.MunicipioSeleccionado?.ToLower() ?? "";
+
+        municipiosFiltrados = municipios
+            .Where(m => m.Nombre.ToLower().Contains(texto))
+            .ToList();
+    }
+
+    // Mostrar menú
+    private void MostrarDropdown()
+    {
+        mostrarDropdown = true;
+    }
+
+    // Cerrar menú después de seleccionar
+    private async Task OnBlurCerrar()
+    {
+        await Task.Delay(150);
+        mostrarDropdown = false;
+    }
+
+    // Seleccionar elemento
+    private void SeleccionarMunicipio(string nombre)
+    {
+        modelo!.MunicipioSeleccionado = nombre;   // Se pone en el input
+        mostrarDropdown = false;                  // Se cierra la lista
+        municipiosFiltrados = new List<Municipio>(); // Limpia la lista para evitar doble render
+    }
+
+    
     public class EdicionOrganizacionModel
     {
         [Required(ErrorMessage = "El nombre de la organización es obligatorio.")]
         [RegularExpression(@"^[^\d\-]+$", ErrorMessage = "El nombre no puede contener números ni signos negativos.")]
         public string NombreOrganizacion { get; set; } = "";
 
-        [Required(ErrorMessage = "El teléfono es obligatorio.")]
-        [RegularExpression(@"^\d{4}\s?\d{4}$", ErrorMessage = "El teléfono debe tener 8 dígitos (puede incluir un espacio).")]
+        // [Required(ErrorMessage = "El teléfono es obligatorio.")]
+        [RegularExpression(@"^\d{4}\s?\d{4}$", ErrorMessage = "El teléfono debe tener 8 dígitos, con o sin espacio (ej: 12345678 o 1234 5678).")]
         public string Telefono { get; set; } = "";
+
 
         [Required(ErrorMessage = "El correo es obligatorio.")]
         [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
         public string Email { get; set; } = "";
 
-        [StringLength(8, MinimumLength = 5, ErrorMessage = "La contraseña debe tener entre 5 y 8 caracteres (si se cambia).")]
-        public string Password { get; set; } = "";
+        // 🔥 Contraseña NO requerida: solo validar si la escriben
+        [StringLength(8, MinimumLength = 5, ErrorMessage = "La contraseña debe tener entre 5 y 8 caracteres.")]
+        public string? Password { get; set; }
 
+        // Municipio sí es obligatorio
         [Required(ErrorMessage = "Debe seleccionar un municipio.")]
-        [RegularExpression(@"^[^\d\-]+$", ErrorMessage = "El municipio no puede contener números ni signos negativos.")]
         public string MunicipioSeleccionado { get; set; } = "";
     }
+
 
     public class ResponseMessage
     {
@@ -280,6 +344,7 @@
         {
             // 1. Cargar la lista de municipios
             municipios = await MunicipioService.ObtenerMunicipiosAsync();
+            municipiosFiltrados = municipios;
 
             // 2. Obtener los datos de la organización por el ID
             organizacionOriginal = await OrganizacionService.ObtenerPorId(Id);
@@ -294,6 +359,14 @@
                     Email = organizacionOriginal.email,
                     // Password se queda vacío para edición
                 };
+
+                // Normalizar teléfono para que no falle la validación
+                modelo.Telefono = new string(organizacionOriginal.telefono.Where(char.IsDigit).ToArray());
+                if (modelo.Telefono.Length == 8)
+                {
+                    modelo.Telefono = modelo.Telefono.Insert(4, " ");
+                }
+
 
                 // Mapear Municipio: Buscar el nombre del municipio usando el ID
                 var municipioEncontrado = municipios.FirstOrDefault(m =>
@@ -394,10 +467,13 @@
             };
 
             // 4. Incluir la contraseña SOLO si el usuario ingresó una nueva
+            // 4. Incluir la contraseña SOLO si el usuario ingresó una nueva
             if (!string.IsNullOrEmpty(modelo.Password))
             {
                 data.Add("password", modelo.Password);
             }
+            // Si viene vacía → NO se envía y la API mantiene la actual
+
 
             // 5. Enviar la solicitud PUT
             var response = await Http.PutAsJsonAsync($"api/organization/{Id}", data);

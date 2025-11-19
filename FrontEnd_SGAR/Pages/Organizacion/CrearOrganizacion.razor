@@ -40,7 +40,37 @@
                 <ValidationMessage For="@(() => modelo.Password)" />
             </div>
 
-            <div class="form-group">
+
+            <div class="form-group position-relative">
+                <label class="required">Municipio</label>
+
+                <InputText class="form-control"
+                           placeholder="Escribe o selecciona un municipio"
+                           @bind-Value="modelo.MunicipioSeleccionado"
+                           @oninput="OnInputMunicipio"
+                           @onfocus="MostrarDropdown"
+                           @onblur="OnBlurCerrar" />
+
+
+                @if (mostrarDropdown && municipiosFiltrados.Any())
+                {
+                    <ul class="list-group position-absolute w-100 shadow"
+                        style="z-index: 2000; max-height: 200px; overflow-y: auto;">
+
+                        @foreach (var m in municipiosFiltrados)
+                        {
+                            <li class="list-group-item list-group-item-action"
+                                @onmousedown="(() => SeleccionarMunicipio(m.Nombre))">
+                                @m.Nombre
+                            </li>
+                        }
+                    </ul>
+                }
+
+                <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
+            </div>
+
+          @*   <div class="form-group">
                 <label class="required">Municipio</label>
                 <InputText list="listaMunicipios" @bind-Value="modelo.MunicipioSeleccionado" class="form-control" placeholder="Escribe o selecciona un municipio" />
                 <datalist id="listaMunicipios">
@@ -50,7 +80,7 @@
                     }
                 </datalist>
                 <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
-            </div>
+            </div> *@
 
             <div class="form-group mt-3">
                 <label>Tipos de notificación</label>
@@ -246,11 +276,57 @@
 
     private List<Municipio> municipios = new();
 
+    // --- AUTOCOMPLETE MUNICIPIOS ---
+    private List<Municipio> municipiosFiltrados = new();
+    private bool mostrarDropdown = false;
+
+    // Cuando escribe en el input
+    private void OnInputMunicipio(ChangeEventArgs e)
+    {
+        if (modelo == null) return;
+
+        modelo.MunicipioSeleccionado = e.Value?.ToString() ?? "";
+        FiltrarMunicipios();
+        mostrarDropdown = true;
+    }
+
+    // Filtro dinámico
+    private void FiltrarMunicipios()
+    {
+        var texto = modelo?.MunicipioSeleccionado?.ToLower() ?? "";
+
+        municipiosFiltrados = municipios
+            .Where(m => m.Nombre.ToLower().Contains(texto))
+            .ToList();
+    }
+
+    // Mostrar menú
+    private void MostrarDropdown()
+    {
+        mostrarDropdown = true;
+    }
+
+    // Cerrar menú después de seleccionar
+    private async Task OnBlurCerrar()
+    {
+        await Task.Delay(150);
+        mostrarDropdown = false;
+    }
+
+    // Seleccionar elemento
+    private void SeleccionarMunicipio(string nombre)
+    {
+        modelo!.MunicipioSeleccionado = nombre;   // Se pone en el input
+        mostrarDropdown = false;                  // Se cierra la lista
+        municipiosFiltrados = new List<Municipio>(); // Limpia la lista para evitar doble render
+    }
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             municipios = await MunicipioService.ObtenerMunicipiosAsync();
+            municipiosFiltrados = municipios;
         }
         catch (Exception ex)
         {
