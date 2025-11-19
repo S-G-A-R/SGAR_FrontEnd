@@ -45,6 +45,7 @@ builder.Services.AddScoped<AuthSeguridadService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MunicipioService>();
 builder.Services.AddScoped<GOrganizacionService>();
+builder.Services.AddScoped<HorarioService>();
 
 
 await builder.Build().RunAsync();
