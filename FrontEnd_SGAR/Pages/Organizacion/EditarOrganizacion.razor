@@ -1,0 +1,508 @@
+﻿@page "/organizacion-editar/{Id:int}"
+@using FrontEnd_SGAR.Services
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@inject GOrganizacionService OrganizacionService
+@inject MunicipioService MunicipioService
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-pencil-square me-2"></i>Editar Organización (ID: @Id)</h3>
+        <hr />
+
+        @if (isLoading)
+        {
+            <p class="text-center"><em>Cargando datos de la organización...</em></p>
+        }
+        else if (modelo == null)
+        {
+            <p class="alert alert-danger text-center">No se pudieron cargar los detalles de la organización. (ID no encontrado)</p>
+        }
+        else
+        {
+            <EditForm Model="modelo" OnValidSubmit="Actualizar">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label>ID</label>
+                    <input value="@Id" class="form-control" disabled />
+                </div>
+
+                <div class="form-group">
+                    <label class="required">Nombre de organización</label>
+                    <InputText @bind-Value="modelo.NombreOrganizacion" class="form-control" placeholder="Ingresa el nombre" />
+                    <ValidationMessage For="@(() => modelo.NombreOrganizacion)" />
+                </div>
+
+                <div class="form-group">
+                    <label class="required">Teléfono</label>
+                    <InputText @bind-Value="modelo.Telefono"
+                               class="form-control"
+                               placeholder="8 dígitos (ej: 1234 5678)" />
+                    <ValidationMessage For="@(() => modelo.Telefono)" />
+                </div>
+
+                <div class="form-group">
+                    <label class="required">Correo electrónico</label>
+                    <InputText @bind-Value="modelo.Email" class="form-control" placeholder="ejemplo@correo.com" />
+                    <ValidationMessage For="@(() => modelo.Email)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Contraseña (Dejar vacío para mantener la actual)</label>
+                    <InputText @bind-Value="modelo.Password" type="password" class="form-control" placeholder="De 5 a 8 caracteres (solo si desea cambiarla)" />
+                    <ValidationMessage For="@(() => modelo.Password)" />
+                </div>
+
+                <div class="form-group position-relative">
+                    <label class="required">Municipio</label>
+
+                    <InputText class="form-control"
+                               placeholder="Escribe o selecciona un municipio"
+                               @bind-Value="modelo.MunicipioSeleccionado"
+                               @oninput="OnInputMunicipio"
+                               @onfocus="MostrarDropdown"
+                               @onblur="OnBlurCerrar" />
+
+
+                    @if (mostrarDropdown && municipiosFiltrados.Any())
+                    {
+                        <ul class="list-group position-absolute w-100 shadow"
+                            style="z-index: 2000; max-height: 200px; overflow-y: auto;">
+
+                            @foreach (var m in municipiosFiltrados)
+                            {
+                                <li class="list-group-item list-group-item-action"
+                                    @onmousedown="(() => SeleccionarMunicipio(m.Nombre))">
+                                    @m.Nombre
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
+                </div>
+
+                <div class="form-group mt-3">
+                    <label>Tipos de notificación</label>
+                    <div class="form-check-group">
+                        <label><InputCheckbox @bind-Value="notifProximidad" /> Notificación por proximidad</label><br />
+                        <label><InputCheckbox @bind-Value="notifInicioRuta" /> Notificación al iniciar ruta</label><br />
+                        <label><InputCheckbox @bind-Value="notifTiempoReal" /> Seguimiento en tiempo real</label>
+                    </div>
+                </div>
+
+                <div class="botones mt-4 d-flex gap-2 justify-content-center">
+                    <button type="submit" class="btn-buscar" style="width: 150px;">
+                        <i class="bi bi-save me-1"></i> Guardar Cambios
+                    </button>
+
+                    <button type="button" class="btn-limpiar" style="width: 150px;" @onclick="Cancelar">
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
+                    </button>
+                </div>
+            </EditForm>
+        }
+
+
+        <div id="successAlert" class="success-alert hidden">
+            <div class="alert-box">
+                <div class="alert-icon">🔔</div>
+                <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* ---------------------------------- */
+    /* ESTILOS CSS DE LAS ALERTAS Y BOTONES */
+    /* ---------------------------------- */
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    /* BOTÓN BUSCAR */
+    .btn-buscar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #10520B;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold;
+    }
+
+        .btn-buscar:hover {
+            background: #49BFBF;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* BOTÓN LIMPIAR */
+    .btn-limpiar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #520B0B;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold;
+    }
+
+        .btn-limpiar:hover {
+            background: #AD3440;
+            color: black;
+            transform: scale(1.05);
+        }
+</style>
+
+<script>
+    /* ----------------------------------------- */
+    /* FUNCIONES JAVASCRIPT REQUERIDAS POR C# */
+    /* ----------------------------------------- */
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "🔔";
+        alert.querySelector(".alert-icon").style.color = "#ffcc00";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    function showErrorAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "❌";
+        alert.querySelector(".alert-icon").style.color = "#e63946";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+</script>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private bool isLoading = true;
+
+    // Se inicializa en null, solo se crea si la carga es exitosa.
+    private EdicionOrganizacionModel? modelo;
+    private OrganizacionDTO? organizacionOriginal;
+
+    private bool notifProximidad;
+    private bool notifInicioRuta;
+    private bool notifTiempoReal;
+
+    private List<Municipio> municipios = new();
+
+    // --- AUTOCOMPLETE MUNICIPIOS ---
+    private List<Municipio> municipiosFiltrados = new();
+    private bool mostrarDropdown = false;
+
+    // Cuando escribe en el input
+    private void OnInputMunicipio(ChangeEventArgs e)
+    {
+        if (modelo == null) return;
+
+        modelo.MunicipioSeleccionado = e.Value?.ToString() ?? "";
+        FiltrarMunicipios();
+        mostrarDropdown = true;
+    }
+
+    // Filtro dinámico
+    private void FiltrarMunicipios()
+    {
+        var texto = modelo?.MunicipioSeleccionado?.ToLower() ?? "";
+
+        municipiosFiltrados = municipios
+            .Where(m => m.Nombre.ToLower().Contains(texto))
+            .ToList();
+    }
+
+    // Mostrar menú
+    private void MostrarDropdown()
+    {
+        mostrarDropdown = true;
+    }
+
+    // Cerrar menú después de seleccionar
+    private async Task OnBlurCerrar()
+    {
+        await Task.Delay(150);
+        mostrarDropdown = false;
+    }
+
+    // Seleccionar elemento
+    private void SeleccionarMunicipio(string nombre)
+    {
+        modelo!.MunicipioSeleccionado = nombre;   // Se pone en el input
+        mostrarDropdown = false;                  // Se cierra la lista
+        municipiosFiltrados = new List<Municipio>(); // Limpia la lista para evitar doble render
+    }
+
+    
+    public class EdicionOrganizacionModel
+    {
+        [Required(ErrorMessage = "El nombre de la organización es obligatorio.")]
+        [RegularExpression(@"^[^\d\-]+$", ErrorMessage = "El nombre no puede contener números ni signos negativos.")]
+        public string NombreOrganizacion { get; set; } = "";
+
+        // [Required(ErrorMessage = "El teléfono es obligatorio.")]
+        [RegularExpression(@"^\d{4}\s?\d{4}$", ErrorMessage = "El teléfono debe tener 8 dígitos, con o sin espacio (ej: 12345678 o 1234 5678).")]
+        public string Telefono { get; set; } = "";
+
+
+        [Required(ErrorMessage = "El correo es obligatorio.")]
+        [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
+        public string Email { get; set; } = "";
+
+        // 🔥 Contraseña NO requerida: solo validar si la escriben
+        [StringLength(8, MinimumLength = 5, ErrorMessage = "La contraseña debe tener entre 5 y 8 caracteres.")]
+        public string? Password { get; set; }
+
+        // Municipio sí es obligatorio
+        [Required(ErrorMessage = "Debe seleccionar un municipio.")]
+        public string MunicipioSeleccionado { get; set; } = "";
+    }
+
+
+    public class ResponseMessage
+    {
+        public string Message { get; set; } = "";
+        public int Id { get; set; }
+    }
+
+
+    // --- CARGA DE DATOS ---
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // 1. Cargar la lista de municipios
+            municipios = await MunicipioService.ObtenerMunicipiosAsync();
+            municipiosFiltrados = municipios;
+
+            // 2. Obtener los datos de la organización por el ID
+            organizacionOriginal = await OrganizacionService.ObtenerPorId(Id);
+
+            if (organizacionOriginal != null)
+            {
+                // Solo inicializa el modelo si la organización fue cargada con éxito.
+                modelo = new EdicionOrganizacionModel
+                {
+                    NombreOrganizacion = organizacionOriginal.nombreOrganizacion,
+                    Telefono = organizacionOriginal.telefono,
+                    Email = organizacionOriginal.email,
+                    // Password se queda vacío para edición
+                };
+
+                // Normalizar teléfono para que no falle la validación
+                modelo.Telefono = new string(organizacionOriginal.telefono.Where(char.IsDigit).ToArray());
+                if (modelo.Telefono.Length == 8)
+                {
+                    modelo.Telefono = modelo.Telefono.Insert(4, " ");
+                }
+
+
+                // Mapear Municipio: Buscar el nombre del municipio usando el ID
+                var municipioEncontrado = municipios.FirstOrDefault(m =>
+                    m.Id.Equals(organizacionOriginal.idMunicipio, StringComparison.OrdinalIgnoreCase));
+
+                if (municipioEncontrado != null)
+                {
+                    modelo.MunicipioSeleccionado = municipioEncontrado.Nombre;
+                }
+                else
+                {
+                    modelo.MunicipioSeleccionado = "Municipio No Encontrado";
+                    await JS.InvokeVoidAsync("showErrorAlert", $"Advertencia: El municipio ID {organizacionOriginal.idMunicipio} no fue encontrado.");
+                }
+
+                // Mapear Notificaciones: Cargar los checkboxes
+                if (!string.IsNullOrEmpty(organizacionOriginal.notificacion))
+                {
+                    string notif = organizacionOriginal.notificacion;
+                    notifProximidad = notif.Length > 0 && notif[0] == '1';
+                    notifInicioRuta = notif.Length > 1 && notif[1] == '1';
+                    notifTiempoReal = notif.Length > 2 && notif[2] == '1';
+                }
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", $"No se encontró la organización con ID {Id}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Captura errores de red o deserialización
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error al cargar datos o municipios: {ex.Message}");
+            organizacionOriginal = null;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+
+    // --- VALIDACIÓN MANUAL ---
+    private bool ValidarCampos()
+    {
+        if (modelo == null) return false;
+
+        // Validación personalizada de contraseña (si se modifica)
+        if (!string.IsNullOrEmpty(modelo.Password))
+        {
+            if (modelo.Password.Length < 5 || modelo.Password.Length > 8)
+            {
+                JS.InvokeVoidAsync("showErrorAlert", "La contraseña, si se modifica, debe tener entre 5 y 8 caracteres");
+                return false;
+            }
+        }
+
+        // Validación de que el municipio seleccionado exista en la lista cargada
+        if (municipios.FirstOrDefault(m => m.Nombre.Equals(modelo.MunicipioSeleccionado, StringComparison.OrdinalIgnoreCase)) == null)
+        {
+            JS.InvokeVoidAsync("showErrorAlert", "El municipio seleccionado no es válido o no existe en la lista.");
+            return false;
+        }
+
+        return true;
+    }
+
+
+    // --- FUNCIÓN DE EDICIÓN ---
+    private async Task Actualizar()
+    {
+        // Validar que el modelo esté cargado y los campos sean válidos
+        if (organizacionOriginal == null || modelo == null || !ValidarCampos())
+            return;
+
+        try
+        {
+            // 1. Construir el string de notificaciones binario (e.g., "101")
+            string tiposNotificacion = $"{(notifProximidad ? "1" : "0")}{(notifInicioRuta ? "1" : "0")}{(notifTiempoReal ? "1" : "0")}";
+
+            // 2. Obtener el ID del municipio a partir del nombre seleccionado
+            var municipio = municipios.FirstOrDefault(m =>
+                m.Nombre.Equals(modelo.MunicipioSeleccionado, StringComparison.OrdinalIgnoreCase));
+
+            // Asegurar que tenemos el ID del municipio (es un campo requerido)
+            string idMunicipio = municipio?.Id ?? throw new InvalidOperationException("No se pudo encontrar el ID del municipio para la actualización.");
+
+            // 3. Crear el payload de la solicitud (similar al OrganizationRequest del backend)
+            var data = new Dictionary<string, object>
+            {
+                { "idMunicipio", idMunicipio },
+                { "nombreOrganizacion", modelo.NombreOrganizacion },
+                { "telefono", modelo.Telefono },
+                { "email", modelo.Email },
+                // Asume que idRol es fijo para Organizacion
+                { "idRol", 5 },
+                { "notificacion", tiposNotificacion }
+            };
+
+            // 4. Incluir la contraseña SOLO si el usuario ingresó una nueva
+            // 4. Incluir la contraseña SOLO si el usuario ingresó una nueva
+            if (!string.IsNullOrEmpty(modelo.Password))
+            {
+                data.Add("password", modelo.Password);
+            }
+            // Si viene vacía → NO se envía y la API mantiene la actual
+
+
+            // 5. Enviar la solicitud PUT
+            var response = await Http.PutAsJsonAsync($"api/organization/{Id}", data);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Espera la respuesta que incluya el mensaje de éxito
+                var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
+                await JS.InvokeVoidAsync("showCustomAlert", $"Organización actualizada: {result?.Message ?? "¡Actualización exitosa!"}");
+
+                // Redirigir después de un breve delay
+                await Task.Delay(1800);
+                Nav.NavigateTo("/index-organizacion");
+            }
+            else
+            {
+                // Manejar errores de la API (ej: resultado == -1 del endpoint)
+                string errorContent = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("showErrorAlert", $"No se pudo actualizar. Servidor: {response.StatusCode}. Detalle: {errorContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error del sistema al actualizar. Detalle: {ex.Message}");
+        }
+    }
+
+    private void Cancelar()
+    {
+        Nav.NavigateTo("/index-organizacion");
+    }
+}

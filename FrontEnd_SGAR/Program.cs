@@ -29,7 +29,13 @@ builder.Services.AddScoped(sp => new HttpClient
 // CONEXIÓN DE LA API DE NAVEGACIÓN
 builder.Services.AddHttpClient("NavigationAPI", client =>
 {
-    client.BaseAddress = new Uri("https://sgar-navigation.onrender.com/api-docs/");
+    client.BaseAddress = new Uri("https://sgar-navigation.onrender.com/");
+});
+
+// API JAVA
+builder.Services.AddHttpClient("JavaAPI", client =>
+{
+    client.BaseAddress = new Uri("https://sgar-api-java.onrender.com/");
 });
 
 
@@ -38,6 +44,7 @@ builder.Services.AddHttpClient("NavigationAPI", client =>
 builder.Services.AddScoped<AuthSeguridadService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MunicipioService>();
+builder.Services.AddScoped<GOrganizacionService>();
 
 
 await builder.Build().RunAsync();

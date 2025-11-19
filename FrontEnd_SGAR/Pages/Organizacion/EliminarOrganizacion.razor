@@ -1,0 +1,315 @@
+﻿@page "/organizacion-eliminar/{Id:int}"
+@using FrontEnd_SGAR.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject GOrganizacionService OrganizacionService
+@inject MunicipioService MunicipioService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3 class="text-danger"><i class="bi bi-trash-fill me-2"></i>Eliminar Organización</h3>
+        <hr />
+
+        <p class="alert alert-warning text-center">
+            ⚠️ **¿Está seguro que desea eliminar la siguiente organización de forma permanente?** Esta acción no se puede deshacer.
+        </p>
+
+        @if (organizacionDetalle == null || !municipioCargado)
+        {
+            <p><em>Cargando organización con ID: @Id...</em></p>
+        }
+        else
+        {
+            <div class="form-group">
+                <label>ID: </label>
+                <span>@organizacionDetalle.id</span>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre de organización: </label>
+                <span>@organizacionDetalle.nombreOrganizacion</span>
+            </div>
+
+            <div class="form-group">
+                <label>Correo electrónico: </label>
+                <span>@organizacionDetalle.email</span>
+            </div>
+
+            <div class="form-group">
+                <label>Municipio: </label>
+                <span>@nombreMunicipioDisplay</span>
+            </div>
+
+            <div class="form-group">
+                <label>Rol: </label>
+                <span>@nombreRolDisplay</span>
+            </div>
+
+            <div class="form-group mb-4">
+                <label>Notificaciones Activas:</label>
+                <div class="d-flex flex-column gap-1 mt-1">
+
+                    <span class="d-flex align-items-center">
+                        <i class="@(notifProximidad ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-2"></i>
+                        Notificación por proximidad
+                    </span>
+
+                    <span class="d-flex align-items-center">
+                        <i class="@(notifInicioRuta ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-2"></i>
+                        Notificación al iniciar ruta
+                    </span>
+
+                    <span class="d-flex align-items-center">
+                        <i class="@(notifTiempoReal ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-2"></i>
+                        Notificación Seguimiento en tiempo real
+                    </span>
+
+                </div>
+            </div>
+
+            <div class="botones mt-4 d-flex gap-2 justify-content-center">
+                <button type="button" class="btn-eliminar" @onclick="ConfirmarEliminar">
+                    <i class="bi bi-trash me-1"></i> Confirmar Eliminación
+                </button>
+
+                <button type="button" class="btn-volver" @onclick="Volver">
+                    <i class="bi bi-arrow-left-circle me-1"></i> Cancelar 
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* Estilo para los títulos de los campos */
+    .form-group label {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .form-group span {
+        font-weight: normal;
+    }
+
+    /* Estilo del botón de Volver (similar a tu btn-limpiar, pero azul para cancelar) */
+    .btn-volver {
+        border: 2px solid #000;
+        background: #fff;
+        color: #124682;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-volver:hover {
+            background: #94BBE9;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* ESTILO NUEVO: Botón de Eliminación (Rojo de peligro) */
+    .btn-eliminar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #520B0B;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-eliminar:hover {
+            background: #AD3440;
+            color: black;
+            transform: scale(1.05);
+        }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private OrganizacionDTO? organizacionDetalle;
+    // Las notificaciones no son necesarias en la vista de eliminación, pero se mantienen las variables.
+    private bool notifProximidad;
+    private bool notifInicioRuta;
+    private bool notifTiempoReal;
+
+    private string nombreMunicipioDisplay = "Cargando...";
+    private string nombreRolDisplay = "Cargando...";
+    private bool municipioCargado = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrganizacionDetalle(Id);
+        await LoadMunicipioNombre();
+
+        // El Rol 5 siempre es Organización
+        if (organizacionDetalle != null && organizacionDetalle.idRol == 5)
+        {
+            nombreRolDisplay = "Organización";
+        }
+        else
+        {
+            nombreRolDisplay = "Rol Desconocido (" + (organizacionDetalle?.idRol.ToString() ?? "N/A") + ")";
+        }
+
+        municipioCargado = true;
+    }
+
+    // --- LÓGICA DE ELIMINACIÓN CON SWEETALERT2 ---
+    private async Task ConfirmarEliminar()
+    {
+        if (organizacionDetalle == null) return;
+
+        // 1. LLAMADA CORREGIDA: Usamos ConfirmarSweetAlert en lugar de Swal.fire
+        bool confirmed = await JS.InvokeAsync<bool>(
+            "ConfirmarSweetAlert", // <-- Llamamos a la nueva función wrapper
+            new
+            {
+                title = "¿Estás seguro?",
+                html = $"¡Vas a eliminar permanentemente la organización **{organizacionDetalle.nombreOrganizacion}** (ID: {Id})!",
+                icon = "warning",
+                showCancelButton = true,
+                confirmButtonText = "Sí, eliminar",
+                cancelButtonText = "Cancelar",
+                reverseButtons = true,
+                confirmButtonColor = "#DC3545",
+                cancelButtonColor = "#3f51b5"
+            }
+        );
+
+        if (confirmed)
+        {
+            try
+            {
+                bool exito = await OrganizacionService.Eliminar(Id);
+
+                if (exito)
+                {
+                    // 2. ÉXITO (Usamos la función MostrarAlerta con la configuración de éxito)
+                    await JS.InvokeVoidAsync("MostrarAlerta", new
+                    {
+                        title = "¡Eliminación Exitosa!",
+                        html = $"La organización con ID **{Id}** ha sido eliminada.",
+                        icon = "success",
+                        showConfirmButton = false,
+                        timer = 2000
+                    });
+
+                    // Esperamos un momento para que el usuario vea la alerta
+                    await Task.Delay(500);
+                    Nav.NavigateTo("/index-organizacion");
+                }
+                else
+                {
+                    // 3. FALLO DE API (Usamos la función MostrarAlerta con la configuración de error)
+                    await JS.InvokeVoidAsync("MostrarAlerta", new
+                    {
+                        title = "Error de Eliminación",
+                        html = $"No se pudo eliminar la organización **{organizacionDetalle.nombreOrganizacion}**. (Registro no encontrado o error en el servidor)",
+                        icon = "error",
+                        confirmButtonText = "Entendido"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // 4. ERROR DE CONEXIÓN (Usamos la función MostrarAlerta con la configuración de error)
+                await JS.InvokeVoidAsync("MostrarAlerta", new
+                {
+                    title = "Error de Conexión",
+                    html = $"Ocurrió un error al intentar comunicar con el servicio: **{ex.Message}**",
+                    icon = "error",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+        }
+    }
+
+    // --- LÓGICA DE CARGA ---
+    private async Task LoadOrganizacionDetalle(int id)
+    {
+        try
+        {
+            organizacionDetalle = await OrganizacionService.ObtenerPorId(id);
+
+            if (organizacionDetalle == null)
+            {
+                // ❌ CAMBIO NECESARIO 1: Reemplazar showErrorAlert por MostrarAlerta con opciones SweetAlert
+                await JS.InvokeVoidAsync("MostrarAlerta", new
+                {
+                    title = "Error de Carga",
+                    html = $"No se encontró la organización con ID **{id}**.",
+                    icon = "error",
+                    confirmButtonText = "OK"
+                });
+            }
+
+            // Mapeo de notificaciones: ESTO SE MANTIENE
+            if (organizacionDetalle != null && !string.IsNullOrEmpty(organizacionDetalle.notificacion))
+            {
+                string notif = organizacionDetalle.notificacion;
+                notifProximidad = notif.Length > 0 && notif[0] == '1';
+                notifInicioRuta = notif.Length > 1 && notif[1] == '1';
+                notifTiempoReal = notif.Length > 2 && notif[2] == '1';
+            }
+        }
+        catch (Exception ex)
+        {
+            // ❌ CAMBIO NECESARIO 2: Reemplazar showErrorAlert por MostrarAlerta con opciones SweetAlert
+            await JS.InvokeVoidAsync("MostrarAlerta", new
+            {
+                title = "Error de Carga",
+                html = $"Error al cargar la organización: **{ex.Message}**",
+                icon = "error",
+                confirmButtonText = "Aceptar"
+            });
+            organizacionDetalle = null;
+        }
+    }
+
+   
+
+    private async Task LoadMunicipioNombre()
+    {
+        if (organizacionDetalle == null || string.IsNullOrEmpty(organizacionDetalle.idMunicipio))
+        {
+            nombreMunicipioDisplay = "ID de Municipio No Disponible";
+            return;
+        }
+
+        try
+        {
+            var municipios = await MunicipioService.ObtenerMunicipiosAsync();
+            var municipioEncontrado = municipios.FirstOrDefault(m =>
+                m.Id.Equals(organizacionDetalle.idMunicipio, StringComparison.OrdinalIgnoreCase));
+
+            if (municipioEncontrado != null)
+            {
+                nombreMunicipioDisplay = $"{municipioEncontrado.Nombre} ({municipioEncontrado.IdDepartamento?.Nombre})";
+            }
+            else
+            {
+                nombreMunicipioDisplay = "Municipio No Encontrado (ID: " + organizacionDetalle.idMunicipio + ")";
+            }
+        }
+        catch (Exception)
+        {
+            nombreMunicipioDisplay = "Error al cargar municipios";
+        }
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/index-organizacion");
+    }
+}

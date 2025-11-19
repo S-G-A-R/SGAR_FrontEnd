@@ -3,7 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SGAR</title>
+    <title>FrontEnd_SGAR</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
     <base href="/" />
     <!-- Bootstrap (solo una fuente) -->
     <link
@@ -33,9 +35,15 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-      window.MostrarAlerta = function (opciones) {
-        Swal.fire(opciones);
-      };
+        window.MostrarAlerta = function (opciones) {
+            Swal.fire(opciones);
+        }
+
+        window.ConfirmarSweetAlert = async (opciones) => {
+            const result = await Swal.fire(opciones);
+            // SweetAlert devuelve un objeto, nosotros solo retornamos el booleano 'isConfirmed'
+            return result.isConfirmed;
+        };
     </script>
 
     <style>
@@ -93,11 +101,9 @@
       <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-    ></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  </body>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
+    <script type="module" src="js/operadorUbicaciones.js"></script>
+
+</body>
+
 </html>
