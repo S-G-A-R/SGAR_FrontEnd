@@ -29,7 +29,7 @@ builder.Services.AddScoped(sp => new HttpClient
 // CONEXIÓN DE LA API DE NAVEGACIÓN
 builder.Services.AddHttpClient("NavigationAPI", client =>
 {
-    client.BaseAddress = new Uri("https://sgar-navigation.onrender.com/api-docs/");
+    client.BaseAddress = new Uri("https://sgar-navigation.onrender.com/");
 });
 
 // API JAVA

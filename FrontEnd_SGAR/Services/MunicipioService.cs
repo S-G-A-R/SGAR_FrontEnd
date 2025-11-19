@@ -15,7 +15,7 @@ namespace FrontEnd_SGAR.Services
         public async Task<List<Municipio>> ObtenerMunicipiosAsync()
         {
             //Endpoint correcto para obtener todos los municipios
-            var municipios = await _http.GetFromJsonAsync<List<Municipio>>("/municipalities/");
+            var municipios = await _http.GetFromJsonAsync<List<Municipio>>("municipalities/");
             return municipios ?? new List<Municipio>();
         }
     }
