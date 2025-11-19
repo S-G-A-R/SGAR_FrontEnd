@@ -121,8 +121,45 @@
                                                         ? municipiosDict[org.IdMunicipio]
                                                         : "No encontrado")
                     </td>
-                    <td>@org.Notificacion</td>
-                    <td>@(org.IdRol == 5 ? "Organización" : "Otro")</td>
+                    <td class="text-start">
+
+                                @*
+      Convertimos el string "101" en 3 booleanos
+      notif[0] = proximidad
+      notif[1] = inicio ruta
+      notif[2] = tiempo real
+    *@
+
+                        @{
+                                    string notif = org.Notificacion ?? "000";
+                                    bool notifProx = notif.Length > 0 && notif[0] == '1';
+                                    bool notifInicio = notif.Length > 1 && notif[1] == '1';
+                                    bool notifTiempo = notif.Length > 2 && notif[2] == '1';
+                                }
+
+                                <div class="d-flex flex-column small">
+
+                                    <span class="d-flex align-items-center">
+                                        <i class="@(notifProx ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-1"></i>
+                                        Proximidad
+                                    </span>
+
+                                    <span class="d-flex align-items-center">
+                                        <i class="@(notifInicio ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-1"></i>
+                                        Inicio ruta
+                                    </span>
+
+                                    <span class="d-flex align-items-center">
+                                        <i class="@(notifTiempo ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-1"></i>
+                                        Tiempo real
+                                    </span>
+
+                                </div>
+
+                            </td>
+
+@*                     <td>@org.Notificacion</td>
+ *@                    <td>@(org.IdRol == 5 ? "Organización" : "Otro")</td>
                     <td class="text-center">
                         <div class="btn-group gap-1">
                             <button class="btn btn-sm btn-outline-info" title="Ver" @onclick="() => Ver(org.Id)">
