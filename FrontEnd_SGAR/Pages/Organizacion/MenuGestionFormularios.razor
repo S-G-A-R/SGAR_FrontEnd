@@ -5,14 +5,14 @@
     <p class="menu-subtitle">Selecciona la sección de formulario que desee acceder:</p>
 
     <div class="button-group">
-        <button class="menu-button" @onclick='() => NavegarAFormulario("quejas")'>
+     @*    <button class="menu-button" @onclick='() => NavegarAFormulario("quejas")'>
             Formulario<br>Gestión de Quejas
-        </button>
+        </button> *@
         <button class="menu-button" @onclick='() => NavegarAFormulario("operador")'>
             Formulario<br>Gestión Operador
         </button>
-        <button class="menu-button" @onclick='() => NavegarAFormulario("mantenimiento")'>
-            Formulario<br>Mantenimiento
+        <button class="menu-button" @onclick='() => NavegarAFormulario("solicitud")'>
+            Formulario<br>Solicitud Operador
         </button>
     </div>
 
@@ -85,7 +85,7 @@
         .menu-button:hover {
             background-color: #4B4B4D;
             color: #fff;
-            border: 5px solid #8865A6;
+            border: 5px solid #EDEDED;
             box-shadow: 0 6px 20px rgba(173, 172, 173), 0 0 10px /* rgba(173, 172, 173) */;
             transform: translateY(-3px);
             font-weight: bold;
