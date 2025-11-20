@@ -1,0 +1,84 @@
+﻿@page "/horarios"
+@inject NavigationManager Nav
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+
+        <h3><i class="bi bi-calendar-week me-2"></i>Horarios</h3>
+        <hr />
+
+        <!-- Bloque 1 -->
+        <div class="horario-item d-flex align-items-center">
+            <img src="https://cdn-icons-png.flaticon.com/512/747/747310.png" class="icono-horario" />
+
+            <div class="info-container">
+                <div class="horario-title">CAMPOS VERDES</div>
+                <div class="horario-box"></div>
+            </div>
+        </div>
+
+        <!-- Bloque 2 -->
+        <div class="horario-item d-flex align-items-center mt-4">
+            <img src="https://cdn-icons-png.flaticon.com/512/747/747310.png" class="icono-horario" />
+
+            <div class="info-container">
+                <div class="horario-title">NUEVO LOURDES</div>
+                <div class="horario-box"></div>
+            </div>
+        </div>
+
+        <div class="botones mt-5" style="text-align:center;">
+            <div class="contenedor-boton">
+                <button class="boton-mapacheAceptar" @onclick="Volver">Volver</button>
+                <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+
+    /* Contenedor principal (ya viene del estilo de Mi Cuenta) */
+
+    .horario-item {
+        gap: 25px;
+        padding: 15px 5px;
+    }
+
+    .icono-horario {
+        width: 100px;
+        opacity: 0.85;
+    }
+
+    .info-container {
+        width: 100%;
+    }
+
+    .horario-title {
+        font-size: 17px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .horario-box {
+        background: #e4e8ee;
+        border: 2px solid #c6ccd3;
+        border-radius: 10px;
+        height: 80px;
+        width: 100%;
+    }
+
+</style>
+
+@code {
+    private void Volver()
+    {
+        Nav.NavigateTo("/mi-cuenta");
+    }
+}
