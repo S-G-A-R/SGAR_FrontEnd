@@ -1,0 +1,82 @@
+@page "/administrador/categorias/crear"
+@using SgarApiVenta.Client.Models 
+@using SgarApiVenta.Client.Services
+@inject CategoriaProductoService CategoriaProductoService 
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime 
+
+<h3 class="mb-3 text-secondary">Crear Nueva Categoría</h3>
+
+<div class="card shadow-sm border-0" style="background-color:#f7f7f7;">
+    <div class="card-body">
+
+        <EditForm Model="@categoriaNueva" OnValidSubmit="HandleCrearCategoria">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label for="nombreCategoria" class="form-label fw-semibold text-secondary">
+                    Nombre de la Categoría
+                </label>
+
+                <InputText id="nombreCategoria"
+                           class="form-control border-0 shadow-sm"
+                           style="background-color:white;"
+                           @bind-Value="categoriaNueva.NombreCat"
+                           placeholder="Ej: Escobas, Tachos de basura, etc." />
+
+                <ValidationMessage For="@(() => categoriaNueva.NombreCat)" class="text-danger" />
+            </div>
+
+            <hr />
+
+            <div class="d-flex justify-content-end">
+                <button type="button"
+                        class="btn btn-outline-secondary me-2"
+                        @onclick="GoBack">
+                    Cancelar
+                </button>
+
+                <button type="submit"
+                        class="btn btn-primary px-4"
+                        disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Guardar
+                </button>
+            </div>
+
+        </EditForm>
+
+    </div>
+</div>
+
+@code {
+    private CategoriaProducto categoriaNueva = new CategoriaProducto();
+    private bool isSaving = false;
+
+    private async Task HandleCrearCategoria()
+    {
+        isSaving = true;
+
+        var categoriaCreada = await CategoriaProductoService.CreateCategoriaAsync(categoriaNueva);
+
+        isSaving = false;
+
+        if (categoriaCreada != null)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Categoría '{categoriaCreada.NombreCat}' creada con éxito.");
+            GoBack();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error al guardar la categoría.");
+        }
+    }
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/administrador/categorias/indexcategorias");
+    }
+}

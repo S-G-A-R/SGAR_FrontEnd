@@ -8,7 +8,7 @@
         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body" @onclick="Error">
+                    <div class="card-body" @onclick="IndexCategorias">
                         @* Aqui va en enlace para la redirigir a la vista correcta *@
                         <NavLink class="card-link w-25">
                             <i class="bi bi-tags-fill" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
@@ -64,7 +64,7 @@
         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body" @onclick="Error">
+                    <div class="card-body" @onclick="ClasificarResiduos">
                         <NavLink class="card-link w-25">
                             <i class="bi bi-recycle" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
                         </NavLink>
@@ -118,6 +118,16 @@
 
 
 @code {
+
+private void ClasificarResiduos()
+    {
+        Navigation.NavigateTo("/administrador/clasificarresiduos/indexresiduos");
+    }
+
+    private void IndexCategorias()
+    {
+        Navigation.NavigateTo("/administrador/categorias/indexcategorias");
+    }
 
     private void Error()
     {

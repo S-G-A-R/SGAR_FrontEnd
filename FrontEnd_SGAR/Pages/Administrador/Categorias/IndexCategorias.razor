@@ -1,0 +1,245 @@
+@page "/administrador/categorias/indexcategorias"
+@using SgarApiVenta.Client.Models 
+@using SgarApiVenta.Client.Services
+@inject CategoriaProductoService CategoriaProductoService 
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime 
+
+<h3 class="my-4 text-secondary">Gestión de Categorías de Productos</h3>
+
+<div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-success" @onclick="GoToCrear">
+        <i class="bi bi-plus-circle me-2"></i> Nueva Categoría
+    </button>
+</div>
+
+@if (categorias is not null)
+{
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover align-middle">
+            <thead class="table-secondary">
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th>Nombre</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in categorias.Items)
+                {
+                    <tr class="bg-light">
+                        <td class="text-center">@cat.Id</td>
+                        <td>@cat.NombreCat</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-warning me-2" @onclick="() => GoToEditar(cat.Id)">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info me-2" @onclick="() => GoToDetalles(cat.Id)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirModalEliminar(cat)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(categorias.TienePaginaAnterior ? "" : "disabled")">
+                <button class="page-link" @onclick="Anterior">Anterior</button>
+            </li>
+            <li class="page-item @(categorias.TienePaginaSiguiente ? "" : "disabled")">
+                <button class="page-link" @onclick="Siguiente">Siguiente</button>
+            </li>
+        </ul>
+    </nav>
+}
+else
+{
+    <div class="text-center py-5 text-secondary">
+        <div class="spinner-border text-secondary" role="status"></div>
+        <p class="mt-3">Cargando categorías...</p>
+    </div>
+}
+
+<!-- Modal de Eliminación -->
+<div class="modal fade @(modalVisible ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.4);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar la categoría <strong>@categoriaActual.NombreCat</strong> (ID: @categoriaActual.Id)?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" @onclick="CerrarModal">Cancelar</button>
+                <button class="btn btn-danger" @onclick="EliminarCategoriaConfirmado">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* DATOS SIMULADO *@
+@code {
+    private PaginatedResponse<CategoriaProducto>? categorias;
+    private int paginaActual = 1;
+
+    private bool modalVisible = false;
+    private CategoriaProducto categoriaActual = new CategoriaProducto();
+
+    // Datos simulados
+    private List<CategoriaProducto> mockCategorias = new List<CategoriaProducto>
+    {
+        new CategoriaProducto { Id = 1, NombreCat = "Escobas" },
+        new CategoriaProducto { Id = 2, NombreCat = "Tachos de basura" },
+        new CategoriaProducto { Id = 3, NombreCat = "Guantes de limpieza" },
+        new CategoriaProducto { Id = 4, NombreCat = "Jabones y detergentes" },
+        new CategoriaProducto { Id = 5, NombreCat = "Carros recolectores pequeños" },
+        new CategoriaProducto { Id = 6, NombreCat = "Trapeadores y mopas" },
+        new CategoriaProducto { Id = 7, NombreCat = "Bolsas de basura" },
+        new CategoriaProducto { Id = 8, NombreCat = "Cepillos y raspadores" },
+        new CategoriaProducto { Id = 9, NombreCat = "Productos desinfectantes" },
+        new CategoriaProducto { Id = 10, NombreCat = "Cubetas y contenedores" }
+    };
+
+    private int pageSize = 5;
+
+    protected override Task OnInitializedAsync()
+    {
+        CargarCategorias();
+        return Task.CompletedTask;
+    }
+
+    private void CargarCategorias()
+    {
+        var items = mockCategorias.Skip((paginaActual - 1) * pageSize).Take(pageSize).ToList();
+
+        categorias = new PaginatedResponse<CategoriaProducto>
+        {
+            Items = items,
+            PaginaActual = paginaActual,
+            TotalPaginas = (int)Math.Ceiling(mockCategorias.Count / (double)pageSize),
+            TotalRegistros = mockCategorias.Count
+        };
+    }
+
+    private void Siguiente()
+    {
+        if (paginaActual < categorias?.TotalPaginas)
+        {
+            paginaActual++;
+            CargarCategorias();
+        }
+    }
+
+    private void Anterior()
+    {
+        if (paginaActual > 1)
+        {
+            paginaActual--;
+            CargarCategorias();
+        }
+    }
+
+    private void AbrirModalEliminar(CategoriaProducto cat)
+    {
+        categoriaActual = new CategoriaProducto { Id = cat.Id, NombreCat = cat.NombreCat };
+        modalVisible = true;
+    }
+
+    private void CerrarModal() => modalVisible = false;
+
+    private Task EliminarCategoriaConfirmado()
+    {
+        mockCategorias.RemoveAll(c => c.Id == categoriaActual.Id);
+        modalVisible = false;
+
+        // Ajustar la página actual si eliminamos el último elemento
+        if ((paginaActual - 1) * pageSize >= mockCategorias.Count && paginaActual > 1)
+            paginaActual--;
+
+        CargarCategorias();
+        return Task.CompletedTask;
+    }
+
+    private void GoToCrear() => NavManager.NavigateTo("/administrador/categorias/crear");
+    private void GoToEditar(int id) => NavManager.NavigateTo($"/administrador/categorias/editar/{id}");
+    private void GoToDetalles(int id) => NavManager.NavigateTo($"/administrador/categorias/detalles/{id}");
+}
+
+@* CÓDIGO REAL PARA CONEXIÓN CON LA API *@
+@* @code {
+    private PaginatedResponse<CategoriaProducto>? categorias;
+    private int paginaActual = 1;
+
+    private bool modalVisible = false;
+    private CategoriaProducto categoriaActual = new CategoriaProducto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCategorias();
+    }
+
+    private async Task CargarCategorias()
+    {
+        try
+        {
+            categorias = await CategoriaProductoService.GetCategoriasAsync(paginaActual, 10);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar categorías: {ex.Message}");
+        }
+    }
+
+    private void GoToCrear() => NavManager.NavigateTo("/administrador/categorias/crear");
+    private void GoToEditar(int id) => NavManager.NavigateTo($"/administrador/categorias/editar/{id}");
+    private void GoToDetalles(int id) => NavManager.NavigateTo($"/administrador/categorias/detalles/{id}");
+
+    private void AbrirModalEliminar(CategoriaProducto cat)
+    {
+        categoriaActual = new CategoriaProducto { Id = cat.Id, NombreCat = cat.NombreCat };
+        modalVisible = true;
+    }
+
+    private void CerrarModal() => modalVisible = false;
+
+    private async Task EliminarCategoriaConfirmado()
+    {
+        bool exito = await CategoriaProductoService.EliminarCategoriaAsync(categoriaActual.Id);
+        if (exito)
+        {
+            modalVisible = false;
+            await CargarCategorias();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al eliminar la categoría {categoriaActual.NombreCat}.");
+        }
+    }
+
+    private async Task Siguiente()
+    {
+        if (categorias?.TienePaginaSiguiente == true)
+        {
+            paginaActual++;
+            await CargarCategorias();
+        }
+    }
+
+    private async Task Anterior()
+    {
+        if (categorias?.TienePaginaAnterior == true)
+        {
+            paginaActual--;
+            await CargarCategorias();
+        }
+    }
+} *@
