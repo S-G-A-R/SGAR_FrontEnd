@@ -1,0 +1,254 @@
+﻿@page "/registro-zona-usuario"
+@using FrontEnd_SGAR.Services
+@using System.ComponentModel.DataAnnotations
+@using static FrontEnd_SGAR.DTOs.ZonaDTO
+@using static FrontEnd_SGAR.Services.ZonaService
+@using static FrontEnd_SGAR.Services.CiudadanoService
+@inject ZonaService ZonaService
+@inject CiudadanoService CiudadanoService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<!-- Alert personalizada -->
+<div id="successAlert" class="success-alert hidden">
+    <div class="alert-box">
+        <span class="alert-icon">🔔</span>
+        <span id="alertMessage" class="alert-text"></span>
+    </div>
+</div>
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-person-plus me-2"></i>Registrar Zona</h3>
+        <hr />
+        
+        @if (isLoading)
+        {
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="modelo" OnValidSubmit="RegistrarAsync">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label class="required">Zona</label>
+                    <InputText list="listaZonas" 
+                               @bind-Value="modelo.ZonaSeleccionado" 
+                               class="form-control" 
+                               placeholder="Escribe o selecciona una zona" 
+                               disabled="@isSubmitting" />
+                    <datalist id="listaZonas">
+                        @foreach (var zona in zonas)
+                        {
+                            <option value="@zona.Nombre"></option>
+                        }
+                    </datalist>
+                    <ValidationMessage For="@(() => modelo.ZonaSeleccionado)" />
+                </div>
+
+                <div class="botones mt-4">
+                    <div class="contenedor-boton">
+                        <button type="submit" class="boton-mapacheAceptar" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Registrando...</span>
+                            }
+                            else
+                            {
+                                <span>Registrar</span>
+                            }
+                        </button>
+                        <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                        <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                    </div>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+<!-- ✅ CSS -->
+<style>
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        opacity: 0;
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    @@keyframes ring {
+        0% { transform: rotate(0); }
+        25% { transform: rotate(10deg); }
+        50% { transform: rotate(-10deg); }
+        75% { transform: rotate(10deg); }
+        100% { transform: rotate(0); }
+    }
+</style>
+
+@code {
+    // Modelo de validación
+    public class RegistroZonaModel
+    {
+        [Required(ErrorMessage = "Debe seleccionar una zona.")]
+        [RegularExpression(@"^[^\d\-]+$", ErrorMessage = "La zona no puede contener números ni signos negativos.")]
+        public string ZonaSeleccionado { get; set; } = string.Empty;
+    }
+
+    // Estado del componente
+    private RegistroZonaModel modelo = new();
+    private List<Zona> zonas = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarZonasAsync();
+    }
+
+    /// <summary>
+    /// Carga las zonas disponibles desde el servicio
+    /// </summary>
+    private async Task CargarZonasAsync()
+    {
+        try
+        {
+            isLoading = true;
+            zonas = await ZonaService.ObtenerZonasAsync();
+            Console.WriteLine($"[ZonaUser] Zonas cargadas: {zonas.Count}");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", "Error al cargar las zonas disponibles.");
+            zonas = new List<Zona>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Registra la zona del ciudadano
+    /// </summary>
+    private async Task RegistrarAsync()
+    {
+        if (isSubmitting) return;
+
+        try
+        {
+            isSubmitting = true;
+
+            // 1. Obtener userId del usuario autenticado
+            var userId = await ObtenerUserIdAsync();
+            if (userId == null)
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "No se pudo identificar el usuario. Por favor, inicie sesión nuevamente.");
+                return;
+            }
+
+            // 2. Buscar la zona seleccionada
+            var zonaSeleccionada = BuscarZonaPorNombre(modelo.ZonaSeleccionado);
+            if (zonaSeleccionada == null)
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "Debe seleccionar una zona válida.");
+                return;
+            }
+
+            // 3. Validar el ID de la zona
+            if (string.IsNullOrEmpty(zonaSeleccionada.Id))
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "ID de zona inválido.");
+                return;
+            }
+
+            // 4. Registrar ciudadano usando el servicio
+            var resultado = await CiudadanoService.RegistrarCiudadanoAsync(zonaSeleccionada.Id, userId.Value);
+
+            if (resultado.EsExitoso && resultado.Datos != null)
+            {
+                // Guardar idCiudadano en localStorage para uso futuro
+                await JS.InvokeVoidAsync("localStorage.setItem", "idCiudadano", resultado.Datos.Id.ToString());
+                
+                await JS.InvokeVoidAsync("showCustomAlert", "Zona registrada exitosamente.");
+                await Task.Delay(2000);
+                Nav.NavigateTo("/home");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", resultado.MensajeError);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ZonaUser] Error: {ex.Message}");
+            await JS.InvokeVoidAsync("showErrorAlert", "Error del sistema. Intente de nuevo.");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el userId desde localStorage
+    /// </summary>
+    private async Task<int?> ObtenerUserIdAsync()
+    {
+        var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+        
+        if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+        {
+            return null;
+        }
+
+        return userId;
+    }
+
+    private Zona? BuscarZonaPorNombre(string nombreZona)
+    {
+        return zonas.FirstOrDefault(z => 
+            z.Nombre.Equals(nombreZona, StringComparison.OrdinalIgnoreCase));
+    }
+}

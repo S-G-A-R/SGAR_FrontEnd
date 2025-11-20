@@ -1,0 +1,227 @@
+﻿@page "/Tipos-suscripcion"
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using FrontEnd_SGAR.Providers
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject TipoSuscripcionService TipoSuscripcionService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject CustomAuthStateProvider AuthStateProvider
+
+<link rel="stylesheet" href="css/index-organizacion.css" />
+
+<div class="container mt-4">
+
+    <h2 class="title-page text-center mb-4">Gestión de Tipos de Suscripción</h2>
+
+    <!-- BOTÓN DE CERRAR SESIÓN -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-danger" @onclick="CerrarSesion">
+            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+        </button>
+    </div>
+
+    <!-- CREAR (IZQUIERDA) + MOSTRAR (DERECHA) -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+
+        <!-- IZQUIERDA: Crear -->
+        <button class="btn btn-crear"
+                @onclick='() => Nav.NavigateTo("/tipos-suscripcion/crear")'>
+            <i class="bi bi-plus-circle"></i> Crear Tipo de Suscripción
+        </button>
+
+        <!-- DERECHA: Mostrar -->
+        <div class="d-flex align-items-center gap-2">
+            <label class="fw-semibold">Mostrar:</label>
+            <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
+                <option value="5">5</option>
+                <option selected value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else if (response == null || !response.TiposSuscripcion.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay tipos de suscripción registrados.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded-3">
+            <table class="table custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre de Suscripción</th>
+                        <th>Precio</th>
+                        <th>Límite</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tipo in response.TiposSuscripcion)
+                    {
+                        <tr>
+                            <td>@tipo.Id</td>
+                            <td>@tipo.SuscripcionNombre</td>
+                            <td>@tipo.Precio.ToString("C")</td>
+                            <td>@tipo.Limite</td>
+                            <td class="text-center">
+                                <div class="btn-group gap-1">
+                                    <button class="btn btn-sm btn-outline-info" title="Ver" @onclick="() => Ver(tipo.Id)">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-warning" title="Editar" @onclick="() => Editar(tipo.Id)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-danger" title="Eliminar" @onclick="() => Eliminar(tipo.Id)">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINACIÓN -->
+        <div class="pagination-container mt-3 d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(!response.HasPreviousPage)"
+                    @onclick="PrevPage">
+                ◀ Anterior
+            </button>
+
+            <span class="fw-bold page-info">
+                Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems tipos de suscripción
+            </span>
+
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(!response.HasNextPage)"
+                    @onclick="NextPage">
+                Siguiente ▶
+            </button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    private TipoSuscripcionResponsePaginada? response;
+    private bool isLoading = true;
+    private int currentPage = 0;
+    private int pageSize = 10;
+    private string sortBy = "id";
+    private string direction = "asc";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("[TiposDeSuscripcion] Iniciando carga de tipos de suscripción...");
+        await CargarTiposSuscripcion();
+    }
+
+    private async Task CargarTiposSuscripcion()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = "";
+            Console.WriteLine($"[TiposDeSuscripcion] Cargando página {currentPage}, tamaño {pageSize}");
+            
+            response = await TipoSuscripcionService.ObtenerTiposSuscripcionAsync(currentPage, pageSize, sortBy, direction);
+            
+            if (response != null)
+            {
+                Console.WriteLine($"[TiposDeSuscripcion] Response recibido - Tipos: {response.TiposSuscripcion?.Count ?? 0}");
+                Console.WriteLine($"[TiposDeSuscripcion] Total Items: {response.TotalItems}");
+                Console.WriteLine($"[TiposDeSuscripcion] Página actual: {response.CurrentPage}");
+            }
+            else
+            {
+                errorMessage = "No se pudo obtener la respuesta del servidor";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar tipos de suscripción: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            Console.WriteLine($"[TiposDeSuscripcion] Carga finalizada. isLoading={isLoading}");
+        }
+    }
+
+    private async Task CambiarPageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int newSize))
+        {
+            pageSize = newSize;
+            currentPage = 0;
+            await CargarTiposSuscripcion();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (response?.HasNextPage == true)
+        {
+            currentPage++;
+            await CargarTiposSuscripcion();
+        }
+    }
+
+    private async Task PrevPage()
+    {
+        if (response?.HasPreviousPage == true)
+        {
+            currentPage--;
+            await CargarTiposSuscripcion();
+        }
+    }
+
+    private void Ver(int id)
+    {
+        Nav.NavigateTo($"/tipos-suscripcion/detalle/{id}");
+    }
+
+    private void Editar(int id)
+    {
+        Nav.NavigateTo($"/tipos-suscripcion/editar/{id}");
+    }
+
+    private async Task Eliminar(int id)
+    {
+        // TODO: Implementar confirmación y eliminación
+        Console.WriteLine($"Eliminar tipo de suscripción con ID: {id}");
+    }
+
+    private async Task CerrarSesion()
+    {
+        await AuthStateProvider.MarkUserAsLoggedOut();
+        Nav.NavigateTo("/login-admin", true);
+    }
+}

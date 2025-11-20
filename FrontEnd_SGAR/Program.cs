@@ -1,13 +1,14 @@
 using FrontEnd_SGAR;
+using FrontEnd_SGAR.Handlers;
+using FrontEnd_SGAR.Providers;
 using FrontEnd_SGAR.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
-
-
 
 builder.Services.AddCors(options =>
 {
@@ -19,25 +20,34 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Registrar servicios de autenticación y autorización
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+builder.Services.AddScoped<CustomAuthStateProvider>();
 
-//CONEXIÓN DE LA API SEGURIDAD
-builder.Services.AddScoped(sp => new HttpClient 
-{ 
-    BaseAddress = new Uri("https://sgarseguridad.somee.com/") //API SEGURIDAD
-});
+// Registrar el AuthenticationHandler como servicio transient
+builder.Services.AddTransient<AuthenticationHandler>();
 
-// CONEXIÓN DE LA API DE NAVEGACIÓN
-builder.Services.AddHttpClient("NavigationAPI", client =>
+// CONEXIÓN ÚNICA AL API GATEWAY - HttpClient por defecto
+builder.Services.AddScoped(sp =>
 {
-    client.BaseAddress = new Uri("https://sgar-navigation.onrender.com/api-docs/");
+    var handler = sp.GetRequiredService<AuthenticationHandler>();
+    handler.InnerHandler = new HttpClientHandler();
+
+    return new HttpClient(handler)
+    {
+        BaseAddress = new Uri("https://gatewaysgar.onrender.com/")
+    };
 });
 
-
-
-//Servicio de autenticacion
+//Servicios de autenticacion y otros
 builder.Services.AddScoped<AuthSeguridadService>();
-builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuthOrganizacionService>();
 builder.Services.AddScoped<MunicipioService>();
+builder.Services.AddScoped<ZonaService>();
+builder.Services.AddScoped<OrganizacionService>();
+builder.Services.AddScoped<CiudadanoService>();
+builder.Services.AddScoped<TipoSuscripcionService>();
 
 
 await builder.Build().RunAsync();

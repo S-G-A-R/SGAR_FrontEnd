@@ -1,0 +1,262 @@
+﻿@page "/Solicitud-usuario"
+@using FrontEnd_SGAR.Services
+@using System.ComponentModel.DataAnnotations
+@using System.Text.Json.Serialization
+@using static FrontEnd_SGAR.DTOs.OrganizacionDTO
+@using static FrontEnd_SGAR.Services.OrganizacionService
+@using static FrontEnd_SGAR.Services.CiudadanoService
+@inject OrganizacionService OrganizacionService
+@inject CiudadanoService CiudadanoService
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<!-- Alert personalizada -->
+<div id="successAlert" class="success-alert hidden">
+    <div class="alert-box">
+        <span class="alert-icon">🔔</span>
+        <span id="alertMessage" class="alert-text"></span>
+    </div>
+</div>
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-building me-2"></i>Solicitar Operador</h3>
+        <hr />
+
+        <EditForm Model="modelo" OnValidSubmit="Registrar">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label class="required">Fecha Solicitud</label>
+                <InputDate @bind-Value="modelo.fechaSolicitud" class="form-control" />
+                <ValidationMessage For="@(() => modelo.fechaSolicitud)" />
+            </div>
+
+            <div class="form-group">
+                <label class="required">Organizaciones</label>
+                <InputText list="listaOrganizacion" @bind-Value="modelo.OrganizacionSeleccionado" class="form-control" placeholder="Selecciona una organización" />
+                <datalist id="listaOrganizacion">
+                    @foreach (var organizacion in Organizacions)
+                    {
+                        <option value="@organizacion.Nombre"></option>
+                    }
+                </datalist>
+                <ValidationMessage For="@(() => modelo.OrganizacionSeleccionado)" />
+            </div>
+
+            <div class="botones mt-4">
+                <div class="contenedor-boton">
+                    <button type="submit" class="boton-mapacheAceptar">Registrar</button>
+                    <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                    <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                </div>
+                <button type="button" class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+            </div>
+        </EditForm>
+
+    </div>
+</div>
+
+<!-- ✅ CSS -->
+<style>
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        opacity: 0;
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    @@keyframes ring {
+        0% { transform: rotate(0); }
+        25% { transform: rotate(10deg); }
+        50% { transform: rotate(-10deg); }
+        75% { transform: rotate(10deg); }
+        100% { transform: rotate(0); }
+    }
+</style>
+
+<script>
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "🔔";
+        alert.querySelector(".alert-icon").style.color = "#ffcc00";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    function showErrorAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "❌";
+        alert.querySelector(".alert-icon").style.color = "#e63946";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+</script>
+
+@code {
+    public class RegistroSolicitudModel
+    {
+        [Required(ErrorMessage = "La fecha de solicitud es requerida.")]
+        public DateTime fechaSolicitud { get; set; } = DateTime.Now;
+
+        [Required(ErrorMessage = "Debe seleccionar una organización.")]
+        public string OrganizacionSeleccionado { get; set; } = "";
+    }
+
+    private RegistroSolicitudModel modelo = new();
+    private List<Organizacion> Organizacions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Organizacions = await OrganizacionService.ObtenerOrganizacionesAsync();
+        }
+        catch (Exception ex)
+        {
+            Organizacions = new List<Organizacion>();
+        }
+    }
+
+    private async Task Registrar()
+    {
+        try
+        {
+            // Obtener el ID del usuario autenticado desde localStorage
+            var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "No se pudo identificar el usuario. Por favor, inicie sesión nuevamente.");
+                return;
+            }
+
+            // Obtener el idCiudadano usando el endpoint correcto
+            var ciudadanoResponse =  await CiudadanoService.ObtenerCiudadanoPorUserIdAsync(userId);
+
+            if (ciudadanoResponse == null || ciudadanoResponse.Id <= 0)
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "No se encontró información del ciudadano. Por favor, registre su zona primero.");
+                return;
+            }
+
+            var idCiudadano = ciudadanoResponse.Id;
+
+            // Buscar la organización seleccionada para obtener su ID
+            var organizacionSeleccionada = Organizacions.FirstOrDefault(o =>
+                o.Nombre.Equals(modelo.OrganizacionSeleccionado, StringComparison.OrdinalIgnoreCase));
+
+            if (organizacionSeleccionada == null)
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "Debe seleccionar una organización válida.");
+                return;
+            }
+
+            // Validar que el ID de la organización sea válido
+            if (organizacionSeleccionada.Id <= 0)
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "ID de organización inválido.");
+                return;
+            }
+
+            // Crear el objeto para enviar al endpoint de solicitud
+            var data = new
+            {
+                id = 0,
+                idCiudadano = idCiudadano,
+                idOrganizacion = organizacionSeleccionada.Id,
+                fechaSolicitud = modelo.fechaSolicitud.ToString("yyyy-MM-ddTHH:mm:ss"),
+                estado = 0
+            };
+
+            // Enviar la petición al endpoint de solicitud de operador
+            var response = await Http.PostAsJsonAsync("api/solicitud", data);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("showCustomAlert", "Solicitud registrada exitosamente.");
+                await Task.Delay(2000);
+                Nav.NavigateTo("/home");
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("showErrorAlert", "No se pudo registrar la solicitud.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", "Error del sistema. Intente de nuevo.");
+        }
+    }
+
+    private void Cancelar()
+    {
+        Nav.NavigateTo("/home");
+    }
+
+    // Clase para deserializar la respuesta del ciudadano
+    public class CiudadanoResponse
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("idUser")]
+        public int IdUser { get; set; }
+    }
+}

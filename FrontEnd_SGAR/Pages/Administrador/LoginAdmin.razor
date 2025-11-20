@@ -1,9 +1,11 @@
 ﻿@page "/login-admin"
 @using FrontEnd_SGAR.Models
 @using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.Providers
 @inject AuthSeguridadService AuthSeguridadService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject CustomAuthStateProvider AuthStateProvider
 
 
 <style>
@@ -206,6 +208,9 @@
         await JS.InvokeVoidAsync("localStorage.setItem", "userEmail", email ?? "");
         await JS.InvokeVoidAsync("localStorage.setItem", "userRole", rol ?? "");
         await JS.InvokeVoidAsync("localStorage.setItem", "userId", userId ?? "");
+
+        // ✅ Notificar al sistema de autenticación
+        await AuthStateProvider.MarkUserAsAuthenticated(token);
 
         //alerta personalizada
         await JS.InvokeVoidAsync("MostrarAlerta", new
