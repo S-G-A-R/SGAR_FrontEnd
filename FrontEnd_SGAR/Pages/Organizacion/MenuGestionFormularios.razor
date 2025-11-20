@@ -1,0 +1,105 @@
+﻿@page "/menu-formularios"
+
+<div class="menu-container">
+    <h1 class="menu-title">Gestión Formularios</h1>
+    <p class="menu-subtitle">Selecciona la sección de formulario que desee acceder:</p>
+
+    <div class="button-group">
+        <button class="menu-button" @onclick='() => NavegarAFormulario("quejas")'>
+            Formulario Gestión de Quejas
+        </button>
+        <button class="menu-button" @onclick='() => NavegarAFormulario("operador")'>
+            Formulario Gestión Operador
+        </button>
+        <button class="menu-button" @onclick='() => NavegarAFormulario("mantenimiento")'>
+            Formulario Mantenimiento
+        </button>
+    </div>
+
+    <div class="image-container">
+        <img src="Img/babyform.jpeg" alt="Imagen Formularios" class="menu-image" />
+    </div>
+
+</div>
+
+@code {
+    [Inject]
+    private NavigationManager Nav { get; set; }
+
+    private void NavegarAFormulario(string ruta)
+    {
+        Nav.NavigateTo($"/formulario-{ruta}");
+    }
+}
+
+<style>
+    .menu-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        background-color: #fff; /* fondo blanco */
+        min-height: 100vh;
+        padding: 50px 20px;
+        color: #000; /* texto negro */
+        font-family: 'Arial', sans-serif;
+    }
+
+       .menu-title {
+        font-family: 'Lilita One', cursive;  /*AGREGAR ESTO */
+        font-size: 3rem;
+        margin-bottom: 10px;
+        font-weight: normal;                 /*opcional, para que no se vea tan grueso */
+    }
+
+    .menu-subtitle {
+        font-family: 'Lilita One', cursive;  /*AGREGAR ESTO */
+        font-size: 1.2rem;
+        margin-bottom: 40px;
+        color: #555;
+        font-weight: 300;                     /*más delgada que el título */
+    }
+
+
+    .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 50px;
+    }
+
+    .menu-button {
+        background-color: #fff; /* blanco */
+        color: #000; /* letra negra */
+        border: none;
+        padding: 15px 20px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(255, 192, 203, 0.3); /* sombra rosada suave */
+        transition: all 0.3s ease;
+        font-weight: bold; /* negrita */
+    }
+
+        .menu-button:hover {
+            background-color: #000; /* negro */
+            color: #fff; /* letra blanca */
+            border: 5px solid #9E2F5F; /* borde rosado brillante al hover */
+            box-shadow: 0 6px 20px rgba(255, 182, 193, 0.8), 0 0 10px rgba(173, 113, 139); /* sombra brillante rosada */
+            transform: translateY(-3px); /* pequeño efecto flotante */
+            font-weight: bold; /* negrita */
+        }
+
+    .image-container {
+        margin-top: 20px;
+    }
+
+    .menu-image {
+        max-width: 300px;
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(255, 192, 203, 0.3); /* sombra rosada suave */
+    }
+</style>
