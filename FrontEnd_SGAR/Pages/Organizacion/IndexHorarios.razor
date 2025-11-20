@@ -1,1 +1,361 @@
-﻿
+﻿@* @page "/index-horarios"
+@using FrontEnd_SGAR.Services
+@inject HorarioService HorarioService
+@inject GOrganizacionService OrganizacionService
+@inject NavigationManager Nav
+@inject HttpClient Http
+
+<link rel="stylesheet" href="css/index-organizacion.css" />
+
+<div class="container mt-4">
+
+    <h2 class="title-page text-center mb-4">Gestión de Horarios</h2>
+
+    <div class="row g-3 align-items-end mb-3 search-section">
+
+        <div class="col-md-2">
+            <label class="form-label">Día:</label>
+            <select class="form-select" @bind="filtros.Dia">
+                <option value="">Todos</option>
+                @foreach (var dia in diasSemana)
+                {
+                    <option value="@dia">@dia</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Organización:</label>
+
+            <input class="form-control"
+                   placeholder="Buscar organización..."
+                   @bind="orgBusqueda"
+                   @oninput="FiltrarOrganizaciones" />
+
+            @if (orgFiltradas.Any())
+            {
+                <ul class="list-group autocomplete-list">
+                    @foreach (var org in orgFiltradas)
+                    {
+                        <li class="list-group-item autocomplete-item"
+                            @onclick="@(() => SeleccionarOrganizacion(org))">
+                            @org.nombreOrganizacion
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Zona:</label>
+
+            <input class="form-control"
+                   placeholder="Buscar zona..."
+                   @bind="zonaBusqueda"
+                   @oninput="FiltrarZonas" />
+
+            @if (zonaFiltradas.Any())
+            {
+                <ul class="list-group autocomplete-list">
+                    @foreach (var z in zonaFiltradas)
+                    {
+                        <li class="list-group-item autocomplete-item"
+                            @onclick="@(() => SeleccionarZona(z))">
+                            @z
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Turno:</label>
+            <select class="form-select" @bind="filtros.Turno">
+                <option value="">Todos</option>
+                <option value="1">Mañana</option>
+                <option value="2">Tarde</option>
+                <option value="3">Noche</option>
+            </select>
+        </div>
+
+        <div class="col-md-1">
+            <label class="form-label">Inicio:</label>
+            <input type="time" class="form-control" @bind="horaInicioStr" />
+        </div>
+
+        <div class="col-md-1">
+            <label class="form-label">Fin:</label>
+            <input type="time" class="form-control" @bind="horaFinStr" />
+        </div>
+
+        <div class="col-md-1 d-flex align-items-end gap-2">
+            <button class="btn btn-buscar w-100" @onclick="Buscar">
+                <i class="bi bi-search"></i>
+            </button>
+
+            <button class="btn btn-limpiar w-100" @onclick="Limpiar">
+                <i class="bi bi-eraser"></i>
+            </button>
+        </div>
+
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+
+        <button class="btn btn-crear"
+                @onclick='() => Nav.NavigateTo("/horario-crear")'>
+            <i class="bi bi-plus-circle"></i> Crear Horario
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+            <label class="fw-semibold">Mostrar:</label>
+            <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
+                <option value="0">Todos</option>
+                <option value="5">5</option>
+                <option selected value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+
+    </div>
+
+    @if (horarios is null)
+    {
+        <p>Cargando...</p>
+    }
+    else if (!horarios.Any())
+    {
+        <p>No hay horarios que coincidan.</p>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded-3">
+            <table class="table custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Día</th>
+                        <th>Organización</th>
+                        <th>Zona</th>
+                        <th>Turno</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var h in horarios)
+                    {
+                        <tr>
+                            <td>@h.Id</td>
+                            <td>@h.Dia</td>
+                            <td>@h.Organizacion</td>
+                            <td>@h.Zona</td>
+                            <td>@MostrarTurno(h.Turno)</td>
+                            <td>@h.HoraInicio</td>
+                            <td>@h.HoraFin</td>
+
+                            <td>
+                                <div class="btn-group gap-1">
+                                    <button class="btn btn-sm btn-outline-info"
+                                            @onclick="() => Ver(h.Id)">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-warning"
+                                            @onclick="() => Editar(h.Id)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => Eliminar(h.Id)">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+
+        <!-- Paginacion -->
+        <div class="pagination-container mt-3">
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(response is null || !response.HasPreviousPage)"
+                    @onclick="PrevPage">
+                ◀
+            </button>
+
+            <span class="fw-bold page-info">
+                Página @pagina de @(response?.TotalPages ?? 1)
+            </span>
+
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(response is null || !response.HasNextPage)"
+                    @onclick="NextPage">
+                ▶
+            </button>
+        </div>
+    }
+</div>
+
+<style>
+    .autocomplete-list {
+        position: absolute;
+        z-index: 10;
+        width: 100%;
+        max-height: 180px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+    }
+
+    .autocomplete-item {
+        cursor: pointer;
+    }
+</style>
+
+@code {
+
+    FiltroHorario filtros = new();
+    List<HorarioDTO> horarios = new();
+    PaginacionHorarioResponse? response;
+
+    private int pagina = 1;
+    private int pageSize = 10;
+
+    private string? horaInicioStr;
+    private string? horaFinStr;
+
+    List<OrganizacionDTO> organizaciones = new();
+    List<OrganizacionDTO> orgFiltradas = new();
+    string orgBusqueda = "";
+
+    List<string> zonas = new() { "A", "B", "C", "D", "E" };
+    List<string> zonaFiltradas = new();
+    string zonaBusqueda = "";
+
+    string[] diasSemana = { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        organizaciones = await OrganizacionService.ObtenerOrganizaciones(1, 1000);
+        await CargarHorarios();
+    }
+
+    private async Task Buscar()
+    {
+        filtros.Page = pagina;
+        filtros.PageSize = pageSize;
+
+        filtros.HoraInicio = horaInicioStr;
+        filtros.HoraFin = horaFinStr;
+
+        response = await HorarioService.ObtenerHorariosAsync(filtros);
+        horarios = response?.Items ?? new();
+    }
+
+    private async Task Limpiar()
+    {
+        filtros = new FiltroHorario();
+        horaInicioStr = null;
+        horaFinStr = null;
+        orgBusqueda = "";
+        zonaBusqueda = "";
+        pagina = 1;
+        await CargarHorarios();
+    }
+
+    private async Task CargarHorarios()
+    {
+        filtros.Page = pagina;
+        filtros.PageSize = pageSize;
+        filtros.HoraInicio = horaInicioStr;
+        filtros.HoraFin = horaFinStr;
+
+        response = await HorarioService.ObtenerHorariosAsync(filtros);
+        horarios = response?.Items ?? new();
+    }
+
+    private void CambiarPageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int newSize))
+        {
+            pageSize = newSize == 0 ? response?.TotalCount ?? 10000 : newSize;
+            pagina = 1;
+            _ = CargarHorarios();
+        }
+    }
+
+    private Task NextPage()
+    {
+        if (response?.HasNextPage == true)
+        {
+            pagina++;
+            return CargarHorarios();
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task PrevPage()
+    {
+        if (response?.HasPreviousPage == true)
+        {
+            pagina--;
+            return CargarHorarios();
+        }
+        return Task.CompletedTask;
+    }
+
+    void FiltrarOrganizaciones(ChangeEventArgs e)
+    {
+        string texto = e.Value?.ToString() ?? "";
+        orgBusqueda = texto;
+
+        orgFiltradas = organizaciones
+            .Where(o => o.nombreOrganizacion.Contains(texto, StringComparison.OrdinalIgnoreCase))
+            .Take(8)
+            .ToList();
+    }
+
+    void SeleccionarOrganizacion(OrganizacionDTO org)
+    {
+        orgBusqueda = org.nombreOrganizacion;
+        filtros.Organizacion = org.id.ToString();
+        orgFiltradas.Clear();
+    }
+
+    void FiltrarZonas(ChangeEventArgs e)
+    {
+        zonaBusqueda = e.Value?.ToString() ?? "";
+
+        zonaFiltradas = zonas
+            .Where(z => z.Contains(zonaBusqueda, StringComparison.OrdinalIgnoreCase))
+            .Take(8)
+            .ToList();
+    }
+
+    void SeleccionarZona(string zona)
+    {
+        zonaBusqueda = zona;
+        filtros.Zona = zona;
+        zonaFiltradas.Clear();
+    }
+
+    void Ver(int id) => Nav.NavigateTo($"/horario-ver/{id}");
+    void Editar(int id) => Nav.NavigateTo($"/horario-editar/{id}");
+    void Eliminar(int id) => Nav.NavigateTo($"/horario-eliminar/{id}");
+
+    string MostrarTurno(string turno) =>
+        turno switch
+        {
+            "1" => "Mañana",
+            "2" => "Tarde",
+            "3" => "Noche",
+            _ => "N/A"
+        };
+} *@
