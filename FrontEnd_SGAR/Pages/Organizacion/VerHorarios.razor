@@ -1,0 +1,34 @@
+﻿@page "/horarios/detalle/{id:int}"
+@using FrontEnd_SGAR.Services
+@inject HorarioService HorarioService
+
+<h3>Detalle del Horario</h3>
+
+@if (horario == null)
+{
+    <p class="text-danger">No se encontró el horario.</p>
+}
+else
+{
+    <ul class="list-group">
+        <li class="list-group-item"><b>ID:</b> @horario.Id</li>
+        <li class="list-group-item"><b>Día:</b> @horario.Dia</li>
+        <li class="list-group-item"><b>Hora Entrada:</b> @horario.HoraEntrada</li>
+        <li class="list-group-item"><b>Hora Salida:</b> @horario.HoraSalida</li>
+        <li class="list-group-item"><b>Zona:</b> @horario.ZonaId</li>
+        <li class="list-group-item"><b>Organización:</b> @horario.IdOrganizacion</li>
+        <li class="list-group-item"><b>Turno:</b> @horario.Turno</li>
+    </ul>
+}
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private HorarioDTO? horario;
+
+    protected override async Task OnInitializedAsync()
+    {
+        horario = await HorarioService.ObtenerPorIdAsync(id);
+    }
+}

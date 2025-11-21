@@ -182,7 +182,102 @@ namespace FrontEnd_SGAR.Services
                 return false;
             }
         }
+
+        public async Task<HorarioDTO?> ObtenerPorIdAsync(int id)
+        {
+            try
+            {
+                var client = await ObtenerClienteConToken();
+                var response = await client.GetAsync($"api/horarios/{id}");
+
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    Console.WriteLine("⚠️ Horario no encontrado");
+                    return null;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"❌ Error obteniendo horario: {response.StatusCode}");
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var item = JsonSerializer.Deserialize<JsonElement>(json);
+
+                var horario = new HorarioDTO();
+
+                if (item.TryGetProperty("id", out var idProp))
+                    horario.Id = idProp.GetInt32();
+
+                if (item.TryGetProperty("dia", out var diaProp))
+                    horario.Dia = diaProp.GetString() ?? "";
+
+                if (item.TryGetProperty("zonaId", out var zonaProp))
+                    horario.ZonaId = zonaProp.GetString() ?? "";
+
+                if (item.TryGetProperty("idOrganizacion", out var orgProp))
+                    horario.IdOrganizacion = orgProp.GetInt32();
+
+                if (item.TryGetProperty("turno", out var turnoProp))
+                    horario.Turno = (byte)turnoProp.GetInt32();
+
+                if (item.TryGetProperty("horaEntrada", out var horaEntradaProp))
+                {
+                    if (horaEntradaProp.ValueKind == JsonValueKind.String)
+                    {
+                        var timeStr = horaEntradaProp.GetString();
+                        if (TimeSpan.TryParse(timeStr, out var timeSpan))
+                        {
+                            horario.HoraEntrada = timeSpan.ToString(@"hh\:mm");
+                        }
+                    }
+                    else if (horaEntradaProp.ValueKind == JsonValueKind.Array)
+                    {
+                        var arr = horaEntradaProp.EnumerateArray().ToArray();
+                        if (arr.Length >= 2)
+                        {
+                            var h = arr[0].GetInt32();
+                            var m = arr[1].GetInt32();
+                            horario.HoraEntrada = $"{h:D2}:{m:D2}";
+                        }
+                    }
+                }
+
+
+                if (item.TryGetProperty("horaSalida", out var horaSalidaProp))
+                {
+                    if (horaSalidaProp.ValueKind == JsonValueKind.String)
+                    {
+                        var timeStr = horaSalidaProp.GetString();
+                        if (TimeSpan.TryParse(timeStr, out var timeSpan))
+                        {
+                            horario.HoraSalida = timeSpan.ToString(@"hh\:mm");
+                        }
+                    }
+                    else if (horaSalidaProp.ValueKind == JsonValueKind.Array)
+                    {
+                        var arr = horaSalidaProp.EnumerateArray().ToArray();
+                        if (arr.Length >= 2)
+                        {
+                            var h = arr[0].GetInt32();
+                            var m = arr[1].GetInt32();
+                            horario.HoraSalida = $"{h:D2}:{m:D2}";
+                        }
+                    }
+                }
+
+                return horario;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"💥 Error ObtenerPorIdAsync: {ex}");
+                return null;
+            }
+        }
+
     }
+
 
     // DTOs simplificados
     public class HorarioDTO
