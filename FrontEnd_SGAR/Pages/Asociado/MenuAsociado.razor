@@ -1,0 +1,72 @@
+@page "/MenuAsociado"
+@inject NavigationManager Navigation
+
+<div class="container text-center p-5">
+    <div class="row align-items-center">
+
+        <!-- Comprar Plan -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        <NavLink class="card-link w-25">
+                            <i class="bi bi-wallet2" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
+                        </NavLink>
+                        <h3>Comprar Plan</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+        <!-- Registrar Productos -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        <NavLink class="card-link w-50">
+                            <i class="bi bi-folder-plus" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
+                        </NavLink>
+                        <h3>Registrar Productos</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+        <!-- Registrar Empresas -->
+        <div class="col">
+            <div class="contenedor-tarjeta">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body" @onclick="Error">
+                        <NavLink class="card-link w-50">
+                            <i class="bi bi-building-add" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
+                        </NavLink>
+                        <h3>Registrar Empresas</h3>
+                        <div class="tarjeta-flecha">Ir ahí <i class="bi bi-arrow-right"></i></div>
+                    </div>
+                </div>
+                <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
+                <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+@code {
+
+    private void Error()
+    {
+        Navigation.NavigateTo("/sgarMantenimiento");
+    }
+
+
+}
+

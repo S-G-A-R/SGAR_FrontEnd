@@ -1,32 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FrontEnd_SGAR</title>
-    <base href="/" />
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="FrontEnd_SGAR.styles.css" rel="stylesheet" />
-</head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
-<body>
+    <base href="/" />
+    <!-- Bootstrap (solo una fuente) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+
+    <!-- Bootstrap Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    />
+
+    <!-- Tus CSS -->
+    <link href="css/registro-organizacion.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app.css" />
+
+    <!-- Fuente personalizada -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        window.MostrarAlerta = function (opciones) {
+            Swal.fire(opciones);
+        }
+
+        window.ConfirmarSweetAlert = async (opciones) => {
+            const result = await Swal.fire(opciones);
+            // SweetAlert devuelve un objeto, nosotros solo retornamos el booleano 'isConfirmed'
+            return result.isConfirmed;
+        };
+    </script>
+
+    <style>
+      /* Personalización de la alerta 🦝 */
+      .swal2-popup {
+        border-radius: 25px !important;
+        font-family: "Lilita One", cursive !important;
+        background: #ffffff !important; /* fondo cálido */
+        border: 2px solid #ccc !important;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+        width: 460px !important; /* <-- ancho personalizado */
+        padding: 1.5em !important; /* <-- espacio interno */
+      }
+
+      .swal2-title {
+        font-size: 26px !important;
+        color: #2e2e2e !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-align: center !important;
+      }
+
+      .swal2-html-container {
+        font-size: 18px !important;
+        color: #444 !important;
+        text-align: center !important;
+        line-height: 1.4 !important;
+        margin-top: 10px !important;
+      }
+
+      /* Ajustar la imagen (mapachito grande) */
+      .swal2-image {
+        width: 160px !important;
+        height: 160px !important;
+        margin: 10px auto 5px auto !important;
+        border-radius: 50%;
+      }
+    </style>
+  </head>
+
+  <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+      <svg class="loading-progress">
+        <circle r="40%" cx="50%" cy="50%" />
+        <circle r="40%" cx="50%" cy="50%" />
+      </svg>
+      <div class="loading-progress-text"></div>
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+      ¡Oh no! Ha ocurrido un error.
+      <a href="" class="reload">Recargar</a>
+      <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
+    <script type="module" src="js/operadorUbicaciones.js"></script>
+
 </body>
 
 </html>

@@ -1,39 +1,48 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject NavigationManager Navigation
+
+<nav class="navbar navbar-light bg-white shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">FrontEnd_SGAR</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+        <!-- Botón menú offcanvas -->
+        <button class="navbar-toggler p-2 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
             <span class="navbar-toggler-icon"></span>
         </button>
+
+        <!-- Logo SGAR -->
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <img src="css/sgarLetra.png" alt="SGAR" width="90" height="30" class="me-2" href="/" />
+        </a>
+
+        <!-- Dropdown Iniciar Sesión -->
+        <div class="ms-auto">
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Iniciar Sesión
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="/user/login-ciudadano">Ciudadano</a></li>
+                    <li><a class="dropdown-item" href="/administrador/login-admin">Administrador</a></li>
+                    <li><a class="dropdown-item" href="/organizacion/login-organizacion">Organización</a></li>
+                    <li><a class="dropdown-item" href="/asociado/login-asociado">Asociado</a></li>
+                    <li><a class="dropdown-item" href="/operadores/login-operador">Operador</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Offcanvas menú lateral -->
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="offcanvasNavbarLabel">SGAR</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <ul class="navbar-nav flex-column">
+                    <li class="nav-item"><NavLink class="nav-link" href="/menuC">Ciudadano</NavLink></li>
+                    <li class="nav-item"><NavLink class="nav-link" href="/menuOp">Operador</NavLink></li>
+                    <li class="nav-item"><NavLink class="nav-link" href="/menuOrg">Organización</NavLink></li>
+                    <li class="nav-item"><NavLink class="nav-link" href="/menuAso">Asociado</NavLink></li>
+                    <li class="nav-item"><NavLink class="nav-link" href="/administrador/menuAdmin">Administrador</NavLink></li>
+                </ul>
+            </div>
+        </div>
     </div>
-</div>
-
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
-@code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}
+</nav>
