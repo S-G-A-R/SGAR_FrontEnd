@@ -4,14 +4,17 @@
 @using System.Text.Json
 @using System.Net.Http.Headers
 @using System.ComponentModel.DataAnnotations
+@using FrontEnd_SGAR.Services
 @using static FrontEnd_SGAR.DTOs.UserDTO
 @using static FrontEnd_SGAR.DTOs.VehiculoDTO
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @inject NavigationManager Nav
 @inject IJSRuntime JS
-@inject IHttpClientFactory ClientFactory
-@inject HttpClient Http
+@inject VehiculoServices VehiculoService
 
-<!-- Bootstrap Icons CDN -->
+
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet" />
 <link href="css/registro-organizacion.css" rel="stylesheet" />
 
@@ -32,92 +35,82 @@
         }
         else
         {
-            <EditForm Model="modelo" OnValidSubmit="GuardarVehiculo">
+            <EditForm Model="modelo" OnValidSubmit="Guardar">
                 <DataAnnotationsValidator />
 
                 <div class="row">
-                    <!-- Marca -->
                     <div class="col-md-6 form-group">
                         <label class="required">Marca</label>
-                        <select @bind="modelo.IdMarca" class="form-control">
-                            <option value="">Seleccionar marca</option>
+                        <InputSelect @bind-Value="modelo.IdMarca" class="form-control">
+                            <option value="0">Seleccionar marca</option>
                             @foreach (var marca in marcas)
                             {
                                 <option value="@marca.Id">@marca.Nombre - @marca.Modelo</option>
                             }
-                        </select>
+                        </InputSelect>
                         <ValidationMessage For="@(() => modelo.IdMarca)" />
                     </div>
 
-                    <!-- Placa -->
                     <div class="col-md-6 form-group">
                         <label class="required">Placa</label>
                         <InputText @bind-Value="modelo.Placa" class="form-control" placeholder="Ej: N-123456" />
                         <ValidationMessage For="@(() => modelo.Placa)" />
                     </div>
 
-                    <!-- Código -->
                     <div class="col-md-6 form-group">
                         <label class="required">Código del Vehículo</label>
                         <InputText @bind-Value="modelo.Codigo" class="form-control" placeholder="Ej: VEH-001" />
                         <ValidationMessage For="@(() => modelo.Codigo)" />
                     </div>
 
-                    <!-- Tipo de Vehículo -->
                     <div class="col-md-6 form-group">
                         <label class="required">Tipo de Vehículo</label>
-                        <select @bind="modelo.IdTipoVehiculo" class="form-control">
-                            <option value="">Seleccionar tipo</option>
+                        <InputSelect @bind-Value="modelo.IdTipoVehiculo" class="form-control">
+                            <option value="0">Seleccionar tipo</option>
                             @foreach (var tipo in tiposVehiculo)
                             {
                                 <option value="@tipo.Id">@tipo.Descripcion</option>
                             }
-                        </select>
+                        </InputSelect>
                         <ValidationMessage For="@(() => modelo.IdTipoVehiculo)" />
                     </div>
 
-                    <!-- Mecánico -->
                     <div class="col-md-6 form-group">
                         <label class="required">Mecánico Asignado</label>
                         <InputText @bind-Value="modelo.Mecanico" class="form-control" placeholder="Nombre del mecánico" />
                         <ValidationMessage For="@(() => modelo.Mecanico)" />
                     </div>
 
-                    <!-- Taller -->
                     <div class="col-md-6 form-group">
                         <label class="required">Taller Asignado</label>
                         <InputText @bind-Value="modelo.Taller" class="form-control" placeholder="Nombre del taller" />
                         <ValidationMessage For="@(() => modelo.Taller)" />
                     </div>
 
-                    <!-- Operador -->
                     <div class="col-md-6 form-group">
                         <label>Operador Asignado</label>
-                        <select @bind="modelo.IdOperador" class="form-control">
+                        <InputSelect @bind-Value="modelo.IdOperador" class="form-control">
                             <option value="">Sin asignar</option>
                             @foreach (var operador in operadores)
                             {
                                 <option value="@operador.Key">@operador.Value</option>
                             }
-                        </select>
+                        </InputSelect>
                     </div>
 
-                    <!-- Estado -->
                     <div class="col-md-6 form-group">
                         <label class="required">Estado del Vehículo</label>
-                        <select @bind="modelo.Estado" class="form-control">
+                        <InputSelect @bind-Value="modelo.Estado" class="form-control">
                             <option value="1">Activo</option>
                             <option value="0">Inactivo</option>
-                        </select>
+                        </InputSelect>
                     </div>
 
-                    <!-- Descripción -->
                     <div class="col-12 form-group">
                         <label>Descripción</label>
-                        <textarea @bind="modelo.Descripcion" class="form-control" rows="3" placeholder="Descripción adicional del vehículo"></textarea>
+                        <InputTextArea @bind-Value="modelo.Descripcion" class="form-control" rows="3" placeholder="Descripción adicional del vehículo" />
                     </div>
 
-                    <!-- Fotografía -->
                     <div class="col-12 form-group">
                         <label>Fotografía del Vehículo</label>
                         <div class="foto-container">
@@ -136,7 +129,7 @@
                                     <p class="mt-2">Seleccionar imagen</p>
                                 }
                             </div>
-                            <InputFile @ref="fileInput" OnChange="CargarImagen" accept="image/*" class="file-input" />
+                            <InputFile OnChange="CargarImagen" accept="image/*" class="file-input" />
                         </div>
                         @if (archivoImagen != null)
                         {
@@ -162,7 +155,6 @@
             </EditForm>
         }
 
-        <!-- Notificación -->
         <div id="successAlert" class="success-alert hidden">
             <div class="alert-box">
                 <div class="alert-icon">🚚</div>
@@ -391,27 +383,29 @@
     private bool guardando = false;
     private string imagenPreview = "";
     private IBrowserFile? archivoImagen;
-    private InputFile? fileInput;
 
+    // Modelos y Listas
     private VehiculoFormModel modelo = new();
     private Dictionary<int, string> operadores = new();
     private List<MarcaDto> marcas = new();
     private List<TipoVehiculoDto> tiposVehiculo = new();
 
-    // Modelos
+    // Clase Modelo Local
     public class VehiculoFormModel
     {
         [Required(ErrorMessage = "La marca es obligatoria")]
+        [Range(1, int.MaxValue, ErrorMessage = "Seleccione una marca")]
         public int IdMarca { get; set; }
 
         [Required(ErrorMessage = "La placa es obligatoria")]
-        [RegularExpression(@"^[A-Z]-\d{6}$|^[A-Z]{2}-\d{4}$", ErrorMessage = "Formato de placa inválido")]
+        [RegularExpression(@"^[A-Z]-\d{6}$|^[A-Z]{2}-\d{4}$", ErrorMessage = "Formato de placa inválido (ej: P-123456)")]
         public string Placa { get; set; } = "";
 
         [Required(ErrorMessage = "El código es obligatorio")]
         public string Codigo { get; set; } = "";
 
         [Required(ErrorMessage = "El tipo de vehículo es obligatorio")]
+        [Range(1, int.MaxValue, ErrorMessage = "Seleccione un tipo")]
         public int IdTipoVehiculo { get; set; }
 
         [Required(ErrorMessage = "El mecánico es obligatorio")]
@@ -422,357 +416,86 @@
 
         public int? IdOperador { get; set; }
         public int? IdFoto { get; set; }
+        public string? ImagenBase64 { get; set; }
 
-        [Required]
         public byte Estado { get; set; } = 1;
-
         public string Descripcion { get; set; } = "";
     }
 
-  
-
     protected override async Task OnInitializedAsync()
     {
-        await CargarDatosIniciales();
-
-        if (EsEdicion)
-        {
-            await CargarVehiculo();
-        }
-
-        cargando = false;
-    }
-
-    private async Task CargarDatosIniciales()
-    {
-        var tasks = new[]
-        {
-            CargarOperadores(),
-            CargarMarcas(),
-            CargarTiposVehiculo()
-        };
-
-        await Task.WhenAll(tasks);
-    }
-
-    private async Task CargarOperadores()
-    {
+        cargando = true;
         try
         {
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-            if (!string.IsNullOrEmpty(token))
-            {
-                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            // 1. Cargar catálogos (Marcas, Tipos, Operadores)
+            var taskMarcas = VehiculoService.ObtenerMarcasAsync();
+            var taskTipos = VehiculoService.ObtenerTiposVehiculoAsync();
+            var taskOperadores = VehiculoService.ObtenerOperadoresConNombresAsync();
 
-            var operadorResponse = await Http.GetStringAsync("ApiAdmin/api/operador/list?size=100");
-            var operadorData = JsonSerializer.Deserialize<JsonElement>(operadorResponse);
+            await Task.WhenAll(taskMarcas, taskTipos, taskOperadores);
 
-            if (operadorData.TryGetProperty("content", out var operadorContent) ||
-                operadorData.TryGetProperty("items", out operadorContent))
-            {
-                var operadoresList = JsonSerializer.Deserialize<List<OperadorDto>>(operadorContent.GetRawText(),
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+            marcas = await taskMarcas;
+            tiposVehiculo = await taskTipos;
+            operadores = await taskOperadores;
 
-                foreach (var operador in operadoresList)
-                {
-                    try
-                    {
-                        var userResponse = await Http.GetStringAsync($"api/user/{operador.IdUser}");
-                        var userData = JsonSerializer.Deserialize<UserDto>(userResponse,
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                        if (userData != null)
-                        {
-                            operadores[operador.Id] = $"{userData.Nombre} {userData.Apellido}".Trim();
-                        }
-                    }
-                    catch
-                    {
-                        operadores[operador.Id] = operador.CodigoOperador;
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error cargando operadores: {ex.Message}");
-        }
-    }
-
-    private async Task CargarMarcas()
-    {
-        try
-        {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            var response = await client.GetAsync("api/marcas?size=1000");
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-
-                if (jsonContent.Contains("\"content\""))
-                {
-                    var pageResponse = JsonSerializer.Deserialize<JsonElement>(jsonContent);
-                    if (pageResponse.TryGetProperty("content", out var contentArray))
-                    {
-                        marcas = JsonSerializer.Deserialize<List<MarcaDto>>(contentArray.GetRawText(),
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-                    }
-                }
-                else
-                {
-                    marcas = JsonSerializer.Deserialize<List<MarcaDto>>(jsonContent,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-                }
-
-                Console.WriteLine($"✅ Marcas cargadas: {marcas.Count}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error cargando marcas: {ex.Message}");
-        }
-    }
-
-    private async Task CargarTiposVehiculo()
-    {
-        try
-        {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            var response = await client.GetAsync("api/tipos-vehiculos?size=1000");
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-
-                if (jsonContent.Contains("\"content\""))
-                {
-                    var pageResponse = JsonSerializer.Deserialize<JsonElement>(jsonContent);
-                    if (pageResponse.TryGetProperty("content", out var contentArray))
-                    {
-                        tiposVehiculo = JsonSerializer.Deserialize<List<TipoVehiculoDto>>(contentArray.GetRawText(),
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-                    }
-                }
-                else
-                {
-                    tiposVehiculo = JsonSerializer.Deserialize<List<TipoVehiculoDto>>(jsonContent,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-                }
-
-                Console.WriteLine($"✅ Tipos de vehículo cargados: {tiposVehiculo.Count}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error cargando tipos de vehículo: {ex.Message}");
-        }
-    }
-
-    private async Task CargarVehiculo()
-    {
-        try
-        {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            var response = await client.GetAsync($"api/vehiculos/{Id}");
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                var vehiculo = JsonSerializer.Deserialize<JsonElement>(json);
-
-                modelo.IdMarca = vehiculo.GetProperty("idMarca").GetInt32();
-                modelo.Placa = vehiculo.GetProperty("placa").GetString() ?? "";
-                modelo.Codigo = vehiculo.GetProperty("codigo").GetString() ?? "";
-                modelo.IdTipoVehiculo = vehiculo.GetProperty("idTipoVehiculo").GetInt32();
-                modelo.Mecanico = vehiculo.GetProperty("mecanico").GetString() ?? "";
-                modelo.Taller = vehiculo.GetProperty("taller").GetString() ?? "";
-                modelo.Estado = vehiculo.GetProperty("estado").GetByte();
-                modelo.Descripcion = vehiculo.GetProperty("descripcion").GetString() ?? "";
-
-                if (vehiculo.TryGetProperty("idOperador", out var idOp) && idOp.ValueKind != JsonValueKind.Null)
-                {
-                    modelo.IdOperador = idOp.GetInt32();
-                }
-
-                if (vehiculo.TryGetProperty("idFoto", out var idFoto) && idFoto.ValueKind != JsonValueKind.Null && idFoto.GetInt32() > 0)
-                {
-                    modelo.IdFoto = idFoto.GetInt32();
-                    await CargarImagenExistente(modelo.IdFoto.Value);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error cargando vehículo: {ex.Message}");
-            await JS.InvokeVoidAsync("showCustomAlert", "Error cargando datos del vehículo", false);
-        }
-    }
-
-    private async Task CargarImagenExistente(int idFoto)
-    {
-        try
-        {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            var imageResponse = await client.GetAsync($"api/fotos/{idFoto}/imagen");
-            if (imageResponse.IsSuccessStatusCode)
-            {
-                var imageBytes = await imageResponse.Content.ReadAsByteArrayAsync();
-                imagenPreview = $"data:image/jpeg;base64,{Convert.ToBase64String(imageBytes)}";
-                StateHasChanged();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error cargando imagen existente: {ex.Message}");
-        }
-    }
-
-    private async Task GuardarVehiculo()
-    {
-        guardando = true;
-
-        try
-        {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            // Paso 1: Subir imagen si existe
-            if (archivoImagen != null)
-            {
-                await SubirImagen();
-            }
-
-            // Paso 2: Crear/actualizar vehículo
-            var formData = new MultipartFormDataContent();
-            formData.Add(new StringContent(modelo.IdMarca.ToString()), "idMarca");
-            formData.Add(new StringContent(modelo.Placa), "placa");
-            formData.Add(new StringContent(modelo.Codigo), "codigo");
-            formData.Add(new StringContent(modelo.IdTipoVehiculo.ToString()), "idTipoVehiculo");
-            formData.Add(new StringContent(modelo.Mecanico), "mecanico");
-            formData.Add(new StringContent(modelo.Taller), "taller");
-            formData.Add(new StringContent(modelo.Estado.ToString()), "estado");
-            formData.Add(new StringContent(modelo.Descripcion), "descripcion");
-
-            if (modelo.IdOperador.HasValue)
-            {
-                formData.Add(new StringContent(modelo.IdOperador.Value.ToString()), "idOperador");
-            }
-
-            if (modelo.IdFoto.HasValue)
-            {
-                formData.Add(new StringContent(modelo.IdFoto.Value.ToString()), "idFoto");
-            }
-
-            HttpResponseMessage response;
-            string mensaje;
-
+            // 2. Si es edición, cargar datos del vehículo
             if (EsEdicion)
             {
-                response = await client.PutAsync($"api/vehiculos/{Id}", formData);
-                mensaje = "Vehículo actualizado exitosamente";
-            }
-            else
-            {
-                response = await client.PostAsync("api/vehiculos", formData);
-                mensaje = "Vehículo creado exitosamente";
-            }
+                var vehiculoExistente = await VehiculoService.ObtenerVehiculoParaEdicionAsync(Id);
+                if (vehiculoExistente != null)
+                {
+                    modelo = vehiculoExistente;
 
-            if (response.IsSuccessStatusCode)
-            {
-                await JS.InvokeVoidAsync("showCustomAlert", mensaje, true);
-                await Task.Delay(2000);
-                Nav.NavigateTo("/vehiculos");
-            }
-            else
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                await JS.InvokeVoidAsync("showCustomAlert", $"Error: {error}", false);
+                    // Si el servicio trajo la imagen en Base64, mostrarla
+                    if (!string.IsNullOrEmpty(modelo.ImagenBase64))
+                    {
+                        imagenPreview = $"data:image/jpeg;base64,{modelo.ImagenBase64}";
+                    }
+                    // Si no, intentar cargarla explícitamente si hay ID (Backup)
+                    else if (modelo.IdFoto.HasValue && modelo.IdFoto > 0)
+                    {
+                        var base64 = await VehiculoService.ObtenerImagenBase64Async(modelo.IdFoto.Value);
+                        if (!string.IsNullOrEmpty(base64))
+                            imagenPreview = $"data:image/jpeg;base64,{base64}";
+                    }
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "No se encontró el vehículo");
+                    Nav.NavigateTo("/vehiculos");
+                }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error guardando vehículo: {ex.Message}");
-            await JS.InvokeVoidAsync("showCustomAlert", "Error guardando el vehículo", false);
+            Console.WriteLine($"Error inicializando: {ex.Message}");
         }
         finally
         {
-            guardando = false;
+            cargando = false;
         }
     }
 
-    private async Task SubirImagen()
+    private async Task Guardar()
     {
-        try
+        guardando = true;
+        StateHasChanged();
+
+        // Enviamos el modelo y el archivo (si existe) al servicio
+        var resultado = await VehiculoService.GuardarVehiculoAsync(modelo, archivoImagen, Id);
+
+        if (resultado.Exito)
         {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            var formData = new MultipartFormDataContent();
-
-            // Convertir el archivo a stream
-            var fileContent = new StreamContent(archivoImagen.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10MB max
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(archivoImagen.ContentType);
-            formData.Add(fileContent, "imagen", archivoImagen.Name);
-
-            var response = await client.PostAsync("api/fotos", formData);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                var fotoResponse = JsonSerializer.Deserialize<JsonElement>(jsonResponse);
-
-                if (fotoResponse.TryGetProperty("id", out var idElement))
-                {
-                    modelo.IdFoto = idElement.GetInt32();
-                    Console.WriteLine($"✅ Imagen subida con ID: {modelo.IdFoto}");
-                }
-            }
-            else
-            {
-                Console.WriteLine($"❌ Error subiendo imagen: {response.StatusCode}");
-            }
+            await JS.InvokeVoidAsync("showCustomAlert", resultado.Mensaje, true);
+            await Task.Delay(1500);
+            Nav.NavigateTo("/vehiculos");
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine($"Error subiendo imagen: {ex.Message}");
+            await JS.InvokeVoidAsync("showCustomAlert", resultado.Mensaje, false);
         }
+
+        guardando = false;
     }
 
     private async Task CargarImagen(InputFileChangeEventArgs e)
@@ -782,37 +505,33 @@
         {
             try
             {
-                // Validaciones
-                if (file.Size > 10 * 1024 * 1024) // 10MB
+                // Validaciones básicas de UI
+                if (file.Size > 10 * 1024 * 1024)
                 {
-                    await JS.InvokeVoidAsync("showCustomAlert", "La imagen no debe exceder 10MB", false);
+                    await JS.InvokeVoidAsync("alert", "La imagen no debe exceder 10MB");
                     return;
                 }
 
-                var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
-                if (!allowedTypes.Contains(file.ContentType))
+                var tiposPermitidos = new[] { "image/jpeg", "image/png", "image/gif" };
+                if (!tiposPermitidos.Contains(file.ContentType))
                 {
-                    await JS.InvokeVoidAsync("showCustomAlert", "Solo se permiten imágenes (JPG, PNG, GIF)", false);
+                    await JS.InvokeVoidAsync("alert", "Formato no válido. Use JPG o PNG.");
                     return;
                 }
 
                 archivoImagen = file;
 
-                // Crear preview
+                // Crear preview local
                 var buffer = new byte[file.Size];
-                await file.OpenReadStream().ReadAsync(buffer);
+                await file.OpenReadStream(10 * 1024 * 1024).ReadAsync(buffer);
                 imagenPreview = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
-
-                StateHasChanged();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error cargando imagen: {ex.Message}");
-                await JS.InvokeVoidAsync("showCustomAlert", "Error procesando la imagen", false);
+                Console.WriteLine($"Error imagen: {ex.Message}");
             }
         }
     }
-
 
     private string FormatFileSize(long bytes)
     {
@@ -827,8 +546,5 @@
         return $"{number:n1} {suffixes[counter]}";
     }
 
-    private void Cancelar()
-    {
-        Nav.NavigateTo("/vehiculos");
-    }
+    private void Cancelar() => Nav.NavigateTo("/vehiculos");
 }

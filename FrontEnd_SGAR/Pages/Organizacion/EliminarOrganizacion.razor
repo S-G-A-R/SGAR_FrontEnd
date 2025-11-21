@@ -1,7 +1,10 @@
 ﻿@page "/organizacion-eliminar/{Id:int}"
 @using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using static FrontEnd_SGAR.DTOs.MunicipioDTO
+@using static FrontEnd_SGAR.DTOs.OrganizacionDTO
 @using Microsoft.AspNetCore.Components.Forms
-@inject GOrganizacionService OrganizacionService
+@inject OrganizacionService OrganizacionService
 @inject MunicipioService MunicipioService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
@@ -25,7 +28,7 @@
         {
             <div class="form-group">
                 <label>ID: </label>
-                <span>@organizacionDetalle.id</span>
+                <span>@organizacionDetalle.Id</span>
             </div>
 
             <div class="form-group">
@@ -137,7 +140,7 @@
     [Parameter]
     public int Id { get; set; }
 
-    private OrganizacionDTO? organizacionDetalle;
+    private OrganizacionDetalle? organizacionDetalle;
     // Las notificaciones no son necesarias en la vista de eliminación, pero se mantienen las variables.
     private bool notifProximidad;
     private bool notifInicioRuta;

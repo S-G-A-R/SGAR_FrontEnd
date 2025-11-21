@@ -1,4 +1,4 @@
-﻿@page "/Tipos-suscripcion"
+﻿@page "/tipos-suscripcion-index"
 @using FrontEnd_SGAR.Services
 @using FrontEnd_SGAR.DTOs
 @using FrontEnd_SGAR.Providers
@@ -27,7 +27,7 @@
 
         <!-- IZQUIERDA: Crear -->
         <button class="btn btn-crear"
-                @onclick='() => Nav.NavigateTo("/tipos-suscripcion/crear")'>
+                @onclick='() => Nav.NavigateTo("/tipoSuscripcion-crear")'>
             <i class="bi bi-plus-circle"></i> Crear Tipo de Suscripción
         </button>
 
@@ -72,25 +72,21 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var tipo in response.TiposSuscripcion)
+                    @foreach (var suscripcion in response.TiposSuscripcion)
                     {
                         <tr>
-                            <td>@tipo.Id</td>
-                            <td>@tipo.SuscripcionNombre</td>
-                            <td>@tipo.Precio.ToString("C")</td>
-                            <td>@tipo.Limite</td>
+                            <td>@suscripcion.Id</td>
+                            <td>@suscripcion.SuscripcionNombre</td>
+                            <td>@suscripcion.Precio.ToString("$#,##0.00")</td>
+                            <td>@suscripcion.Limite</td>
                             <td class="text-center">
                                 <div class="btn-group gap-1">
-                                    <button class="btn btn-sm btn-outline-info" title="Ver" @onclick="() => Ver(tipo.Id)">
-                                        <i class="bi bi-eye-fill"></i>
+                                    <button class="btn btn-sm btn-outline-warning" title="Editar" @onclick="() => Editar(suscripcion.Id)">
+                                        <i class="bi bi-pencil">Editar</i>
                                     </button>
 
-                                    <button class="btn btn-sm btn-outline-warning" title="Editar" @onclick="() => Editar(tipo.Id)">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-
-                                    <button class="btn btn-sm btn-outline-danger" title="Eliminar" @onclick="() => Eliminar(tipo.Id)">
-                                        <i class="bi bi-trash3-fill"></i>
+                                    <button class="btn btn-sm btn-outline-danger" title="Eliminar" @onclick="() => ConfirmarEliminar(suscripcion)">
+                                        <i class="bi bi-trash3-fill">Eliminar</i>
                                     </button>
                                 </div>
                             </td>
@@ -126,7 +122,95 @@
             <i class="bi bi-exclamation-triangle"></i> @errorMessage
         </div>
     }
+
+    @if (mostrarModalEliminar && TipoSuscripcionAEliminar != null)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header-delete">
+                    <h5 class="m-0 text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">¿Estás seguro que deseas eliminar este tipo de suscripcion?</p>
+                    <div class="alert alert-warning d-inline-block p-2 mt-2">
+                        <strong>@TipoSuscripcionAEliminar.SuscripcionNombre</strong>
+                    </div>
+                    <p class="text-danger small mt-3 mb-0">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
+                    <button type="button" class="btn-continuar" @onclick="EliminarTipoSuscripcion">
+                        <i class="bi bi-trash me-1"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 400px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .modal-header-delete {
+        background: #dc3545;
+        color: white;
+        padding: 15px 20px;
+        text-align: center;
+    }
+
+    .modal-body {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        padding: 20px;
+        justify-content: center;
+    }
+
+    .btn-continuar {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .btn-cancelar {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+</style>
+
 
 @code {
     private TipoSuscripcionResponsePaginada? response;
@@ -137,9 +221,11 @@
     private string direction = "asc";
     private string errorMessage = "";
 
+    private bool mostrarModalEliminar = false;
+    private TipoSuscripcionDTO? TipoSuscripcionAEliminar;
+
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("[TiposDeSuscripcion] Iniciando carga de tipos de suscripción...");
         await CargarTiposSuscripcion();
     }
 
@@ -149,20 +235,7 @@
         {
             isLoading = true;
             errorMessage = "";
-            Console.WriteLine($"[TiposDeSuscripcion] Cargando página {currentPage}, tamaño {pageSize}");
-            
             response = await TipoSuscripcionService.ObtenerTiposSuscripcionAsync(currentPage, pageSize, sortBy, direction);
-            
-            if (response != null)
-            {
-                Console.WriteLine($"[TiposDeSuscripcion] Response recibido - Tipos: {response.TiposSuscripcion?.Count ?? 0}");
-                Console.WriteLine($"[TiposDeSuscripcion] Total Items: {response.TotalItems}");
-                Console.WriteLine($"[TiposDeSuscripcion] Página actual: {response.CurrentPage}");
-            }
-            else
-            {
-                errorMessage = "No se pudo obtener la respuesta del servidor";
-            }
         }
         catch (Exception ex)
         {
@@ -203,20 +276,47 @@
         }
     }
 
-    private void Ver(int id)
-    {
-        Nav.NavigateTo($"/tipos-suscripcion/detalle/{id}");
-    }
-
     private void Editar(int id)
     {
-        Nav.NavigateTo($"/tipos-suscripcion/editar/{id}");
+        Nav.NavigateTo($"/editar-tipo-suscripcion/{id}");
     }
 
-    private async Task Eliminar(int id)
+    private void ConfirmarEliminar(TipoSuscripcionDTO suscripcion)
     {
-        // TODO: Implementar confirmación y eliminación
-        Console.WriteLine($"Eliminar tipo de suscripción con ID: {id}");
+        TipoSuscripcionAEliminar = suscripcion;
+        mostrarModalEliminar = true;
+        StateHasChanged();
+    }
+
+    private void CerrarModalEliminar()
+    {
+        mostrarModalEliminar = false;
+        TipoSuscripcionAEliminar = null;
+    }
+
+    private async Task EliminarTipoSuscripcion()
+    {
+        if (TipoSuscripcionAEliminar == null) return;
+
+        try
+        {
+            var resultado = await TipoSuscripcionService.EliminarTipoSuscripcionAsync(TipoSuscripcionAEliminar.Id);
+
+            if (resultado.Exito)
+            {
+                CerrarModalEliminar();
+                await CargarTiposSuscripcion();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", $"No se pudo eliminar: {resultado.Mensaje}");
+                CerrarModalEliminar();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error crítico: {ex.Message}");
+        }
     }
 
     private async Task CerrarSesion()

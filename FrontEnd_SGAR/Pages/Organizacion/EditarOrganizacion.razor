@@ -1,11 +1,14 @@
 ﻿@page "/organizacion-editar/{Id:int}"
+@using FrontEnd_SGAR.DTOs
 @using FrontEnd_SGAR.Services
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Components.Forms
 @using static FrontEnd_SGAR.DTOs.MunicipioDTO
-@inject GOrganizacionService OrganizacionService
+@using static FrontEnd_SGAR.DTOs.OrganizacionDTO
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject OrganizacionService OrganizacionService
 @inject MunicipioService MunicipioService
-@inject HttpClient Http
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -206,9 +209,6 @@
 </style>
 
 <script>
-    /* ----------------------------------------- */
-    /* FUNCIONES JAVASCRIPT REQUERIDAS POR C# */
-    /* ----------------------------------------- */
     function showCustomAlert(message) {
         const alert = document.getElementById("successAlert");
         const text = document.getElementById("alertMessage");
@@ -252,7 +252,7 @@
 
     // Se inicializa en null, solo se crea si la carga es exitosa.
     private EdicionOrganizacionModel? modelo;
-    private OrganizacionDTO? organizacionOriginal;
+    private OrganizacionDetalle? organizacionOriginal;
 
     private bool notifProximidad;
     private bool notifInicioRuta;
@@ -300,19 +300,18 @@
     // Seleccionar elemento
     private void SeleccionarMunicipio(string nombre)
     {
-        modelo!.MunicipioSeleccionado = nombre;   // Se pone en el input
-        mostrarDropdown = false;                  // Se cierra la lista
-        municipiosFiltrados = new List<Municipio>(); // Limpia la lista para evitar doble render
+        modelo!.MunicipioSeleccionado = nombre;   
+        mostrarDropdown = false;                  
+        municipiosFiltrados = new List<Municipio>(); 
     }
 
-    
     public class EdicionOrganizacionModel
     {
         [Required(ErrorMessage = "El nombre de la organización es obligatorio.")]
         [RegularExpression(@"^[^\d\-]+$", ErrorMessage = "El nombre no puede contener números ni signos negativos.")]
         public string NombreOrganizacion { get; set; } = "";
 
-        // [Required(ErrorMessage = "El teléfono es obligatorio.")]
+        [Required(ErrorMessage = "El teléfono es obligatorio.")]
         [RegularExpression(@"^\d{4}\s?\d{4}$", ErrorMessage = "El teléfono debe tener 8 dígitos, con o sin espacio (ej: 12345678 o 1234 5678).")]
         public string Telefono { get; set; } = "";
 
@@ -331,13 +330,6 @@
     }
 
 
-    public class ResponseMessage
-    {
-        public string Message { get; set; } = "";
-        public int Id { get; set; }
-    }
-
-
     // --- CARGA DE DATOS ---
     protected override async Task OnInitializedAsync()
     {
@@ -347,18 +339,17 @@
             municipios = await MunicipioService.ObtenerMunicipiosAsync();
             municipiosFiltrados = municipios;
 
-            // 2. Obtener los datos de la organización por el ID
-            organizacionOriginal = await OrganizacionService.ObtenerPorId(Id);
+            // 2. Obtener los datos de la organización por el ID usando el servicio
+            organizacionOriginal = await OrganizacionService.ObtenerPorId(Id); // ✅ Ya no se mapea, se asigna directamente
 
             if (organizacionOriginal != null)
             {
-                // Solo inicializa el modelo si la organización fue cargada con éxito.
+                // ✅ Usar directamente las propiedades de organizacion Original (camelCase)
                 modelo = new EdicionOrganizacionModel
                 {
                     NombreOrganizacion = organizacionOriginal.nombreOrganizacion,
                     Telefono = organizacionOriginal.telefono,
                     Email = organizacionOriginal.email,
-                    // Password se queda vacío para edición
                 };
 
                 // Normalizar teléfono para que no falle la validación
@@ -367,7 +358,6 @@
                 {
                     modelo.Telefono = modelo.Telefono.Insert(4, " ");
                 }
-
 
                 // Mapear Municipio: Buscar el nombre del municipio usando el ID
                 var municipioEncontrado = municipios.FirstOrDefault(m =>
@@ -440,7 +430,7 @@
     private async Task Actualizar()
     {
         // Validar que el modelo esté cargado y los campos sean válidos
-        if (organizacionOriginal == null || modelo == null || !ValidarCampos())
+        if (modelo == null || !ValidarCampos())
             return;
 
         try
@@ -455,35 +445,29 @@
             // Asegurar que tenemos el ID del municipio (es un campo requerido)
             string idMunicipio = municipio?.Id ?? throw new InvalidOperationException("No se pudo encontrar el ID del municipio para la actualización.");
 
-            // 3. Crear el payload de la solicitud (similar al OrganizationRequest del backend)
-            var data = new Dictionary<string, object>
+            // 3. Crear el DTO usando OrganizationRequest
+            var request = new OrganizationRequest
             {
-                { "idMunicipio", idMunicipio },
-                { "nombreOrganizacion", modelo.NombreOrganizacion },
-                { "telefono", modelo.Telefono },
-                { "email", modelo.Email },
-                // Asume que idRol es fijo para Organizacion
-                { "idRol", 5 },
-                { "notificacion", tiposNotificacion }
+                idMunicipio = idMunicipio,
+                nombreOrganizacion = modelo.NombreOrganizacion,
+                telefono = modelo.Telefono,
+                email = modelo.Email,
+                idRol = 5,
+                notificacion = tiposNotificacion
             };
 
             // 4. Incluir la contraseña SOLO si el usuario ingresó una nueva
-            // 4. Incluir la contraseña SOLO si el usuario ingresó una nueva
             if (!string.IsNullOrEmpty(modelo.Password))
             {
-                data.Add("password", modelo.Password);
+                request.password = modelo.Password;
             }
-            // Si viene vacía → NO se envía y la API mantiene la actual
 
+            // 5. Enviar la solicitud PUT usando el servicio
+            var result = await OrganizacionService.Actualizar(Id, request);
 
-            // 5. Enviar la solicitud PUT
-            var response = await Http.PutAsJsonAsync($"api/organization/{Id}", data);
-
-            if (response.IsSuccessStatusCode)
+            if (result != null && !string.IsNullOrEmpty(result.message))
             {
-                // Espera la respuesta que incluya el mensaje de éxito
-                var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
-                await JS.InvokeVoidAsync("showCustomAlert", $"Organización actualizada: {result?.Message ?? "¡Actualización exitosa!"}");
+                await JS.InvokeVoidAsync("showCustomAlert", $"Organización actualizada: {result.message}");
 
                 // Redirigir después de un breve delay
                 await Task.Delay(1800);
@@ -491,9 +475,7 @@
             }
             else
             {
-                // Manejar errores de la API (ej: resultado == -1 del endpoint)
-                string errorContent = await response.Content.ReadAsStringAsync();
-                await JS.InvokeVoidAsync("showErrorAlert", $"No se pudo actualizar. Servidor: {response.StatusCode}. Detalle: {errorContent}");
+                await JS.InvokeVoidAsync("showErrorAlert", "No se pudo actualizar la organización.");
             }
         }
         catch (Exception ex)

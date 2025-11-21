@@ -1,9 +1,13 @@
 ﻿@page "/organizacion-crear"
 @using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
 @using System.ComponentModel.DataAnnotations
 @using static FrontEnd_SGAR.DTOs.MunicipioDTO
+@using static FrontEnd_SGAR.DTOs.OrganizacionDTO
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject OrganizacionService OrganizacionService
 @inject MunicipioService MunicipioService
-@inject HttpClient Http
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -71,17 +75,6 @@
                 <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
             </div>
 
-          @*   <div class="form-group">
-                <label class="required">Municipio</label>
-                <InputText list="listaMunicipios" @bind-Value="modelo.MunicipioSeleccionado" class="form-control" placeholder="Escribe o selecciona un municipio" />
-                <datalist id="listaMunicipios">
-                    @foreach (var municipio in municipios)
-                    {
-                        <option value="@municipio.Nombre"></option>
-                    }
-                </datalist>
-                <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
-            </div> *@
 
             <div class="form-group mt-3">
                 <label>Tipos de notificación</label>
@@ -104,14 +97,6 @@
                 </button>
             </div>
 
-@*             <div class="botones mt-4">
-                <div class="contenedor-boton">
-                    <button type="submit" class="boton-mapacheAceptar">Crear</button>
-                    <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
-                    <img src="css/orejaIz.png" class="oreja oreja-derecha" />
-                </div>
-                <button type="button" class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
-            </div> *@
         </EditForm>
 
         <!-- ✅ Notificación tipo campana -->
@@ -387,15 +372,14 @@
         try
         {
             string tiposNotificacion = $"{(notifProximidad ? "1" : "0")}{(notifInicioRuta ? "1" : "0")}{(notifTiempoReal ? "1" : "0")}";
-
             var municipio = municipios.FirstOrDefault(m =>
                 m.Nombre.Equals(modelo.MunicipioSeleccionado, StringComparison.OrdinalIgnoreCase));
-
             string idMunicipio = municipio?.Id ?? string.Empty;
 
-            var data = new
+            // Crear el DTO usando OrganizationRequest
+            var request = new OrganizationRequest
             {
-                idMunicipio,
+                idMunicipio = idMunicipio,
                 nombreOrganizacion = modelo.NombreOrganizacion,
                 telefono = modelo.Telefono,
                 email = modelo.Email,
@@ -404,13 +388,13 @@
                 notificacion = tiposNotificacion
             };
 
-            var response = await Http.PostAsJsonAsync("api/organization", data);
+            // Usar el servicio en lugar de HttpClient directamente
+            var result = await OrganizacionService.Crear(request);
 
-            if (response.IsSuccessStatusCode)
+            if (result != null && !string.IsNullOrEmpty(result.message))
             {
-                var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
                 // ALERTA DE ÉXITO
-                await JS.InvokeVoidAsync("showCustomAlert", $"Organización registrada: {result?.Message}");
+                await JS.InvokeVoidAsync("showCustomAlert", $"Organización registrada: {result.message}");
 
                 await Task.Delay(1800);
                 Nav.NavigateTo("/index-organizacion");
@@ -421,10 +405,10 @@
                 await JS.InvokeVoidAsync("showErrorAlert", "No se pudo registrar la organización");
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // ERROR DEL SISTEMA (SERVIDOR CAÍDO)
-            await JS.InvokeVoidAsync("showErrorAlert", "Error del sistema. Intente de nuevo.");
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error del sistema: {ex.Message}");
         }
     }
 
@@ -433,12 +417,6 @@
         modelo = new();
         notifProximidad = notifInicioRuta = notifTiempoReal = false;
         Nav.NavigateTo("/index-organizacion");
-    }
-
-    public class ResponseMessage
-    {
-        public string Message { get; set; } = "";
-        public int Id { get; set; }
     }
 }
 

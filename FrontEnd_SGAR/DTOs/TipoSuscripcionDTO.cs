@@ -2,9 +2,6 @@
 
 namespace FrontEnd_SGAR.DTOs
 {
-    /// <summary>
-    /// Modelo de respuesta paginada para tipos de suscripción
-    /// </summary>
     public class TipoSuscripcionResponsePaginada
     {
         [JsonPropertyName("totalItems")]
@@ -33,9 +30,6 @@ namespace FrontEnd_SGAR.DTOs
         public bool HasPreviousPage => HasPrevious;
     }
 
-    /// <summary>
-    /// Modelo de Tipo de Suscripción
-    /// </summary>
     public class TipoSuscripcionDTO
     {
         [JsonPropertyName("id")]
@@ -50,4 +44,13 @@ namespace FrontEnd_SGAR.DTOs
         [JsonPropertyName("limite")]
         public int Limite { get; set; }
     }
+
+    public class TipoSuscripcionRequest
+    {
+        public string SuscripcionNombre { get; set; } = string.Empty;
+        public decimal Precio { get; set; }
+
+        public int Limite { get; set; }
+    }
+
 }

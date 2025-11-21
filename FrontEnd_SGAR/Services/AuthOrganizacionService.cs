@@ -22,7 +22,7 @@ namespace FrontEnd_SGAR.Services
         {
             try
             {
-                var response = await _http.PostAsJsonAsync("ApiSeguridad/organization/login", credenciales);
+                var response = await _http.PostAsJsonAsync("ApiSeguridad/Api/organization/login", credenciales);
 
                 if (!response.IsSuccessStatusCode)
                     return null;

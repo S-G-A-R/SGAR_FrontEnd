@@ -1,11 +1,14 @@
 ﻿@page "/vehiculos"
-@using System.Net.Http.Json
-@using System.Text.Json
-@using System.Net.Http.Headers
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using FrontEnd_SGAR.Providers
+@using static FrontEnd_SGAR.DTOs.VehiculoDTO
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject VehiculoServices VehiculoService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
-@inject IHttpClientFactory ClientFactory
-@inject HttpClient Http
+@inject CustomAuthStateProvider AuthStateProvider
 
 <!-- Bootstrap Icons CDN -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet" />
@@ -14,9 +17,15 @@
     <div class="header-section">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="bi bi-truck me-2"></i>Vehículos</h2>
-            <button class="btn btn-success" @onclick="CrearNuevo">
-                <i class="bi bi-plus-circle me-1"></i>Crear Registro
-            </button>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-success" @onclick="CrearNuevo">
+                    <i class="bi bi-plus-circle me-1"></i>Crear Registro
+                </button>
+                <button class="btn btn-danger" @onclick="CerrarSesion">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                </button>
+            </div>
         </div>
 
         <!-- Filtros responsivos -->
@@ -31,7 +40,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Código -->
                 <div class="col-12 col-md-6 col-lg-3">
                     <input @bind="filtros.Codigo" @onkeypress="OnFilterKeyPress" class="form-control" placeholder="Código..." />
@@ -67,7 +76,7 @@
                             <option value="1">Activos</option>
                             <option value="0">Inactivos</option>
                         </select>
-                        
+
                         <select @onchange="CambiarTamañoPagina" class="form-select" value="@pageSize" style="min-width: 80px;">
                             <option value="5">5</option>
                             <option value="10">10</option>
@@ -77,14 +86,14 @@
                     </div>
                 </div>
             </div>
-            
+
             @if (TieneFiltrosActivos())
             {
                 <div class="mt-3 text-center">
                     <button class="btn btn-outline-danger btn-sm" @onclick="LimpiarFiltros">
                         <i class="bi bi-x-circle me-1"></i>Limpiar filtros
                     </button>
-                    <small class="text-muted ms-2">@totalElements resultado(s) encontrado(s)</small>
+                    <small class="text-muted ms-2">@(response?.TotalCount ?? 0) resultado(s) encontrado(s)</small>
                 </div>
             }
         </div>
@@ -99,11 +108,18 @@
             <p class="mt-2">Cargando vehículos...</p>
         </div>
     }
-    else if (vehiculos?.Count > 0)
+    else if (response == null || !response.Items.Any())
     {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay vehículos registrados.
+        </div>
+    }
+    else
+    {
+        <!-- Contenido de vehículos igual que antes pero usando response.Items -->
         <!-- Vista de escritorio (tarjetas) -->
         <div class="vehiculos-grid d-none d-lg-grid">
-            @foreach (var vehiculo in vehiculos)
+            @foreach (var vehiculo in response.Items)
             {
                 <div class="vehiculo-card">
                     <div class="vehiculo-imagen">
@@ -183,9 +199,6 @@
                         <button class="action-btn delete-btn" @onclick="() => ConfirmarEliminar(vehiculo)" title="Eliminar">
                             <i class="bi bi-trash"></i>
                         </button>
-                        <button class="action-btn view-btn" @onclick="() => VerDetalles(vehiculo.Id)" title="Ver detalles">
-                            <i class="bi bi-eye"></i>
-                        </button>
                     </div>
                 </div>
             }
@@ -193,7 +206,7 @@
 
         <!-- Vista móvil y tablets (lista) -->
         <div class="vehiculos-list d-lg-none">
-            @foreach (var vehiculo in vehiculos)
+            @foreach (var vehiculo in response.Items)
             {
                 <div class="vehiculo-item-mobile">
                     <div class="vehiculo-mobile-header">
@@ -209,7 +222,7 @@
                                 </div>
                             }
                         </div>
-                        
+
                         <div class="vehiculo-mobile-basic">
                             <h5 class="mb-1">@vehiculo.Placa</h5>
                             <p class="mb-1 text-muted">Código: @vehiculo.Codigo</p>
@@ -218,7 +231,7 @@
                                 <span class="badge bg-secondary">@vehiculo.TipoVehiculoDescripcion</span>
                             </div>
                         </div>
-                        
+
                         <div class="vehiculo-mobile-status">
                             @if (vehiculo.Estado == 1)
                             {
@@ -247,9 +260,6 @@
                         <button class="btn btn-sm btn-outline-warning" @onclick="() => EditarVehiculo(vehiculo.Id)">
                             <i class="bi bi-pencil me-1"></i>Editar
                         </button>
-                        <button class="btn btn-sm btn-outline-info" @onclick="() => VerDetalles(vehiculo.Id)">
-                            <i class="bi bi-eye me-1"></i>Ver
-                        </button>
                         <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarEliminar(vehiculo)">
                             <i class="bi bi-trash me-1"></i>Eliminar
                         </button>
@@ -258,72 +268,58 @@
             }
         </div>
 
-        <!-- Información de paginación -->
-        <div class="pagination-info">
-            <span>Mostrando @((currentPage * pageSize) + 1) - @(Math.Min((currentPage + 1) * pageSize, totalElements)) de @totalElements vehículos</span>
-        </div>
+        <!-- Paginación -->
+        <div class="pagination-container mt-3 d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(!response.HasPreviousPage)"
+                    @onclick="PrevPage">
+                ◀ Anterior
+            </button>
 
-        <!-- Paginación responsiva -->
-        @if (totalPages > 1)
-        {
-            <div class="pagination-container">
-                <nav>
-                    <ul class="pagination justify-content-center flex-wrap">
-                        <li class="page-item @(currentPage <= 0 ? "disabled" : "")">
-                            <button class="page-link" @onclick="() => CambiarPagina(currentPage - 1)">&laquo;</button>
-                        </li>
+            <span class="fw-bold page-info">
+                Página @(response.PageNumber + 1) de @response.TotalPages | Total: @response.TotalCount vehículos
+            </span>
 
-                        @for (int i = Math.Max(0, currentPage - 1); i <= Math.Min(totalPages - 1, currentPage + 1); i++)
-                        {
-                            <li class="page-item @(i == currentPage ? "active" : "")">
-                                <button class="page-link" @onclick="() => CambiarPagina(i)">@(i + 1)</button>
-                            </li>
-                        }
-
-                        <li class="page-item @(currentPage >= totalPages - 1 ? "disabled" : "")">
-                            <button class="page-link" @onclick="() => CambiarPagina(currentPage + 1)">&raquo;</button>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        }
-    }
-    else
-    {
-        <div class="empty-state">
-            <i class="bi bi-truck" style="font-size: 4rem; color: #ccc;"></i>
-            <h4>No hay vehículos registrados</h4>
-            <p>@(TieneFiltrosActivos() ? "No se encontraron vehículos con los filtros aplicados" : "Comienza agregando tu primer vehículo")</p>
-            @if (!TieneFiltrosActivos())
-            {
-                <button class="btn btn-primary" @onclick="CrearNuevo">
-                    <i class="bi bi-plus-circle me-1"></i>Crear Vehículo
-                </button>
-            }
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(!response.HasNextPage)"
+                    @onclick="NextPage">
+                Siguiente ▶
+            </button>
         </div>
     }
 
-    <!-- Modal de confirmación para eliminar -->
-    @if (mostrarModalEliminar)
+    @if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="modal-overlay" @onclick="CerrarModalEliminar">
-            <div class="modal-content" @onclick:stopPropagation="true">
+        <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        </div>
+    }
+
+    @if (mostrarModalEliminar && vehiculoAEliminar != null)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
                 <div class="modal-header-delete">
-                    <h4>Eliminar Vehículo</h4>
+                    <h5 class="m-0 text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
                 </div>
                 <div class="modal-body">
-                    <p><strong>¿Está seguro de eliminar el vehículo?</strong></p>
-                    <p>Placa: <strong>@vehiculoAEliminar?.Placa</strong></p>
-                    <p>Esta acción no se puede deshacer.</p>
+                    <p class="mb-2">¿Estás seguro que deseas eliminar el vehículo?</p>
+                    <div class="alert alert-warning d-inline-block p-2 mt-2">
+                        <strong>@vehiculoAEliminar.Placa</strong> - @vehiculoAEliminar.NombreMarca @vehiculoAEliminar.ModeloMarca
+                    </div>
+                    <p class="text-danger small mt-3 mb-0">Esta acción no se puede deshacer.</p>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn-continuar" @onclick="EliminarVehiculo">Eliminar</button>
-                    <button class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
+                    <button type="button" class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
+                    <button type="button" class="btn-continuar" @onclick="EliminarVehiculo">
+                        <i class="bi bi-trash me-1"></i> Eliminar
+                    </button>
                 </div>
             </div>
         </div>
     }
 </div>
+
 
 <style>
     .vehiculos-container {
@@ -450,17 +446,17 @@
         align-items: center;
     }
 
-    .estado-badge.activo {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-        box-shadow: 0 2px 4px rgba(40,167,69,0.3);
-    }
+        .estado-badge.activo {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 2px 4px rgba(40,167,69,0.3);
+        }
 
-    .estado-badge.inactivo {
-        background: linear-gradient(135deg, #dc3545, #e74c3c);
-        color: white;
-        box-shadow: 0 2px 4px rgba(220,53,69,0.3);
-    }
+        .estado-badge.inactivo {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+            color: white;
+            box-shadow: 0 2px 4px rgba(220,53,69,0.3);
+        }
 
     .marca-badges {
         display: flex;
@@ -695,29 +691,22 @@
         border-radius: 8px;
         cursor: pointer;
     }
-    
-
-    
-}
 </style>
 
 @code {
-    private List<VehiculoDto> vehiculos = new();
-    private Dictionary<int, string> operadores = new();
+    private VehiculoResponsePaginada? response;
     private List<MarcaDto> marcas = new();
     private List<TipoVehiculoDto> tiposVehiculo = new();
+    private Dictionary<int, string> operadores = new();
     private bool cargando = true;
     private int currentPage = 0;
-    private int totalPages = 0;
-    private int totalElements = 0;
     private int pageSize = 10;
-
-    // Filtros estructurados
+    private string errorMessage = "";
     private FiltroVehiculoModel filtros = new();
 
     // Modal eliminar
     private bool mostrarModalEliminar = false;
-    private VehiculoDto? vehiculoAEliminar;
+    private VehiculoDetalleDto? vehiculoAEliminar;
 
     public class FiltroVehiculoModel
     {
@@ -729,194 +718,27 @@
         public string Mecanico { get; set; } = "";
     }
 
-    public class VehiculoDto
-    {
-        public int Id { get; set; }
-        public string NombreMarca { get; set; } = "";
-        public string ModeloMarca { get; set; } = "";
-        public string Placa { get; set; } = "";
-        public string Codigo { get; set; } = "";
-        public string TipoVehiculoDescripcion { get; set; } = "";
-        public int? IdOperador { get; set; }
-        public int? IdFoto { get; set; }
-        public string NombreOperador { get; set; } = "";
-        public string ImagenBase64 { get; set; } = "";
-        public byte Estado { get; set; }
-    }
-
-    public class OperadorDto
-    {
-        public int Id { get; set; }
-        public int IdUser { get; set; }
-        public string CodigoOperador { get; set; } = "";
-        public int IdOrganizacion { get; set; }
-    }
-
-    public class UserDto
-    {
-        public int Id { get; set; }
-        public string Nombre { get; set; } = "";
-        public string Apellido { get; set; } = "";
-        public string Email { get; set; } = "";
-    }
-
-    public class MarcaDto
-    {
-        public int Id { get; set; }
-        public string Nombre { get; set; } = "";
-        public string Modelo { get; set; } = "";
-    }
-
-    public class TipoVehiculoDto
-    {
-        public int Id { get; set; }
-        public string Descripcion { get; set; } = "";
-    }
-
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("[VehiculosIndex] Iniciando carga...");
         await CargarDatosIniciales();
         await CargarVehiculos();
     }
 
     private async Task CargarDatosIniciales()
     {
-        var tasks = new[]
-        {
-            CargarOperadores(),
-            CargarMarcas(),
-            CargarTiposVehiculo()
-        };
-
-        await Task.WhenAll(tasks);
-    }
-
-    private async Task CargarOperadores()
-    {
         try
         {
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-            if (!string.IsNullOrEmpty(token))
-            {
-                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            marcas = await VehiculoService.ObtenerMarcasAsync();
+            tiposVehiculo = await VehiculoService.ObtenerTiposVehiculoAsync();
+            operadores = await VehiculoService.ObtenerOperadoresConNombresAsync();
 
-            var operadorResponse = await Http.GetStringAsync("api/operador/list?size=100");
-            var operadorData = JsonSerializer.Deserialize<JsonElement>(operadorResponse);
-
-            if (operadorData.TryGetProperty("content", out var operadorContent) || 
-                operadorData.TryGetProperty("items", out operadorContent))
-            {
-                var operadoresList = JsonSerializer.Deserialize<List<OperadorDto>>(operadorContent.GetRawText(),
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-
-                foreach (var operador in operadoresList)
-                {
-                    try
-                    {
-                        var userResponse = await Http.GetStringAsync($"api/user/{operador.IdUser}");
-                        var userData = JsonSerializer.Deserialize<UserDto>(userResponse,
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                        if (userData != null)
-                        {
-                            operadores[operador.Id] = $"{userData.Nombre} {userData.Apellido}".Trim();
-                        }
-                    }
-                    catch
-                    {
-                        operadores[operador.Id] = operador.CodigoOperador;
-                    }
-                }
-            }
+            Console.WriteLine($"✅ Datos iniciales - Marcas: {marcas.Count}, Tipos: {tiposVehiculo.Count}, Operadores: {operadores.Count}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error cargando operadores: {ex.Message}");
-        }
-    }
-
-    private async Task CargarMarcas()
-    {
-        try
-        {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            // Usar el endpoint correcto sin size para obtener todas las marcas
-            var response = await client.GetAsync("api/marcas?size=1000");
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-                
-                if (jsonContent.Contains("\"content\""))
-                {
-                    var pageResponse = JsonSerializer.Deserialize<JsonElement>(jsonContent);
-                    if (pageResponse.TryGetProperty("content", out var contentArray))
-                    {
-                        marcas = JsonSerializer.Deserialize<List<MarcaDto>>(contentArray.GetRawText(),
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-                    }
-                }
-                else
-                {
-                    marcas = JsonSerializer.Deserialize<List<MarcaDto>>(jsonContent,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-                }
-                
-                Console.WriteLine($"✅ Marcas cargadas: {marcas.Count}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error cargando marcas: {ex.Message}");
-        }
-    }
-
-    private async Task CargarTiposVehiculo()
-    {
-        try
-        {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            // Usar el endpoint correcto: /api/tipos-vehiculos
-            var response = await client.GetAsync("api/tipos-vehiculos?size=1000");
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-                
-                if (jsonContent.Contains("\"content\""))
-                {
-                    var pageResponse = JsonSerializer.Deserialize<JsonElement>(jsonContent);
-                    if (pageResponse.TryGetProperty("content", out var contentArray))
-                    {
-                        tiposVehiculo = JsonSerializer.Deserialize<List<TipoVehiculoDto>>(contentArray.GetRawText(),
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-                    }
-                }
-                else
-                {
-                    tiposVehiculo = JsonSerializer.Deserialize<List<TipoVehiculoDto>>(jsonContent,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-                }
-                
-                Console.WriteLine($"✅ Tipos de vehículo cargados: {tiposVehiculo.Count}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error cargando tipos de vehículo: {ex.Message}");
+            errorMessage = $"Error al cargar datos iniciales: {ex.Message}";
+            Console.WriteLine($"[VehiculosIndex] Error datos iniciales: {ex.Message}");
         }
     }
 
@@ -925,95 +747,48 @@
         try
         {
             cargando = true;
+            errorMessage = "";
             StateHasChanged();
 
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
+            Console.WriteLine($"[VehiculosIndex] Cargando página {currentPage}, tamaño {pageSize}");
 
-            if (!string.IsNullOrEmpty(token))
+            response = await VehiculoService.ObtenerVehiculosAsync(
+                currentPage,
+                pageSize,
+                filtros.Placa,
+                filtros.Codigo,
+                filtros.MarcaId,
+                filtros.TipoVehiculoId,
+                filtros.Estado,
+                filtros.Mecanico);
+
+            if (response != null)
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            // Construir URL con todos los filtros
-            var url = $"api/vehiculos?page={currentPage}&size={pageSize}";
-            
-            if (!string.IsNullOrEmpty(filtros.Placa))
-                url += $"&placa={Uri.EscapeDataString(filtros.Placa)}";
-                
-            if (!string.IsNullOrEmpty(filtros.Codigo))
-                url += $"&codigo={Uri.EscapeDataString(filtros.Codigo)}";
-                
-            if (!string.IsNullOrEmpty(filtros.MarcaId))
-                url += $"&marcaId={filtros.MarcaId}";
-                
-            if (!string.IsNullOrEmpty(filtros.TipoVehiculoId))
-                url += $"&tipoVehiculoId={filtros.TipoVehiculoId}";
-                
-            if (!string.IsNullOrEmpty(filtros.Estado))
-                url += $"&estado={filtros.Estado}";
-                
-            if (!string.IsNullOrEmpty(filtros.Mecanico))
-                url += $"&mecanico={Uri.EscapeDataString(filtros.Mecanico)}";
-
-            Console.WriteLine($"🔍 URL de búsqueda: {url}");
-            var response = await client.GetAsync(url);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-                var pageResponse = JsonSerializer.Deserialize<JsonElement>(jsonContent);
-
-                if (pageResponse.TryGetProperty("content", out var contentArray))
+                // Cargar nombres de operadores e imágenes
+                foreach (var vehiculo in response.Items)
                 {
-                    var vehiculosRaw = JsonSerializer.Deserialize<List<VehiculoDto>>(contentArray.GetRawText(),
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
-
-                    // Procesar cada vehículo
-                    foreach (var vehiculo in vehiculosRaw)
+                    if (vehiculo.IdOperador.HasValue && operadores.ContainsKey(vehiculo.IdOperador.Value))
                     {
-                        // Asignar nombre del operador
-                        if (vehiculo.IdOperador.HasValue && operadores.ContainsKey(vehiculo.IdOperador.Value))
-                        {
-                            vehiculo.NombreOperador = operadores[vehiculo.IdOperador.Value];
-                        }
-
-                        // Cargar imagen como Base64
-                        if (vehiculo.IdFoto.HasValue && vehiculo.IdFoto.Value > 0)
-                        {
-                            try
-                            {
-                                var imageResponse = await client.GetAsync($"api/fotos/{vehiculo.IdFoto.Value}/imagen");
-                                
-                                if (imageResponse.IsSuccessStatusCode)
-                                {
-                                    var imageBytes = await imageResponse.Content.ReadAsByteArrayAsync();
-                                    vehiculo.ImagenBase64 = Convert.ToBase64String(imageBytes);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"❌ Error cargando imagen para vehículo {vehiculo.Id}: {ex.Message}");
-                            }
-                        }
+                        vehiculo.NombreOperador = operadores[vehiculo.IdOperador.Value];
                     }
 
-                    vehiculos = vehiculosRaw;
-                    totalPages = pageResponse.TryGetProperty("totalPages", out var pages) ? pages.GetInt32() : 0;
-                    totalElements = pageResponse.TryGetProperty("totalElements", out var elements) ? elements.GetInt32() : 0;
-                    currentPage = pageResponse.TryGetProperty("number", out var number) ? number.GetInt32() : 0;
-
-                    Console.WriteLine($"📊 Página {currentPage + 1}/{totalPages} - {vehiculos.Count} vehículos - Total: {totalElements}");
+                    if (vehiculo.IdFoto.HasValue && vehiculo.IdFoto.Value > 0)
+                    {
+                        vehiculo.ImagenBase64 = await VehiculoService.ObtenerImagenBase64Async(vehiculo.IdFoto.Value);
+                    }
                 }
+
+                Console.WriteLine($"[VehiculosIndex] Response - Vehículos: {response.Items.Count}, Total: {response.TotalCount}");
             }
             else
             {
-                Console.WriteLine($"❌ Error API vehiculos: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+                errorMessage = "No se pudo obtener la respuesta del servidor";
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"💥 Error cargando vehículos: {ex.Message}");
+            errorMessage = $"Error al cargar vehículos: {ex.Message}";
+            Console.WriteLine($"[VehiculosIndex] Error: {ex.Message}");
         }
         finally
         {
@@ -1053,15 +828,6 @@
                !string.IsNullOrEmpty(filtros.Mecanico);
     }
 
-    private async Task CambiarPagina(int nuevaPagina)
-    {
-        if (nuevaPagina >= 0 && nuevaPagina < totalPages)
-        {
-            currentPage = nuevaPagina;
-            await CargarVehiculos();
-        }
-    }
-
     private async Task CambiarTamañoPagina(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var nuevoTamaño))
@@ -1069,70 +835,75 @@
             pageSize = nuevoTamaño;
             currentPage = 0;
             await CargarVehiculos();
-            StateHasChanged();
         }
     }
 
-    private void CrearNuevo()
+    private async Task NextPage()
     {
-        Nav.NavigateTo("/vehiculos/crear");
+        if (response?.HasNextPage == true)
+        {
+            currentPage++;
+            await CargarVehiculos();
+        }
     }
 
-    private void EditarVehiculo(int id)
+    private async Task PrevPage()
     {
-        Nav.NavigateTo($"/vehiculos/editar/{id}");
+        if (response?.HasPreviousPage == true)
+        {
+            currentPage--;
+            await CargarVehiculos();
+        }
     }
 
-    private void VerDetalles(int id)
-    {
-        Nav.NavigateTo($"/vehiculos/detalles/{id}");
-    }
+    private void CrearNuevo() => Nav.NavigateTo("/vehiculos/crear");
+    private void EditarVehiculo(int id) => Nav.NavigateTo($"/vehiculos/editar/{id}");
 
-    private void ConfirmarEliminar(VehiculoDto vehiculo)
+   private void ConfirmarEliminar(VehiculoDetalleDto vehiculo)
     {
         vehiculoAEliminar = vehiculo;
         mostrarModalEliminar = true;
+        StateHasChanged(); // Forzar renderizado
     }
 
+    // Método para cerrar
     private void CerrarModalEliminar()
     {
         mostrarModalEliminar = false;
         vehiculoAEliminar = null;
     }
 
+    // Método real que llama al servicio
     private async Task EliminarVehiculo()
     {
         if (vehiculoAEliminar == null) return;
 
         try
         {
-            var client = ClientFactory.CreateClient("JavaAPI");
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
+            // Llamamos al nuevo método del servicio
+            var resultado = await VehiculoService.EliminarVehiculoAsync(vehiculoAEliminar.Id);
 
-            if (!string.IsNullOrEmpty(token))
+            if (resultado.Exito)
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            var response = await client.DeleteAsync($"api/vehiculos/{vehiculoAEliminar.Id}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                await JS.InvokeVoidAsync("alert", "Vehículo eliminado exitosamente");
+                CerrarModalEliminar();
                 await CargarVehiculos();
             }
             else
             {
-                await JS.InvokeVoidAsync("alert", "Error al eliminar el vehículo");
+                // Aquí verás por qué falla realmente
+                await JS.InvokeVoidAsync("alert", $"No se pudo eliminar: {resultado.Mensaje}");
+                CerrarModalEliminar(); 
             }
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"Error crítico: {ex.Message}");
         }
-        finally
-        {
-            CerrarModalEliminar();
-        }
+    }
+
+    private async Task CerrarSesion()
+    {
+        await AuthStateProvider.MarkUserAsLoggedOut();
+        Nav.NavigateTo("/login-admin", true);
     }
 }
