@@ -1,6 +1,7 @@
 ﻿@page "/index-horarios"
 @using FrontEnd_SGAR.Services
 @inject HorarioService HorarioService
+@inject GOrganizacionService OrganizacionService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -8,9 +9,12 @@
 
 <div class="horarios-container">
     <div class="header-section">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><i class="bi bi-clock me-2"></i>Gestión de Horarios</h2>
-            <button class="btn btn-success" @onclick="CrearNuevo">
+        <div class="header-bar">
+
+            <h2 class="title-page">Gestión de Horarios</h2>
+
+
+            <button class="btn btn-crear"  @onclick="CrearNuevo">
                 <i class="bi bi-plus-circle me-1"></i>Crear Horario
             </button>
         </div>
@@ -25,24 +29,25 @@
                         <option value="2">Organización 2</option>
                     </select>
                 </div>
+
                 <div class="col-12 col-md-3">
                     <select @bind="selectedDia" @bind:after="AplicarFiltros" class="form-select">
                         <option value="">Todos los días</option>
-                        <option value="Lunes">Lunes</option>
-                        <option value="Martes">Martes</option>
-                        <option value="Miércoles">Miércoles</option>
-                        <option value="Jueves">Jueves</option>
-                        <option value="Viernes">Viernes</option>
-                        <option value="Sábado">Sábado</option>
-                        <option value="Domingo">Domingo</option>
+
+                        @foreach (var d in diasSemana.Select((texto, index) => new { texto, index }))
+                        {
+                            <option value="@(d.index + 1)">@d.texto</option>
+                        }
                     </select>
                 </div>
+
                 <div class="col-12 col-md-3">
                     <select @bind="selectedTurno" @bind:after="AplicarFiltros" class="form-select">
                         <option value="0">Todos los turnos</option>
-                        <option value="1">🌅 Mañana</option>
-                        <option value="2">☀ Tarde</option>
-                        <option value="3">🌙 Noche</option>
+                        <option value="1">Mañana</option>
+                        <option value="2">Tarde</option>
+                        <option value="3">Noche</option>
+                        <option value="4">N/A</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-3">
@@ -84,7 +89,7 @@
                     <tr>
                         <th><i class="bi bi-hash me-1"></i>ID</th>
                         <th><i class="bi bi-calendar-day me-1"></i>Día</th>
-                        <th><i class="bi bi-building me-1"></i>Org. ID</th>
+                        <th><i class="bi bi-building me-1"></i>Organización</th>
                         <th><i class="bi bi-geo-alt me-1"></i>Zona</th>
                         <th><i class="bi bi-sun me-1"></i>Turno</th>
                         <th><i class="bi bi-clock me-1"></i>Horario</th>
@@ -95,10 +100,11 @@
                     @foreach (var horario in horarios)
                     {
                         <tr>
-                            <td class="fw-bold text-primary">#@horario.Id</td>
+                            <td class="fw-bold text-dark">@horario.Id</td>
                             <td>
-                                <span class="badge bg-light text-dark">@horario.Dia</span>
+                                <span class="badge bg-light text-dark">@ObtenerDiaTexto(horario.Dia)</span>
                             </td>
+
                             <td>@horario.IdOrganizacion</td>
                             <td>
                                 <span class="badge bg-secondary">@horario.ZonaId</span>
@@ -186,7 +192,10 @@
                 <div class="modal-body">
                     <p><strong>¿Está seguro de eliminar este horario?</strong></p>
                     <p>ID: <strong>@horarioAEliminar?.Id</strong></p>
-                    <p>Día: <strong>@horarioAEliminar?.Dia</strong></p>
+                    <p>Día: <strong>@ObtenerDiaTexto(horarioAEliminar!.Dia)</strong></p>
+                    <p>Turno: <strong>@ObtenerTurnoTexto(horarioAEliminar!.Turno)</strong></p>
+                    <p>Hora Entrada:<strong> @horarioAEliminar.HoraEntrada</strong></p>
+                    <p>Hora Salida:<strong> @horarioAEliminar.HoraSalida</strong></p>
                     <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
                 </div>
                 <div class="modal-actions">
@@ -297,6 +306,50 @@
         justify-content: center;
         background: #f8f9fa;
     }
+
+    .btn-crear {
+        border: 2px solid #000;
+        background: #fff;
+        color: #2e7d32;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: .2s;
+        width: auto; /* que se adapte al contenido */
+        padding: 6px 12px; /* puedes ajustarlo */
+    }
+
+        .btn-crear:hover {
+            background: #5C9E77;
+            color: white;
+            transform: scale(1.05);
+        }
+
+    .title-page {
+        font-family: 'Lilita One', sans-serif;
+        font-size: 32px;
+        font-weight: normal; /* evita que se engrose demasiado */
+        color: #050303; /* moradito suave, puedes cambiar */
+        letter-spacing: 1px;
+        text-align: center;
+    }
+
+    /* Contenedor principal del título + botón */
+    .header-bar {
+        position: relative;
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 10px 0;
+    }
+
+        /* Botón alineado totalmente a la derecha SIN mover el título */
+        .header-bar .btn-crear {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
 </style>
 
 @code {
@@ -323,6 +376,25 @@
     {
         await CargarHorarios();
     }
+
+    private readonly List<string> diasSemana = new()
+{
+    "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
+};
+
+
+    private string ObtenerDiaTexto(string dia) => dia switch
+    {
+        "1" => "Lunes",
+        "2" => "Martes",
+        "3" => "Miércoles",
+        "4" => "Jueves",
+        "5" => "Viernes",
+        "6" => "Sábado",
+        "7" => "Domingo",
+        _ => dia // si viene texto ya legible, lo deja igual
+    };
+
 
     private async Task CargarHorarios()
     {
@@ -457,9 +529,9 @@
 
     private string ObtenerTurnoTexto(byte turno) => turno switch
     {
-        1 => "🌅 Mañana",
-        2 => "☀ Tarde",
-        3 => "🌙 Noche",
-        _ => "❓ N/A"
+        1 => "Mañana",
+        2 => "Tarde",
+        3 => "Noche",
+        _ => "N/A"
     };
 }

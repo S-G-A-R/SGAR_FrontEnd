@@ -1,25 +1,114 @@
 ﻿@page "/horarios/detalle/{id:int}"
 @using FrontEnd_SGAR.Services
 @inject HorarioService HorarioService
+@inject NavigationManager Nav
 
-<h3>Detalle del Horario</h3>
+<link rel="stylesheet" href="css/horario-detalle.css" />
 
-@if (horario == null)
-{
-    <p class="text-danger">No se encontró el horario.</p>
-}
-else
-{
-    <ul class="list-group">
-        <li class="list-group-item"><b>ID:</b> @horario.Id</li>
-        <li class="list-group-item"><b>Día:</b> @horario.Dia</li>
-        <li class="list-group-item"><b>Hora Entrada:</b> @horario.HoraEntrada</li>
-        <li class="list-group-item"><b>Hora Salida:</b> @horario.HoraSalida</li>
-        <li class="list-group-item"><b>Zona:</b> @horario.ZonaId</li>
-        <li class="list-group-item"><b>Organización:</b> @horario.IdOrganizacion</li>
-        <li class="list-group-item"><b>Turno:</b> @horario.Turno</li>
-    </ul>
-}
+<div class="detalle-container">
+    <div class="card">
+        @if (horario == null)
+        {
+            <p class="error-text">No se encontró el horario.</p>
+        }
+        else
+        {
+            <h2 class="title">Detalle del Horario</h2>
+
+            <div class="info-row"><span class="label">ID:</span> <span>@horario.Id</span></div>
+            <div class="info-row"><span class="label">Día:</span> <span>@ObtenerDiaTexto(horario.Dia)</span></div>
+            <div class="info-row"><span class="label">Hora Entrada:</span> <span>@horario.HoraEntrada</span></div>
+            <div class="info-row"><span class="label">Hora Salida:</span> <span>@horario.HoraSalida</span></div>
+            <div class="info-row"><span class="label">Zona:</span> <span>@horario.ZonaId</span></div>
+            <div class="info-row"><span class="label">Organización:</span> <span>@horario.IdOrganizacion</span></div>
+            <div class="info-row"><span class="label">Turno:</span> <span>@ObtenerTurnoTexto(horario.Turno)</span></div>
+
+            <button class="btn-volver" @onclick="Volver">← Volver</button>
+        }
+    </div>
+</div>
+
+<style>
+
+    .detalle-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 40px;
+    }
+
+    .card {
+        width: 420px;
+        background: #ffffff;
+        padding: 25px 30px;
+        border-radius: 18px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+        animation: fadeIn 0.25s ease-in-out;
+    }
+
+    .title {
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 25px;
+        color: #4b4b4b;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #ececec;
+        font-size: 16px;
+    }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+    .label {
+        font-weight: 600;
+        color: #555;
+    }
+
+    .error-text {
+        text-align: center;
+        color: #d9534f;
+        font-weight: bold;
+    }
+
+    .btn-volver {
+        margin-top: 25px;
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        background: #6c63ff;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+        .btn-volver:hover {
+            background: #5850d4;
+        }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(7px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
 
 @code {
     [Parameter]
@@ -31,4 +120,32 @@ else
     {
         horario = await HorarioService.ObtenerPorIdAsync(id);
     }
+
+    private string ObtenerTurnoTexto(byte turno) => turno switch
+    {
+        1 => "Mañana",
+        2 => "Tarde",
+        3 => "Noche",
+        _ => "N/A"
+    };
+
+    private string ObtenerDiaTexto(string dia) => dia switch
+    {
+        "1" => "Lunes",
+        "2" => "Martes",
+        "3" => "Miércoles",
+        "4" => "Jueves",
+        "5" => "Viernes",
+        "6" => "Sábado",
+        "7" => "Domingo",
+        _ => dia // si viene texto ya legible, lo deja igual
+    };
+
+    void Volver()
+    {
+        Nav.NavigateTo("/index-horarios");
+    }
 }
+
+
+
