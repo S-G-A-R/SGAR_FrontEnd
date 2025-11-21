@@ -1,0 +1,428 @@
+﻿@page "/organizacion-crear"
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using System.ComponentModel.DataAnnotations
+@using static FrontEnd_SGAR.DTOs.MunicipioDTO
+@using static FrontEnd_SGAR.DTOs.OrganizacionDTO
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject OrganizacionService OrganizacionService
+@inject MunicipioService MunicipioService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-building me-2"></i>Crear Organización</h3>
+        <hr />
+
+        <EditForm Model="modelo" OnValidSubmit="Registrar">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label class="required">Nombre de organización</label>
+                <InputText @bind-Value="modelo.NombreOrganizacion" class="form-control" placeholder="Ingresa el nombre" />
+                <ValidationMessage For="@(() => modelo.NombreOrganizacion)" />
+            </div>
+
+            <div class="form-group">
+                <label class="required">Teléfono</label>
+                <InputText @bind-Value="modelo.Telefono" class="form-control" placeholder="8 dígitos (ej: 1234 5678)" />
+                <ValidationMessage For="@(() => modelo.Telefono)" />
+            </div>
+
+            <div class="form-group">
+                <label class="required">Correo electrónico</label>
+                <InputText @bind-Value="modelo.Email" class="form-control" placeholder="ejemplo@correo.com" />
+                <ValidationMessage For="@(() => modelo.Email)" />
+            </div>
+
+            <div class="form-group">
+                <label class="required">Contraseña</label>
+                <InputText @bind-Value="modelo.Password" type="password" class="form-control" placeholder="De 5 a 8 caracteres" />
+                <ValidationMessage For="@(() => modelo.Password)" />
+            </div>
+
+
+            <div class="form-group position-relative">
+                <label class="required">Municipio</label>
+
+                <InputText class="form-control"
+                           placeholder="Escribe o selecciona un municipio"
+                           @bind-Value="modelo.MunicipioSeleccionado"
+                           @oninput="OnInputMunicipio"
+                           @onfocus="MostrarDropdown"
+                           @onblur="OnBlurCerrar" />
+
+
+                @if (mostrarDropdown && municipiosFiltrados.Any())
+                {
+                    <ul class="list-group position-absolute w-100 shadow"
+                        style="z-index: 2000; max-height: 200px; overflow-y: auto;">
+
+                        @foreach (var m in municipiosFiltrados)
+                        {
+                            <li class="list-group-item list-group-item-action"
+                                @onmousedown="(() => SeleccionarMunicipio(m.Nombre))">
+                                @m.Nombre
+                            </li>
+                        }
+                    </ul>
+                }
+
+                <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
+            </div>
+
+
+            <div class="form-group mt-3">
+                <label>Tipos de notificación</label>
+                <div class="form-check-group">
+                    <label><InputCheckbox @bind-Value="notifProximidad" /> Notificación por proximidad</label><br />
+                    <label><InputCheckbox @bind-Value="notifInicioRuta" /> Notificación al iniciar ruta</label><br />
+                    <label><InputCheckbox @bind-Value="notifTiempoReal" /> Seguimiento en tiempo real</label>
+                </div>
+            </div>
+
+            <div class="botones mt-4 d-flex gap-2 justify-content-center">
+                <!-- Botón Crear -->
+                <button type="submit" class="btn-buscar" style="width: 150px;">
+                    <i class="bi bi-check-circle me-1"></i> Crear
+                </button>
+
+                <!-- Botón Cancelar -->
+                <button type="button" class="btn-limpiar" style="width: 150px;" @onclick="Cancelar">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar
+                </button>
+            </div>
+
+        </EditForm>
+
+        <!-- ✅ Notificación tipo campana -->
+        <div id="successAlert" class="success-alert hidden">
+            <div class="alert-box">
+                <div class="alert-icon">🔔</div>
+                <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    /* BOTÓN BUSCAR */
+    .btn-buscar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #10520B;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-buscar:hover {
+            background: #49BFBF;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* BOTÓN LIMPIAR */
+    .btn-limpiar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #520B0B;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-limpiar:hover {
+            background: #AD3440;
+            color: black;
+            transform: scale(1.05);
+        }
+</style>
+
+<script>
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "🔔";
+        alert.querySelector(".alert-icon").style.color = "#ffcc00";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    function showErrorAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "❌";
+        alert.querySelector(".alert-icon").style.color = "#e63946";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+</script>
+
+
+@code {
+    // ✅ Modelo de validación
+    public class RegistroOrganizacionModel
+    {
+        [Required(ErrorMessage = "El nombre de la organización es obligatorio.")]
+        [RegularExpression(@"^[^\d\-]+$", ErrorMessage = "El nombre no puede contener números ni signos negativos.")]
+        public string NombreOrganizacion { get; set; } = "";
+
+        [Required(ErrorMessage = "El teléfono es obligatorio.")]
+        [RegularExpression(@"^\d{4}\s?\d{4}$", ErrorMessage = "El teléfono debe tener 8 dígitos (puede incluir un espacio).")]
+        public string Telefono { get; set; } = "";
+
+        [Required(ErrorMessage = "El correo es obligatorio.")]
+        [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es obligatoria.")]
+        [StringLength(8, MinimumLength = 5, ErrorMessage = "La contraseña debe tener entre 5 y 8 caracteres.")]
+        public string Password { get; set; } = "";
+
+        [Required(ErrorMessage = "Debe seleccionar un municipio.")]
+        [RegularExpression(@"^[^\d\-]+$", ErrorMessage = "El municipio no puede contener números ni signos negativos.")]
+        public string MunicipioSeleccionado { get; set; } = "";
+    }
+
+    // Instancia del modelo
+    private RegistroOrganizacionModel modelo = new();
+
+    private bool notifProximidad;
+    private bool notifInicioRuta;
+    private bool notifTiempoReal;
+
+    private List<Municipio> municipios = new();
+
+    // --- AUTOCOMPLETE MUNICIPIOS ---
+    private List<Municipio> municipiosFiltrados = new();
+    private bool mostrarDropdown = false;
+
+    // Cuando escribe en el input
+    private void OnInputMunicipio(ChangeEventArgs e)
+    {
+        if (modelo == null) return;
+
+        modelo.MunicipioSeleccionado = e.Value?.ToString() ?? "";
+        FiltrarMunicipios();
+        mostrarDropdown = true;
+    }
+
+    // Filtro dinámico
+    private void FiltrarMunicipios()
+    {
+        var texto = modelo?.MunicipioSeleccionado?.ToLower() ?? "";
+
+        municipiosFiltrados = municipios
+            .Where(m => m.Nombre.ToLower().Contains(texto))
+            .ToList();
+    }
+
+    // Mostrar menú
+    private void MostrarDropdown()
+    {
+        mostrarDropdown = true;
+    }
+
+    // Cerrar menú después de seleccionar
+    private async Task OnBlurCerrar()
+    {
+        await Task.Delay(150);
+        mostrarDropdown = false;
+    }
+
+    // Seleccionar elemento
+    private void SeleccionarMunicipio(string nombre)
+    {
+        modelo!.MunicipioSeleccionado = nombre;   // Se pone en el input
+        mostrarDropdown = false;                  // Se cierra la lista
+        municipiosFiltrados = new List<Municipio>(); // Limpia la lista para evitar doble render
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            municipios = await MunicipioService.ObtenerMunicipiosAsync();
+            municipiosFiltrados = municipios;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar municipios: {ex.Message}");
+            municipios = new List<Municipio>();
+        }
+    }
+
+    // VALIDACIÓN MANUAL PERSONALIZADA
+    private bool ValidarCampos()
+    {
+        // Nombre obligatorio
+        if (string.IsNullOrWhiteSpace(modelo.NombreOrganizacion))
+        {
+            JS.InvokeVoidAsync("showErrorAlert", "Debe ingresar un nombre de organización");
+            return false;
+        }
+
+        // Teléfono válido 8 dígitos con o sin espacio
+        if (!System.Text.RegularExpressions.Regex.IsMatch(modelo.Telefono, @"^\d{4}\s?\d{4}$"))
+        {
+            JS.InvokeVoidAsync("showErrorAlert", "El teléfono debe tener 8 dígitos (puede incluir un espacio)");
+            return false;
+        }
+
+        // Correo válido
+        if (!System.Text.RegularExpressions.Regex.IsMatch(modelo.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            JS.InvokeVoidAsync("showErrorAlert", "Ingrese un correo válido");
+            return false;
+        }
+
+        // Contraseña 5–8 caracteres
+        if (modelo.Password.Length < 5 || modelo.Password.Length > 8)
+        {
+            JS.InvokeVoidAsync("showErrorAlert", "La contraseña debe tener entre 5 y 8 caracteres");
+            return false;
+        }
+
+        // Municipio seleccionado
+        if (string.IsNullOrWhiteSpace(modelo.MunicipioSeleccionado))
+        {
+            JS.InvokeVoidAsync("showErrorAlert", "Debe seleccionar un municipio");
+            return false;
+        }
+
+        return true;
+    }
+
+
+    private async Task Registrar()
+    {
+        //VALIDAR CAMPOS ANTES DE ENVIAR
+        if (!ValidarCampos())
+            return;
+
+        try
+        {
+            string tiposNotificacion = $"{(notifProximidad ? "1" : "0")}{(notifInicioRuta ? "1" : "0")}{(notifTiempoReal ? "1" : "0")}";
+            var municipio = municipios.FirstOrDefault(m =>
+                m.Nombre.Equals(modelo.MunicipioSeleccionado, StringComparison.OrdinalIgnoreCase));
+            string idMunicipio = municipio?.Id ?? string.Empty;
+
+            // Crear el DTO usando OrganizationRequest
+            var request = new OrganizationRequest
+            {
+                idMunicipio = idMunicipio,
+                nombreOrganizacion = modelo.NombreOrganizacion,
+                telefono = modelo.Telefono,
+                email = modelo.Email,
+                password = modelo.Password,
+                idRol = 5,
+                notificacion = tiposNotificacion
+            };
+
+            // Usar el servicio en lugar de HttpClient directamente
+            var result = await OrganizacionService.Crear(request);
+
+            if (result != null && !string.IsNullOrEmpty(result.message))
+            {
+                // ALERTA DE ÉXITO
+                await JS.InvokeVoidAsync("showCustomAlert", $"Organización registrada: {result.message}");
+
+                await Task.Delay(1800);
+                Nav.NavigateTo("/index-organizacion");
+            }
+            else
+            {
+                // ERROR CONTROLADO DEL BACKEND
+                await JS.InvokeVoidAsync("showErrorAlert", "No se pudo registrar la organización");
+            }
+        }
+        catch (Exception ex)
+        {
+            // ERROR DEL SISTEMA (SERVIDOR CAÍDO)
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error del sistema: {ex.Message}");
+        }
+    }
+
+    private void Cancelar()
+    {
+        modelo = new();
+        notifProximidad = notifInicioRuta = notifTiempoReal = false;
+        Nav.NavigateTo("/index-organizacion");
+    }
+}
+
+
+
+
+
+
+

@@ -1,0 +1,229 @@
+﻿@page "/empresa-crear"
+@using FrontEnd_SGAR.Providers
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject EmpresaService EmpresaService
+@attribute [Authorize]
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject CustomAuthStateProvider AuthStateProvider
+
+
+
+<div id="successAlert" class="success-alert hidden">
+    <div class="alert-box">
+        <div class="alert-icon">🔔</div>
+        <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+    </div>
+</div>
+
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-person-plus me-2"></i>Registrar Empresa</h3>
+        <hr />
+
+        <EditForm Model="modelo" OnValidSubmit="Registrar">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label class="required">Nombre de suscripcion</label>
+                <InputText @bind-Value="modelo.NombreEmpresa" class="form-control" placeholder="Ingresa el nombre de la empresa" />
+                <ValidationMessage For="@(() => modelo.NombreEmpresa)" />
+            </div>
+
+            <div class="botones mt-4">
+                <div class="contenedor-boton">
+                    <button type="submit" class="boton-mapacheAceptar" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <span>Registrando...</span>
+                        }
+                        else
+                        {
+                            <span>Registrar</span>
+                        }
+                    </button>
+                    <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                    <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+</div>
+
+<style>
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        opacity: 0;
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    @@keyframes ring {
+        0% {
+            transform: rotate(0);
+        }
+
+        25% {
+            transform: rotate(10deg);
+        }
+
+        50% {
+            transform: rotate(-10deg);
+        }
+
+        75% {
+            transform: rotate(10deg);
+        }
+
+        100% {
+            transform: rotate(0);
+        }
+    }
+</style>
+
+<script>
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "🔔";
+        alert.querySelector(".alert-icon").style.color = "#ffcc00";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    function showErrorAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "❌";
+        alert.querySelector(".alert-icon").style.color = "#e63946";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+</script>
+
+@code {
+
+    public class RegistroZonaModelValidacion
+    {
+        [Required(ErrorMessage = "El nombre de la empresa es obligatorio.")]
+        [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
+        public string NombreEmpresa { get; set; } = string.Empty;
+    }
+
+    private RegistroZonaModelValidacion modelo = new();
+    private bool isSubmitting = false;
+
+    private async Task Registrar()
+    {
+        if (isSubmitting) return;
+
+        try
+        {
+            isSubmitting = true;
+
+            var userId = await ObtenerUserIdAsync();
+            if (userId == null)
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "No se pudo identificar el usuario. Por favor, inicie sesión nuevamente.");
+                return;
+            }
+
+            var request = new EmpresaRequest
+            {
+                NombreEmpresa = modelo.NombreEmpresa,
+                AsociadoId = userId.Value
+            };
+            var resultado = await EmpresaService.CrearEmpresa(request);
+
+            if (resultado != null && !string.IsNullOrEmpty(resultado.message))
+            {
+                // ÉXITO: Llamamos a la función principal pasando solo el mensaje
+                await JS.InvokeVoidAsync("showCustomAlert", $"Empresa registrada: {resultado.message}", "success");
+                Nav.NavigateTo("/empresa-index");
+            }
+            else
+            {
+                // ERROR: Llamamos a la función de error (que usa 'error')
+                await JS.InvokeVoidAsync("showErrorAlert", "Error: El servidor no proporcionó detalles del registro.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // ERROR CRÍTICO
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error crítico: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+
+    private async Task<int?> ObtenerUserIdAsync()
+    {
+        var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+
+        if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+        {
+            return null;
+        }
+
+        return userId;
+    }
+}

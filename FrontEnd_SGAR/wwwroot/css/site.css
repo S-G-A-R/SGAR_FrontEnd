@@ -1,0 +1,266 @@
+﻿html {
+    font-size: 14px;
+}
+
+.required:after {
+    content: " *";
+    color: red;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+S
+/* Estilos para los enlaces dentro del offcanvas */
+.offcanvas-body a {
+    transition: background-color 0.3s ease;
+    padding: 5px;
+    display: block; /* Para que el padding y el background-color ocupen todo el ancho */
+}
+
+/* Estilo al pasar el cursor */
+.offcanvas-body a:hover {
+    background-color: #dcdada;
+}
+
+
+
+/*BOTON ESTILO OREJAS DE MAPACHE*/
+.contenedor-boton {
+    position: relative;
+    display: inline-block;
+    margin: 15px;
+}
+
+.boton-mapache {
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 10px;
+    height: 50px;
+    width: 250px;
+    background-color: #b0abab;
+}
+
+    .boton-mapache:hover {
+        border: 3px solid black;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+.oreja {
+    position: absolute;
+    width: 30px; /* Ajusta el tamaño de las imágenes */
+    height: 30px;
+    display: none;
+}
+
+.oreja-izquierda {
+    top: -25px;
+    left: 5px;
+}
+
+.oreja-derecha {
+    top: -25px;
+    right: 5px;
+}
+
+.contenedor-boton:hover .oreja {
+    display: block;
+}
+
+/*BOTON MAPACHE: SOLO PARA BOTONES DE ACEPTAR(LOGIN)*/
+.boton-mapacheAceptar {
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 10px;
+    height: 50px;
+    width: 100px;
+    background-color: #b0abab;
+}
+
+    .boton-mapacheAceptar:hover {
+        border: 3px solid black;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+
+/*OREJAS PARA LAS TARJETAS DE MENU CIUDADANO*/
+.contenedor-tarjeta {
+    position: relative;
+    display: inline-block;
+}
+
+.oreja {
+    position: absolute;
+    width: 30px; /* Ajusta el tamaño de las orejas */
+    height: 30px;
+    display: none;
+}
+
+.oreja-izquierda {
+    top: -25px; /* Ajusta la posición vertical */
+    left: 10px; /* Ajusta la posición horizontal */
+}
+
+.oreja-derecha {
+    top: -25px;
+    right: 10px;
+}
+
+.contenedor-tarjeta:hover .oreja {
+    display: block;
+}
+
+/* Estilo de la tarjeta al pasar el cursor */
+.contenedor-tarjeta:hover .card {
+    border: 3px solid black;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+/* --- FORMULARIO REGISTRO ORGANIZACIÓN ESTILO SGAR --- */
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Fondo completo */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, #1e045a 0%, #480048 100%);
+    background-attachment: fixed;
+}
+
+/* Contenedor central */
+.registro-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* Tarjeta del formulario */
+.registro-card {
+    background-color: #ffffff; /* Cambiado de gris claro a blanco puro */
+    border-radius: 15px;
+    padding: 2rem 3rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.15);
+    width: 450px;
+    text-align: left;
+}
+
+    /* Título */
+    .registro-card h3 {
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #2c2c2c;
+    }
+
+/* Etiquetas obligatorias */
+.required::after {
+    content: " *";
+    color: red;
+}
+
+/* Inputs */
+.form-control {
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+/* Botones centrados */
+.botones {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+/* Botón tipo mapache */
+.contenedor-boton {
+    position: relative;
+    display: inline-block;
+}
+
+.boton-mapacheAceptar {
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 10px;
+    height: 50px;
+    width: 120px;
+    background-color: #b0abab;
+    transition: all 0.2s ease-in-out;
+}
+
+    .boton-mapacheAceptar:hover {
+        border: 3px solid black;
+        font-weight: bold;
+    }
+
+/* Orejas */
+.oreja {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    display: none;
+}
+
+.oreja-izquierda {
+    top: -25px;
+    left: 5px;
+}
+
+.oreja-derecha {
+    top: -25px;
+    right: 5px;
+}
+
+.contenedor-boton:hover .oreja {
+    display: block;
+}
+
+/* Botón Cancelar */
+.btn-cancelar {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    height: 50px;
+    width: 120px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+    .btn-cancelar:hover {
+        background-color: #5a6268;
+    }
