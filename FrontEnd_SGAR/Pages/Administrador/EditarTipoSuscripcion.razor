@@ -9,56 +9,102 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
 <div class="registro-container">
-    <div class="registro-card">
-        <h3><i class="bi bi-building me-2"></i>Editar tipo de organizacion (ID: @Id)</h3>
+    <div class="card shadow-lg p-4 custom-form-card">
+        
+        <h3 class="text-center mb-4 fw-bold text-dark">
+            <i class="bi bi-pencil-square me-2"></i> Editar Plan de Suscripción (ID: @Id)
+        </h3>
         <hr />
 
         @if (isLoading)
         {
-            <p class="text-center"><em>Cargando datos de la organización...</em></p>
+            <div class="text-center p-5">
+                <div class="loader-dots-container d-flex justify-content-center align-items-center mb-3 gap-2">
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <p class="mt-2 text-secondary fw-bold fs-5">Cargando Plan...</p>
+            </div>
         }
         else if (modelo == null)
         {
-            <p class="alert alert-danger text-center">No se pudieron cargar los detalles de la organización. (ID no encontrado)</p>
+            <p class="alert alert-danger text-center">No se pudieron cargar los detalles del Plan. (ID @Id no encontrado)</p>
+        }
+        else
+        {
+            <EditForm Model="modelo" OnValidSubmit="Actualizar">
+                <DataAnnotationsValidator />
+
+                <div class="row g-3">
+                    
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label class="required fw-semibold">Nombre del Plan</label>
+                            <InputText @bind-Value="modelo.SuscripcionNombre" class="form-control" placeholder="Ingresa el nombre la suscripcion" />
+                            <ValidationMessage For="@(() => modelo.SuscripcionNombre)" />
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required fw-semibold">Precio ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                                <InputNumber @bind-Value="modelo.Precio" class="form-control" placeholder="0.00" />
+                            </div>
+                            <ValidationMessage For="@(() => modelo.Precio)" />
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required fw-semibold">Límite de Productos/Entidades</label>
+                            <InputNumber @bind-Value="modelo.Limite" class="form-control" placeholder="Límite de productos a agregar" />
+                            <ValidationMessage For="@(() => modelo.Limite)" />
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="fw-semibold text-secondary">Fecha de Inicio (Pendiente)</label>
+                            <input value="(Funcionalidad Pendiente)" class="form-control bg-light" disabled />
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="fw-semibold text-secondary">Fecha de Fin (Pendiente)</label>
+                            <input value="(Funcionalidad Pendiente)" class="form-control bg-light" disabled />
+                        </div>
+                    </div>
+                    </div>
+
+                <hr class="mt-4 mb-3" />
+
+                <div class="d-flex gap-3 justify-content-center mt-4">
+                    
+                    <button type="submit" class="btn btn-primary px-4 py-2 custom-btn-size">
+                        <i class="bi bi-check-circle me-1"></i> Actualizar
+                    </button>
+
+                    <button type="button" class="btn btn-secondary px-4 py-2 custom-btn-size" @onclick="Cancelar">
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
+                    </button>
+                </div>
+
+            </EditForm>
         }
 
-        <EditForm Model="modelo" OnValidSubmit="Actualizar">
-            <DataAnnotationsValidator />
-
-            <div class="form-group">
-                <label class="required">Nombre de suscripcion</label>
-                <InputText @bind-Value="modelo.SuscripcionNombre" class="form-control" placeholder="Ingresa el nombre la suscripcion" />
-                <ValidationMessage For="@(() => modelo.SuscripcionNombre)" />
-            </div>
-
-            <div class="form-group">
-                <label class="required">Precio</label>
-                <InputNumber @bind-Value="modelo.Precio" class="form-control" placeholder="Ingrese el precio" />
-                <ValidationMessage For="@(() => modelo.Precio)" />
-            </div>
-
-            <div class="form-group">
-                <label class="required">limite</label>
-                <InputNumber @bind-Value="modelo.Limite" class="form-control" placeholder="Ingresa el limite de prodcutos para agregar" />
-                <ValidationMessage For="@(() => modelo.Limite)" />
-            </div>
-
-            <div class="botones mt-4 d-flex gap-2 justify-content-center">
-                <!-- Botón Crear -->
-                <button type="submit" class="btn-buscar" style="width: 150px;">
-                    <i class="bi bi-check-circle me-1"></i> Actualizar
-                </button>
-
-                <!-- Botón Cancelar -->
-                <button type="button" class="btn-limpiar" style="width: 150px;" @onclick="Cancelar">
-                    <i class="bi bi-x-circle me-1"></i> Cancelar
-                </button>
-            </div>
-
-        </EditForm>
-
-        <!-- ✅ Notificación tipo campana -->
         <div id="successAlert" class="success-alert hidden">
             <div class="alert-box">
                 <div class="alert-icon">🔔</div>
@@ -69,8 +115,32 @@
     </div>
 </div>
 
-
 <style>
+    /* Estilos de Botones y Formulario (Ajustados para consistencia) */
+    .custom-form-card {
+        max-width: 600px;
+        margin: 40px auto;
+        border-radius: 12px;
+    }
+    
+    label.required::after {
+        content: " *";
+        color: red;
+        font-weight: bold;
+    }
+
+    .custom-btn-size {
+        min-width: 150px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: transform 0.1s;
+    }
+
+    .custom-btn-size:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Estilos de la Alerta (Mantenidos) */
     .success-alert {
         position: fixed;
         top: 20px;
@@ -81,15 +151,15 @@
         transform: translateY(-20px);
     }
 
-        .success-alert.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .success-alert.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-        .success-alert.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
+    .success-alert.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
 
     .alert-box {
         background: #ffffff;
@@ -111,47 +181,13 @@
         font-weight: 500;
         color: #333;
     }
+    
 
-    /* BOTÓN BUSCAR */
-    .btn-buscar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #10520B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold; /* ← Aquí se hace negrita */
-    }
-
-        .btn-buscar:hover {
-            background: #49BFBF;
-            color: black;
-            transform: scale(1.05);
-        }
-
-    /* BOTÓN LIMPIAR */
-    .btn-limpiar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #520B0B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold; /* ← Aquí se hace negrita */
-    }
-
-        .btn-limpiar:hover {
-            background: #AD3440;
-            color: black;
-            transform: scale(1.05);
-        }
 </style>
 
+
 <script>
+    // Se mantienen las funciones showCustomAlert y showErrorAlert
     function showCustomAlert(message) {
         const alert = document.getElementById("successAlert");
         const text = document.getElementById("alertMessage");
@@ -210,7 +246,8 @@
 
     private bool isLoading = true;
     private EdicionTipoSuscripcionModeloValidacion modelo = new();
-
+    
+  
     protected override async Task OnInitializedAsync()
     {
         if (Id != 0)
@@ -237,12 +274,15 @@
             }
             else
             {
-                Console.WriteLine($"Error: Tipo de suscripción con ID {id} no encontrado.");
+                modelo = null; // Esto dispara el mensaje de error en el Razor
+                await JS.InvokeVoidAsync("showErrorAlert", $"Error: Plan con ID {id} no encontrado.");
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error al cargar datos de suscripción: {ex.Message}");
+            await JS.InvokeVoidAsync("showErrorAlert", "Error de conexión al cargar el Plan.");
+            modelo = null; // Esto dispara el mensaje de error en el Razor
         }
         finally
         {
@@ -250,24 +290,34 @@
         }
     }
 
+  
     private async Task Actualizar()
     {
-        if (Id == 0) return;
-        var requets = new TipoSuscripcionRequest
+        try
         {
-            SuscripcionNombre = modelo.SuscripcionNombre,
-            Precio = modelo.Precio,
-            Limite = modelo.Limite
-        };
-        var resultado = await TipoSuscripcionService.ActualizarTipoSuscripcion(Id, requets);
-        if (resultado != null)
-        {
-            await JS.InvokeVoidAsync("showCustomAlert", "Tipo de suscripción editado con éxito.");
-            Nav.NavigateTo("/tipos-suscripcion-index");
+            if (Id == 0) return;
+            var requets = new TipoSuscripcionRequest
+            {
+                SuscripcionNombre = modelo.SuscripcionNombre,
+                Precio = modelo.Precio,
+                Limite = modelo.Limite
+            };
+            var resultado = await TipoSuscripcionService.ActualizarTipoSuscripcion(Id, requets);
+            
+            if (resultado != null && !string.IsNullOrEmpty(resultado.message))
+            {
+                await JS.InvokeVoidAsync("showCustomAlert", $"Plan editado con éxito: {resultado.message}");
+                await Task.Delay(500);
+                Nav.NavigateTo("/tipos-suscripcion-index");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el Plan. Inténtalo de nuevo.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el tipo de suscripción. Inténtalo de nuevo.");
+             await JS.InvokeVoidAsync("showErrorAlert", $"Error del sistema al actualizar: {ex.Message}");
         }
     }
 
@@ -275,6 +325,4 @@
     {
         Nav.NavigateTo("/tipos-suscripcion-index");
     }
-
-
 }
