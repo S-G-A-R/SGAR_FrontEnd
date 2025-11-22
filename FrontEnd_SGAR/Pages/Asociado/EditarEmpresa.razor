@@ -1,4 +1,4 @@
-﻿@page "/empresa-crear"
+﻿@page "/empresa-editar/{id:int}"
 @using FrontEnd_SGAR.Providers
 @using FrontEnd_SGAR.Services
 @using FrontEnd_SGAR.DTOs
@@ -11,7 +11,6 @@
 @inject CustomAuthStateProvider AuthStateProvider
 
 
-
 <div id="successAlert" class="success-alert hidden">
     <div class="alert-box">
         <div class="alert-icon">🔔</div>
@@ -19,40 +18,47 @@
     </div>
 </div>
 
-
 <div class="registro-container">
     <div class="registro-card">
-        <h3><i class="bi bi-person-plus me-2"></i>Registrar Empresa</h3>
+        <h3><i class="bi bi-building me-2"></i>Editar empresa</h3>
         <hr />
 
-        <EditForm Model="modelo" OnValidSubmit="Registrar">
-            <DataAnnotationsValidator />
+        @if (isLoading)
+        {
+            <p class="text-center"><em>Cargando datos de la empresa...</em></p>
+        }
+        else
+        {
+            <EditForm Model="modelo" OnValidSubmit="Actualizar">
+                <DataAnnotationsValidator />
 
-            <div class="form-group">
-                <label class="required">Nombre de la empresa</label>
-                <InputText @bind-Value="modelo.NombreEmpresa" class="form-control" placeholder="Ingresa el nombre de la empresa" />
-                <ValidationMessage For="@(() => modelo.NombreEmpresa)" />
-            </div>
-
-            <div class="botones mt-4">
-                <div class="contenedor-boton">
-                    <button type="submit" class="boton-mapacheAceptar" disabled="@isSubmitting">
-                        @if (isSubmitting)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <span>Registrando...</span>
-                        }
-                        else
-                        {
-                            <span>Registrar</span>
-                        }
-                    </button>
-                    <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
-                    <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                <div class="form-group">
+                    <label class="required">Nombre de la empresa</label>
+                    <InputText @bind-Value="modelo.NombreEmpresa" class="form-control" placeholder="Ingresa el nombre de la empresa" />
+                    <ValidationMessage For="@(() => modelo.NombreEmpresa)" />
                 </div>
-            </div>
 
-        </EditForm>
+                <div class="botones mt-4">
+                    <div class="contenedor-boton">
+                        <button type="submit" class="boton-mapacheAceptar" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Registrando...</span>
+                            }
+                            else
+                            {
+                                <span>Actualizar</span>
+                            }
+                        </button>
+                        <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                        <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                    </div>
+                </div>
+
+            </EditForm>
+
+        }
     </div>
 </div>
 
@@ -161,69 +167,81 @@
 
     public class EmpresaModelValidacion
     {
+        // Propiedad oculta para mantener el ID del asociado
+        public int AsociadoId { get; set; }
+
         [Required(ErrorMessage = "El nombre de la empresa es obligatorio.")]
         [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
         public string NombreEmpresa { get; set; } = string.Empty;
     }
 
+    [Parameter]
+    public int id { get; set; }
+    private int asociadoIdActual;
+    private bool isLoading = true;
+
     private EmpresaModelValidacion modelo = new();
     private bool isSubmitting = false;
 
-    private async Task Registrar()
+    protected override async Task OnInitializedAsync()
     {
-        if (isSubmitting) return;
+        if (id != 0)
+        {
+            await CargarDatosEmpresa(id);
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
 
+    private async Task CargarDatosEmpresa(int id)
+    {
         try
         {
-            isSubmitting = true;
+            var empresaDto = await EmpresaService.ObtenerPorId(id);
 
-            var userId = await ObtenerUserIdAsync();
-            if (userId == null)
+            if (empresaDto != null)
             {
-                await JS.InvokeVoidAsync("showErrorAlert", "No se pudo identificar el usuario. Por favor, inicie sesión nuevamente.");
-                return;
-            }
-
-            var request = new EmpresaRequest
-            {
-                NombreEmpresa = modelo.NombreEmpresa,
-                AsociadoId = userId.Value
-            };
-            var resultado = await EmpresaService.CrearEmpresa(request);
-
-            if (resultado != null && !string.IsNullOrEmpty(resultado.message))
-            {
-                // ÉXITO: Llamamos a la función principal pasando solo el mensaje
-                await JS.InvokeVoidAsync("showCustomAlert", $"Empresa registrada: {resultado.message}", "success");
-                Nav.NavigateTo("/empresa-index");
+                modelo.NombreEmpresa = empresaDto.NombreEmpresa;
             }
             else
             {
-                // ERROR: Llamamos a la función de error (que usa 'error')
-                await JS.InvokeVoidAsync("showErrorAlert", "Error: El servidor no proporcionó detalles del registro.");
+                Console.WriteLine($"Error: Tipo de suscripción con ID {id} no encontrado.");
             }
         }
         catch (Exception ex)
         {
-            // ERROR CRÍTICO
-            await JS.InvokeVoidAsync("showErrorAlert", $"Error crítico: {ex.Message}");
+            Console.WriteLine($"Error al cargar datos de suscripción: {ex.Message}");
         }
         finally
         {
-            isSubmitting = false;
+            isLoading = false;
         }
     }
 
-
-    private async Task<int?> ObtenerUserIdAsync()
+    private async Task Actualizar()
     {
-        var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
-
-        if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+        if (id == 0) return;
+        var requets = new EmpresaRequest
         {
-            return null;
+            NombreEmpresa = modelo.NombreEmpresa
+        };
+        var resultado = await EmpresaService.ActualizarEmpresa(id, requets);
+        if (resultado != null)
+        {
+            await JS.InvokeVoidAsync("showCustomAlert", "Tipo de suscripción editado con éxito.");
+            Nav.NavigateTo("/empresa-index");
         }
-
-        return userId;
+        else
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el tipo de suscripción. Inténtalo de nuevo.");
+        }
     }
+
+    private void Cancelar()
+    {
+        Nav.NavigateTo("/empresa-index");
+    }
+
 }
