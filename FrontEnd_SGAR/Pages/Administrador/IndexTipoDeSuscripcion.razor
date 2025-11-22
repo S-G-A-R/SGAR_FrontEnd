@@ -11,29 +11,21 @@
 
 <link rel="stylesheet" href="css/index-organizacion.css" />
 
-<div class="container mt-4">
+<div class="container mt-5">
 
-    <h2 class="title-page text-center mb-4">Gestión de Tipos de Suscripción</h2>
+    <h1 class="display-4 fw-bolder text-center mb-5 titulo-principal">
+        <i class="bi bi-tags-fill me-3"></i> Gestión de Planes
+    </h1>
 
-    <!-- BOTÓN DE CERRAR SESIÓN -->
-    <div class="d-flex justify-content-end mb-3">
-        <button class="btn btn-danger" @onclick="CerrarSesion">
-            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-        </button>
-    </div>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
 
-    <!-- CREAR (IZQUIERDA) + MOSTRAR (DERECHA) -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-
-        <!-- IZQUIERDA: Crear -->
-        <button class="btn btn-crear"
-                @onclick='() => Nav.NavigateTo("/tipoSuscripcion-crear")'>
-            <i class="bi bi-plus-circle"></i> Crear Tipo de Suscripción
+        <button class="btn btn-success px-4 py-2 fw-semibold shadow-sm"
+            @onclick='() => Nav.NavigateTo("/tipoSuscripcion-crear")'>
+            <i class="bi bi-plus-circle me-2"></i> Crear Nuevo Plan
         </button>
 
-        <!-- DERECHA: Mostrar -->
-        <div class="d-flex align-items-center gap-2">
-            <label class="fw-semibold">Mostrar:</label>
+        <div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
+            <label class="fw-semibold text-secondary">Mostrar:</label>
             <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
                 <option value="5">5</option>
                 <option selected value="10">10</option>
@@ -44,92 +36,150 @@
 
     </div>
 
-    @if (isLoading)
-    {
-        <div class="text-center p-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
+    <div class="p-4 rounded-3 shadow-lg bg-white main-content-card">
+
+        @if (isLoading)
+        {
+            <div class="text-center p-5 custom-loader-container">
+
+                <div class="loader-dots-container d-flex justify-content-center align-items-center mb-3 gap-2">
+
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+
+                </div>
+
+                <p class="mt-2 text-secondary fw-bold fs-5">Cargando Planes...</p>
             </div>
-        </div>
-    }
-    else if (response == null || !response.TiposSuscripcion.Any())
-    {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No hay tipos de suscripción registrados.
-        </div>
-    }
-    else
-    {
-        <div class="table-responsive shadow-sm rounded-3">
-            <table class="table custom-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre de Suscripción</th>
-                        <th>Precio</th>
-                        <th>Límite</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var suscripcion in response.TiposSuscripcion)
-                    {
-                        <tr>
-                            <td>@suscripcion.Id</td>
-                            <td>@suscripcion.SuscripcionNombre</td>
-                            <td>@suscripcion.Precio.ToString("$#,##0.00")</td>
-                            <td>@suscripcion.Limite</td>
-                            <td class="text-center">
-                                <div class="btn-group gap-1">
-                                    <button class="btn btn-sm btn-outline-warning" title="Editar" @onclick="() => Editar(suscripcion.Id)">
-                                        <i class="bi bi-pencil">Editar</i>
-                                    </button>
+        }
+        else if (response == null || !response.TiposSuscripcion.Any())
+        {
+            <div class="alert alert-info text-center py-4 my-4 border-0 rounded-3">
+                <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+                <h4 class="mb-0">No hay tipos de suscripción registrados.</h4>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4 mt-3">
+                @foreach (var suscripcion in response.TiposSuscripcion)
+                {
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 card-suscripcion card-shadow-border">
 
-                                    <button class="btn btn-sm btn-outline-danger" title="Eliminar" @onclick="() => ConfirmarEliminar(suscripcion)">
-                                        <i class="bi bi-trash3-fill">Eliminar</i>
-                                    </button>
+                            <div class="card-body d-flex flex-column">
+
+                                <h4 class="card-title fw-bold text-dark mb-3">
+                                    @suscripcion.SuscripcionNombre
+                                </h4>
+
+                                <p class="text-muted small mb-2">
+                                    ID: @suscripcion.Id
+                                </p>
+
+                                <p class="mb-2 fs-5 text-success fw-bold">
+                                    <i class="bi bi-currency-dollar me-1"></i>
+                                    @suscripcion.Precio.ToString("#,##0.00")
+                                </p>
+
+
+                                <div class="mb-3">
+                                    <h6 class="fw-bold mb-1 mt-2">Detalles:</h6>
+                                    <ul class="list-unstyled small text-secondary ms-3">
+                                        <p class="mb-2">
+                                            <i class="bi bi-box-seam me-1 text-info"></i>
+                                            <strong>Límite de productos:</strong> @suscripcion.Limite
+                                        </p>
+
+                                    </ul>
                                 </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
 
-        <!-- PAGINACIÓN -->
-        <div class="pagination-container mt-3 d-flex justify-content-between align-items-center">
-            <button class="btn btn-outline-secondary btn-sm"
-                    disabled="@(!response.HasPreviousPage)"
-                    @onclick="PrevPage">
-                ◀ Anterior
-            </button>
+                                <div class="small mt-auto border-top pt-2">
+                                    <p class="mb-1 text-secondary">
+                                        <i class="bi bi-calendar-range me-1"></i>
+                                        Fecha Inicio: (pendiente)
+                                    </p>
+                                    <p class="mb-0 text-secondary">
+                                        <i class="bi bi-clock-history me-1"></i>
+                                        Fecha Fin: (pendiente)
+                                    </p>
+                                </div>
 
-            <span class="fw-bold page-info">
-                Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems tipos de suscripción
-            </span>
 
-            <button class="btn btn-outline-secondary btn-sm"
-                    disabled="@(!response.HasNextPage)"
-                    @onclick="NextPage">
-                Siguiente ▶
-            </button>
-        </div>
-    }
+                                <div class="d-flex justify-content-center gap-2 mt-4 pt-2 border-top">
 
-    @if (!string.IsNullOrEmpty(errorMessage))
+                                    <button class="btn btn-warning btn-icon-lg" title="Editar"
+                                        @onclick="() => Editar(suscripcion.Id)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+
+                                    <button class="btn btn-danger btn-icon-lg" title="Eliminar"
+                                        @onclick="() => ConfirmarEliminar(suscripcion)">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div
+                class="pagination-footer mt-5 pt-3 border-top d-flex flex-column flex-md-row justify-content-center align-items-center gap-3">
+
+                <div class="d-flex gap-3">
+                    <button class="btn btn-outline-primary px-3 py-2 fw-bold" disabled="@(!response.HasPreviousPage)"
+                        @onclick="PrevPage">
+                        <i class="bi bi-arrow-left"></i> Anterior
+                    </button>
+
+                    <span class="fw-bold page-info">
+                        Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems tipos de
+                        suscripción
+                    </span>
+
+                    <button class="btn btn-outline-primary px-3 py-2 fw-bold" disabled="@(!response.HasNextPage)"
+                        @onclick="NextPage">
+                        Siguiente <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div> @if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger mt-3">
-            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        <div class="alert alert-danger mt-4 shadow" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Error:</strong> @errorMessage
         </div>
     }
 
+@* CERRAR SESIÓN *@
+    @* <div class="d-flex justify-content-end mt-4">
+        <button class="btn btn-danger shadow-sm" @onclick="CerrarSesion">
+            <i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión
+        </button>
+    </div> *@
+
+    @* Modal de Eliminación (Sin cambios) *@
     @if (mostrarModalEliminar && TipoSuscripcionAEliminar != null)
     {
         <div class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header-delete">
-                    <h5 class="m-0 text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                    <h5 class="m-0 text-white">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+                    </h5>
                 </div>
+
                 <div class="modal-body">
                     <p class="mb-2">¿Estás seguro que deseas eliminar este tipo de suscripcion?</p>
                     <div class="alert alert-warning d-inline-block p-2 mt-2">
@@ -137,6 +187,7 @@
                     </div>
                     <p class="text-danger small mt-3 mb-0">Esta acción no se puede deshacer.</p>
                 </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
                     <button type="button" class="btn-continuar" @onclick="EliminarTipoSuscripcion">
@@ -149,13 +200,74 @@
 </div>
 
 <style>
+    /* 1. Estilo del Título Mejorado */
+    .titulo-principal {
+        color: #0d161f;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        letter-spacing: 1px;
+    }
+
+    /* 2. Contenedor Principal (Fondo de la vista) */
+    .main-content-card {
+        background-color: white !important;
+        /* Fondo blanco */
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        /* Sombra para diferenciar del fondo general */
+    }
+
+    /* 3. Estilo de las Tarjetas de Suscripción (Planes) */
+    .card-suscripcion {
+        border-radius: 14px;
+        transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+        /* Sombra leve difuminada gris */
+        box-shadow: 0 0 10px rgba(131, 130, 130, 0.3);
+        /* Sombra inicial sutil */
+    }
+
+    /* Sombra más marcada al pasar el ratón */
+    .card-suscripcion:hover {
+        transform: translateY(-5px);
+        /* Pequeño levantamiento */
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 0 15px rgba(100, 100, 100, 0.2);
+        /* Sombra más pronunciada */
+    }
+
+    /* 4. Botones de Iconos de Tarjetas (Menos Separados) */
+    /* Se utiliza gap-2 en el HTML, aquí se mejora el estilo de los botones */
+    .btn-icon-lg {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        /* Borde más redondeado */
+        font-size: 1.1rem;
+        padding: 0;
+        /* Eliminar el padding por defecto */
+    }
+
+    /* 5. Estilo de Paginación Mejorado */
+    .pagination-footer {
+        padding: 15px 0;
+    }
+
+    .page-info-summary {
+        font-size: 0.95rem;
+        color: #6c757d;
+    }
+
+    .btn-outline-primary {
+        transition: background-color .15s, color .15s;
+    }
+
     .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -169,7 +281,7 @@
         width: 100%;
         max-width: 400px;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
     .modal-header-delete {
@@ -198,6 +310,11 @@
         padding: 10px 20px;
         border-radius: 8px;
         cursor: pointer;
+        transition: background-color .15s ease-in-out;
+    }
+
+    .btn-continuar:hover {
+        background: #c82333;
     }
 
     .btn-cancelar {
@@ -207,8 +324,12 @@
         padding: 10px 20px;
         border-radius: 8px;
         cursor: pointer;
+        transition: background-color .15s ease-in-out;
     }
 
+    .btn-cancelar:hover {
+        background: #5a6268;
+    }
 </style>
 
 
