@@ -12,46 +12,86 @@
 <link href="css/registro-organizacion.css" rel="stylesheet" />
 
 <div class="registro-container">
-    <div class="registro-card">
-        <h3><i class="bi bi-building me-2"></i>Crear tipos de organizacion</h3>
+    <div class="card shadow-lg p-4 custom-form-card">
+
+        <h3 class="text-center mb-4 fw-bold text-dark">
+            <i class="bi bi-tag-fill me-2"></i> Crear Nuevo Plan
+        </h3>
         <hr />
 
         <EditForm Model="modelo" OnValidSubmit="Registrar">
             <DataAnnotationsValidator />
 
-            <div class="form-group">
-                <label class="required">Nombre de suscripcion</label>
-                <InputText @bind-Value="modelo.SuscripcionNombre" class="form-control" placeholder="Ingresa el nombre la suscripcion" />
-                <ValidationMessage For="@(() => modelo.SuscripcionNombre)" />
+            <div class="row g-3">
+
+                <div class="col-12">
+                    <div class="form-group">
+                        <label class="required fw-semibold">Nombre del Plan</label>
+                        <InputText @bind-Value="modelo.SuscripcionNombre" class="form-control"
+                                   placeholder="Ej: Plan Básico / Plan Premium" />
+                        <ValidationMessage For="@(() => modelo.SuscripcionNombre)" />
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="required fw-semibold">Precio ($)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                            <InputNumber @bind-Value="modelo.Precio" class="form-control" placeholder="0.00" />
+                        </div>
+                        <ValidationMessage For="@(() => modelo.Precio)" />
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="required fw-semibold">Límite de Productos/Entidades</label>
+                        <InputNumber @bind-Value="modelo.Limite" class="form-control"
+                                     placeholder="Máximo de productos a registrar" />
+                        <ValidationMessage For="@(() => modelo.Limite)" />
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="required fw-semibold">Dias de duracion del plan</label>
+                        <InputNumber @bind-Value="modelo.DuracionDias" class="form-control"
+                                     placeholder="Dias de duracion del plan" />
+                        <ValidationMessage For="@(() => modelo.DuracionDias)" />
+                    </div>
+                </div>
+
+                @*  <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="fw-semibold text-secondary">fecha de inicio</label>
+                        <div class="form-control-plaintext text-muted">(funcionalidad pendiente)</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="fw-semibold text-secondary">fecha fin</label>
+                        <div class="form-control-plaintext text-muted">(funcionalidad pendiente)</div>
+                    </div>
+                </div> *@
             </div>
 
-            <div class="form-group">
-                <label class="required">Precio</label>
-                <InputNumber @bind-Value="modelo.Precio" class="form-control" placeholder="Ingrese el precio" />
-                <ValidationMessage For="@(() => modelo.Precio)" />
-            </div>
+            <hr class="mt-4 mb-3" />
 
-            <div class="form-group">
-                <label class="required">limite</label>
-                <InputNumber @bind-Value="modelo.Limite" class="form-control" placeholder="Ingresa el limite de prodcutos para agregar" />
-                <ValidationMessage For="@(() => modelo.Limite)" />
-            </div>
+            <div class="d-flex gap-3 justify-content-center mt-4">
 
-            <div class="botones mt-4 d-flex gap-2 justify-content-center">
-                <!-- Botón Crear -->
-                <button type="submit" class="btn-buscar" style="width: 150px;">
-                    <i class="bi bi-check-circle me-1"></i> Crear
+                <button type="submit" class="btn btn-success px-4 py-2 custom-btn-size">
+                    <i class="bi bi-check-circle me-1"></i> Crear Plan
                 </button>
 
-                <!-- Botón Cancelar -->
-                <button type="button" class="btn-limpiar" style="width: 150px;" @onclick="Cancelar">
+                <button type="button" class="btn btn-secondary px-4 py-2 custom-btn-size" @onclick="Cancelar">
                     <i class="bi bi-x-circle me-1"></i> Cancelar
                 </button>
             </div>
 
         </EditForm>
 
-        <!-- ✅ Notificación tipo campana -->
         <div id="successAlert" class="success-alert hidden">
             <div class="alert-box">
                 <div class="alert-icon">🔔</div>
@@ -63,6 +103,40 @@
 </div>
 
 <style>
+    .custom-form-card {
+        max-width: 600px;
+        margin: 40px auto;
+        border-radius: 12px;
+    }
+
+    /* Estilo para labels requeridos */
+    label.required::after {
+        content: " *";
+        color: red;
+        font-weight: bold;
+    }
+
+    /* Tamaño consistente para los botones de acción */
+    .custom-btn-size {
+        min-width: 150px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: transform 0.1s;
+    }
+
+        .custom-btn-size:hover {
+            transform: translateY(-2px);
+        }
+
+    /* Nota: Se eliminaron los estilos .btn-buscar y .btn-limpiar
+           porque ahora usamos clases estándar de Bootstrap (btn-success, btn-secondary).
+           Si quieres mantener tus estilos personalizados, renombra y ajusta: */
+
+    /* Ejemplo de como se verían tus estilos personalizados reescritos a clases de Boostrap si los necesitas: */
+    /* .btn-success { background-color: #4CAF50; border-color: #4CAF50; } */
+    /* .btn-secondary { background-color: #6c757d; border-color: #6c757d; } */
+
+    /* Estilos del JavaScript de alerta (Se mantiene) */
     .success-alert {
         position: fixed;
         top: 20px;
@@ -73,15 +147,15 @@
         transform: translateY(-20px);
     }
 
-        .success-alert.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .success-alert.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-        .success-alert.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
+    .success-alert.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
 
     .alert-box {
         background: #ffffff;
@@ -103,47 +177,11 @@
         font-weight: 500;
         color: #333;
     }
-
-    /* BOTÓN BUSCAR */
-    .btn-buscar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #10520B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold; /* ← Aquí se hace negrita */
-    }
-
-        .btn-buscar:hover {
-            background: #49BFBF;
-            color: black;
-            transform: scale(1.05);
-        }
-
-    /* BOTÓN LIMPIAR */
-    .btn-limpiar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #520B0B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold; /* ← Aquí se hace negrita */
-    }
-
-        .btn-limpiar:hover {
-            background: #AD3440;
-            color: black;
-            transform: scale(1.05);
-        }
 </style>
 
+
 <script>
+    // ... (El código JavaScript para showCustomAlert y showErrorAlert se mantiene sin cambios) ...
     function showCustomAlert(message) {
         const alert = document.getElementById("successAlert");
         const text = document.getElementById("alertMessage");
@@ -181,7 +219,7 @@
 
 
 @code {
-
+    // ... (El código C# se mantiene sin cambios) ...
     public class TipoSuscripcionModeloValidacion
     {
         [Required(ErrorMessage = "El nombre de la suscripción es obligatorio.")]
@@ -195,6 +233,10 @@
         [Required(ErrorMessage = "El límite de usuarios/entidades es obligatorio.")]
         [Range(1, 100, ErrorMessage = "El límite debe ser un número entero entre 1 y 100.")]
         public int Limite { get; set; }
+
+        [Required(ErrorMessage = "La duracion de los dias es obligatorio.")]
+        [Range(1, 365, ErrorMessage = "La duracion de los dias debe ser entre 1 y 365")]
+        public int DuracionDias { get; set; }
     }
 
     private TipoSuscripcionModeloValidacion modelo = new();
@@ -207,7 +249,8 @@
             {
                 SuscripcionNombre = modelo.SuscripcionNombre,
                 Precio = modelo.Precio,
-                Limite = modelo.Limite
+                Limite = modelo.Limite,
+                DuracionDias = modelo.DuracionDias
             };
             var result = await TipoSuscripcionService.CrearTipoSuscripcion(request);
 
@@ -232,7 +275,4 @@
     {
         Nav.NavigateTo("/Tipos-suscripcion-index");
     }
-
-
-
 }

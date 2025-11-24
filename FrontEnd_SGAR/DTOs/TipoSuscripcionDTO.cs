@@ -43,14 +43,18 @@ namespace FrontEnd_SGAR.DTOs
 
         [JsonPropertyName("limite")]
         public int Limite { get; set; }
+
+        [JsonPropertyName("duracionDias")]
+        public int DuracionDias { get; set; }
     }
 
     public class TipoSuscripcionRequest
     {
+        public int Id { get; set; }
         public string SuscripcionNombre { get; set; } = string.Empty;
         public decimal Precio { get; set; }
-
         public int Limite { get; set; }
+        public int DuracionDias { get; set; }
     }
 
 }
