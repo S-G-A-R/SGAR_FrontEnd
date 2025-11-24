@@ -28,7 +28,7 @@
                     <div class="form-group">
                         <label class="required fw-semibold">Nombre del Plan</label>
                         <InputText @bind-Value="modelo.SuscripcionNombre" class="form-control"
-                            placeholder="Ej: Plan Básico / Plan Premium" />
+                                   placeholder="Ej: Plan Básico / Plan Premium" />
                         <ValidationMessage For="@(() => modelo.SuscripcionNombre)" />
                     </div>
                 </div>
@@ -48,24 +48,33 @@
                     <div class="form-group">
                         <label class="required fw-semibold">Límite de Productos/Entidades</label>
                         <InputNumber @bind-Value="modelo.Limite" class="form-control"
-                            placeholder="Máximo de productos a registrar" />
+                                     placeholder="Máximo de productos a registrar" />
                         <ValidationMessage For="@(() => modelo.Limite)" />
                     </div>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="form-group">
-                        <label class="fw-semibold text-secondary">Fecha de Inicio</label>
-                        <div class="form-control-plaintext text-muted">(Funcionalidad Pendiente)</div>
+                        <label class="required fw-semibold">Dias de duracion del plan</label>
+                        <InputNumber @bind-Value="modelo.DuracionDias" class="form-control"
+                                     placeholder="Dias de duracion del plan" />
+                        <ValidationMessage For="@(() => modelo.DuracionDias)" />
+                    </div>
+                </div>
+
+                @*  <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="fw-semibold text-secondary">fecha de inicio</label>
+                        <div class="form-control-plaintext text-muted">(funcionalidad pendiente)</div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label class="fw-semibold text-secondary">Fecha Fin</label>
-                        <div class="form-control-plaintext text-muted">(Funcionalidad Pendiente)</div>
+                        <label class="fw-semibold text-secondary">fecha fin</label>
+                        <div class="form-control-plaintext text-muted">(funcionalidad pendiente)</div>
                     </div>
-                </div>
+                </div> *@
             </div>
 
             <hr class="mt-4 mb-3" />
@@ -115,13 +124,13 @@
         transition: transform 0.1s;
     }
 
-    .custom-btn-size:hover {
-        transform: translateY(-2px);
-    }
+        .custom-btn-size:hover {
+            transform: translateY(-2px);
+        }
 
-    /* Nota: Se eliminaron los estilos .btn-buscar y .btn-limpiar 
-       porque ahora usamos clases estándar de Bootstrap (btn-success, btn-secondary).
-       Si quieres mantener tus estilos personalizados, renombra y ajusta: */
+    /* Nota: Se eliminaron los estilos .btn-buscar y .btn-limpiar
+           porque ahora usamos clases estándar de Bootstrap (btn-success, btn-secondary).
+           Si quieres mantener tus estilos personalizados, renombra y ajusta: */
 
     /* Ejemplo de como se verían tus estilos personalizados reescritos a clases de Boostrap si los necesitas: */
     /* .btn-success { background-color: #4CAF50; border-color: #4CAF50; } */
@@ -224,6 +233,10 @@
         [Required(ErrorMessage = "El límite de usuarios/entidades es obligatorio.")]
         [Range(1, 100, ErrorMessage = "El límite debe ser un número entero entre 1 y 100.")]
         public int Limite { get; set; }
+
+        [Required(ErrorMessage = "La duracion de los dias es obligatorio.")]
+        [Range(1, 365, ErrorMessage = "La duracion de los dias debe ser entre 1 y 365")]
+        public int DuracionDias { get; set; }
     }
 
     private TipoSuscripcionModeloValidacion modelo = new();
@@ -236,7 +249,8 @@
             {
                 SuscripcionNombre = modelo.SuscripcionNombre,
                 Precio = modelo.Precio,
-                Limite = modelo.Limite
+                Limite = modelo.Limite,
+                DuracionDias = modelo.DuracionDias
             };
             var result = await TipoSuscripcionService.CrearTipoSuscripcion(request);
 

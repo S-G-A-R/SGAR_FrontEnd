@@ -13,7 +13,7 @@
 
 <div class="registro-container">
     <div class="card shadow-lg p-4 custom-form-card">
-        
+
         <h3 class="text-center mb-4 fw-bold text-dark">
             <i class="bi bi-pencil-square me-2"></i> Editar Plan de Suscripción (ID: @Id)
         </h3>
@@ -46,7 +46,7 @@
                 <DataAnnotationsValidator />
 
                 <div class="row g-3">
-                    
+
                     <div class="col-12">
                         <div class="form-group">
                             <label class="required fw-semibold">Nombre del Plan</label>
@@ -73,26 +73,35 @@
                             <ValidationMessage For="@(() => modelo.Limite)" />
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="fw-semibold text-secondary">Fecha de Inicio (Pendiente)</label>
-                            <input value="(Funcionalidad Pendiente)" class="form-control bg-light" disabled />
+                            <label class="required fw-semibold">Dias de duracion del plan</label>
+                            <InputNumber @bind-Value="modelo.DuracionDias" class="form-control" placeholder="Duaracion del plan a agregar" />
+                            <ValidationMessage For="@(() => modelo.DuracionDias)" />
+                        </div>
+                    </div>
+
+
+                  @*   <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="fw-semibold text-secondary">fecha de inicio (pendiente)</label>
+                            <input value="(funcionalidad pendiente)" class="form-control bg-light" disabled />
                         </div>
                     </div>
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="fw-semibold text-secondary">Fecha de Fin (Pendiente)</label>
-                            <input value="(Funcionalidad Pendiente)" class="form-control bg-light" disabled />
+                            <label class="fw-semibold text-secondary">fecha de fin (pendiente)</label>
+                            <input value="(funcionalidad pendiente)" class="form-control bg-light" disabled />
                         </div>
-                    </div>
-                    </div>
+                    </div> *@
+                </div>
 
                 <hr class="mt-4 mb-3" />
 
                 <div class="d-flex gap-3 justify-content-center mt-4">
-                    
+
                     <button type="submit" class="btn btn-primary px-4 py-2 custom-btn-size">
                         <i class="bi bi-check-circle me-1"></i> Actualizar
                     </button>
@@ -122,7 +131,7 @@
         margin: 40px auto;
         border-radius: 12px;
     }
-    
+
     label.required::after {
         content: " *";
         color: red;
@@ -136,10 +145,10 @@
         transition: transform 0.1s;
     }
 
-    .custom-btn-size:hover {
-        transform: translateY(-2px);
-    }
-    
+        .custom-btn-size:hover {
+            transform: translateY(-2px);
+        }
+
     /* Estilos de la Alerta (Mantenidos) */
     .success-alert {
         position: fixed;
@@ -181,10 +190,77 @@
         font-weight: 500;
         color: #333;
     }
-    
+</style>
+        background: #fff;
 
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-buscar:hover {
+            background: #49BFBF;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* BOTÓN LIMPIAR */
+    .btn-limpiar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #520B0B;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+        background: #fff;
+        .btn-limpiar:hover {
+            background: #AD3440;
+            color: black;
+            transform: scale(1.05);
+        }
 </style>
 
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-buscar:hover {
+            background: #49BFBF;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* BOTÓN LIMPIAR */
+    .btn-limpiar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #520B0B;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+        font-weight: bold; /* ← Aquí se hace negrita */
+    }
+
+        .btn-limpiar:hover {
+            background: #AD3440;
+            color: black;
+
+
+        }
+</style>
 
 <script>
     // Se mantienen las funciones showCustomAlert y showErrorAlert
@@ -216,7 +292,7 @@
         alert.classList.remove("hidden");
         alert.classList.add("show");
 
-        setTimeout(() => {
+
             alert.classList.remove("show");
             alert.classList.add("hidden");
         }, 3000);
@@ -226,28 +302,42 @@
 
 @code {
 
+
     public class EdicionTipoSuscripcionModeloValidacion
     {
-        [Required(ErrorMessage = "El nombre de la suscripción es obligatorio.")]
-        [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
-        public string SuscripcionNombre { get; set; } = string.Empty;
+        try
+        {
+            if (Id == 0) return;
+            var requets = new TipoSuscripcionRequest
+            {
+                SuscripcionNombre = modelo.SuscripcionNombre,
+                Precio = modelo.Precio,
+                Limite = modelo.Limite,
+                DuracionDias = modelo.DuracionDias
+            };
+            var resultado = await TipoSuscripcionService.ActualizarTipoSuscripcion(Id, requets);
 
-        [Required(ErrorMessage = "El precio es obligatorio.")]
-        [Range(0.01, 10000.00, ErrorMessage = "El precio debe ser mayor a cero (0) y no exceder 10,000.")]
-        public decimal Precio { get; set; }
-
-        [Required(ErrorMessage = "El límite de usuarios/entidades es obligatorio.")]
-        [Range(1, 100, ErrorMessage = "El límite debe ser un número entero entre 1 y 100.")]
-        public int Limite { get; set; }
-    }
+            if (resultado != null && !string.IsNullOrEmpty(resultado.message))
+            {
+                await JS.InvokeVoidAsync("showCustomAlert", $"Plan editado con éxito: {resultado.message}");
+                await Task.Delay(500);
+                Nav.NavigateTo("/tipos-suscripcion-index");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el Plan. Inténtalo de nuevo.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error del sistema al actualizar: {ex.Message}");
 
     [Parameter]
     public int Id { get; set; }
 
     private bool isLoading = true;
     private EdicionTipoSuscripcionModeloValidacion modelo = new();
-    
-  
+
     protected override async Task OnInitializedAsync()
     {
         if (Id != 0)
@@ -259,21 +349,22 @@
             isLoading = false;
         }
     }
-
-    private async Task CargarDatosSuscripcion(int id)
-    {
-        try
+        if (Id == 0) return;
+        var requets = new TipoSuscripcionRequest
         {
-            var suscripcionDto = await TipoSuscripcionService.ObtenerPorId(id);
-
-            if (suscripcionDto != null)
-            {
-                modelo.SuscripcionNombre = suscripcionDto.SuscripcionNombre;
-                modelo.Precio = suscripcionDto.Precio;
-                modelo.Limite = suscripcionDto.Limite;
-            }
-            else
-            {
+            SuscripcionNombre = modelo.SuscripcionNombre,
+            Precio = modelo.Precio,
+            Limite = modelo.Limite
+        };
+        var resultado = await TipoSuscripcionService.ActualizarTipoSuscripcion(Id, requets);
+        if (resultado != null)
+        {
+            await JS.InvokeVoidAsync("showCustomAlert", "Tipo de suscripción editado con éxito.");
+            Nav.NavigateTo("/tipos-suscripcion-index");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el tipo de suscripción. Inténtalo de nuevo.");
                 modelo = null; // Esto dispara el mensaje de error en el Razor
                 await JS.InvokeVoidAsync("showErrorAlert", $"Error: Plan con ID {id} no encontrado.");
             }
@@ -290,34 +381,24 @@
         }
     }
 
-  
     private async Task Actualizar()
     {
-        try
+        if (Id == 0) return;
+        var requets = new TipoSuscripcionRequest
         {
-            if (Id == 0) return;
-            var requets = new TipoSuscripcionRequest
-            {
-                SuscripcionNombre = modelo.SuscripcionNombre,
-                Precio = modelo.Precio,
-                Limite = modelo.Limite
-            };
-            var resultado = await TipoSuscripcionService.ActualizarTipoSuscripcion(Id, requets);
-            
-            if (resultado != null && !string.IsNullOrEmpty(resultado.message))
-            {
-                await JS.InvokeVoidAsync("showCustomAlert", $"Plan editado con éxito: {resultado.message}");
-                await Task.Delay(500);
-                Nav.NavigateTo("/tipos-suscripcion-index");
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el Plan. Inténtalo de nuevo.");
-            }
+            SuscripcionNombre = modelo.SuscripcionNombre,
+            Precio = modelo.Precio,
+            Limite = modelo.Limite
+        };
+        var resultado = await TipoSuscripcionService.ActualizarTipoSuscripcion(Id, requets);
+        if (resultado != null)
+        {
+            await JS.InvokeVoidAsync("showCustomAlert", "Tipo de suscripción editado con éxito.");
+            Nav.NavigateTo("/tipos-suscripcion-index");
         }
-        catch (Exception ex)
+        else
         {
-             await JS.InvokeVoidAsync("showErrorAlert", $"Error del sistema al actualizar: {ex.Message}");
+            await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el tipo de suscripción. Inténtalo de nuevo.");
         }
     }
 
