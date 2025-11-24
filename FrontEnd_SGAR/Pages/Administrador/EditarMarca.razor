@@ -1,0 +1,254 @@
+﻿@page "/marcas-editar/{id:int}"
+@using FrontEnd_SGAR.DTOs
+@using FrontEnd_SGAR.Services
+@using static FrontEnd_SGAR.DTOs.MarcaDTO
+@inject MarcaService MarcaService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<h3 class="titulo-editar">Editar Marca</h3>
+
+<div class="card-editar">
+    @if (cargando)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2">Cargando datos...</p>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="modelo" OnValidSubmit="GuardarCambios">
+            <DataAnnotationsValidator />
+            <input type="hidden" @bind="modelo.Id" />
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nombre</label>
+                <InputText class="form-control" @bind-Value="modelo.Nombre" />
+                <ValidationMessage For="@(() => modelo.Nombre)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Modelo</label>
+                <InputText class="form-control" @bind-Value="modelo.Modelo" />
+                <ValidationMessage For="@(() => modelo.Modelo)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Año de Fabricación</label>
+                <InputSelect class="form-select" @bind-Value="modelo.YearOfFabrication">
+                    <option value="">Seleccione un año</option>
+                    @foreach (var y in listaAnios)
+                    {
+                        <option value="@y">@y</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => modelo.YearOfFabrication)" />
+            </div>
+
+
+            @if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="alert alert-danger">@mensajeError</div>
+            }
+
+            <div class="btns-acciones">
+                <button class="btn btn-primary px-4" type="submit" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Guardar Cambios
+                </button>
+
+                <button class="btn btn-secondary" type="button" @onclick="Volver">
+                    Volver
+                </button>
+            </div>
+
+        </EditForm>
+    }
+</div>
+
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    private MarcaFormModel modelo = new();
+    private bool cargando = true;
+    private bool guardando = false;
+    private string? mensajeError;
+
+    private List<string> listaAnios = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        GenerarAnios();
+        await CargarDatos();
+    }
+
+    private void GenerarAnios()
+    {
+        int inicio = 1960;
+        int fin = DateTime.Now.Year + 10;
+
+        for (int anio = fin; anio >= inicio; anio--)
+        {
+            listaAnios.Add(anio.ToString());
+        }
+    }
+
+    private async Task CargarDatos()
+    {
+        try
+        {
+            var data = await MarcaService.ObtenerMarcaPorIdAsync(id);
+
+            if (data == null)
+            {
+                mensajeError = "No se encontró la marca.";
+                return;
+            }
+
+            modelo = new MarcaFormModel
+            {
+                Id = data.Id,  
+                Nombre = data.Nombre,
+                Modelo = data.Modelo,
+                YearOfFabrication = data.YearOfFabrication?.ToString()
+            };
+
+        }
+        catch
+        {
+            mensajeError = "Error al cargar la información.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GuardarCambios()
+    {
+        guardando = true;
+        mensajeError = null;
+
+        var respuesta = await MarcaService.ActualizarMarcaAsync(id, modelo);
+
+        guardando = false;
+
+        if (respuesta.Exito)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "Actualizado",
+                text = "La marca se actualizó correctamente.",
+                icon = "success",
+                confirmButtonText = "Ok"
+            });
+
+            Nav.NavigateTo("/index-marcas");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "Error",
+                text = respuesta.Mensaje,
+                icon = "error"
+            });
+        }
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/index-marcas");
+    }
+}
+<style>
+
+    /* ================================
+           TÍTULO PRINCIPAL
+        ================================ */
+    .titulo-editar {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #111;
+        font-family: 'Lilita One', sans-serif; /* 👈 fuente bonita */
+        text-align: center;
+    }
+
+
+    .card-editar {
+        max-width: 500px;
+        margin: auto;
+        padding: 2rem;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px !important;
+        padding: 10px 12px !important;
+        font-size: 1rem;
+    }
+
+    label.form-label,
+    label.fw-semibold {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    /* ================================
+           BOTONES
+        ================================ */
+    .btns-acciones {
+        display: flex;
+        gap: 14px;
+        margin-top: 1.4rem;
+    }
+
+    /* BOTÓN GUARDAR - elegante */
+    .btn-primary {
+        background: #000;
+        color: white;
+        border: none;
+        padding: 10px 22px;
+        font-size: 1rem;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-primary:hover {
+            background: #444;
+        }
+
+    /* BOTÓN CANCELAR - gris moderno */
+    .btn-secondary {
+        background: #e3e3e3;
+        color: #111;
+        border: none;
+        padding: 10px 22px;
+        font-size: 1rem;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-secondary:hover {
+            background: #cfcfcf;
+            color: black;
+        }
+
+    /* Spinner centrado cuando guardas */
+    .spinner-border-sm {
+        margin-bottom: 1px;
+    }
+
+</style>
+
