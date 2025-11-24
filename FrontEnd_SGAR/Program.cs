@@ -50,5 +50,6 @@ builder.Services.AddScoped<CiudadanoService>();
 builder.Services.AddScoped<TipoSuscripcionService>();
 builder.Services.AddScoped<VehiculoServices>();
 builder.Services.AddScoped<EmpresaService>();
+builder.Services.AddScoped<PlanService>();
 
 await builder.Build().RunAsync();

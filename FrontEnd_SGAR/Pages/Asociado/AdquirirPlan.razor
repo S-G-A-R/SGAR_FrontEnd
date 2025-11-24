@@ -1,0 +1,324 @@
+﻿@page "/adquirir-plan/{Id:int}"
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject PlanService PlanService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="card shadow-lg p-4 custom-form-card">
+
+        <h3 class="text-center mb-4 fw-bold text-dark">
+            <i class="bi bi-cart-check me-2"></i> Confirmar Compra (Plan #@Id)
+        </h3>
+        <hr />
+
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2">Cargando detalles del plan...</p>
+            </div>
+        }
+        else if (tipoSuscripcion == null)
+        {
+            <div class="alert alert-danger text-center">
+                No se encontró el plan solicitado.
+            </div>
+            <div class="d-flex justify-content-center">
+                <button class="btn btn-secondary" @onclick="Cancelar">Regresar</button>
+            </div>
+        }
+        else
+        {
+            <!-- Formulario de confirmación (Solo lectura) -->
+            <EditForm Model="tipoSuscripcion" OnValidSubmit="Adquirir">
+                
+                <div class="row g-3">
+                    <!-- Nombre del Plan -->
+                    <div class="col-12">
+                        <label class="fw-bold">Nombre del Plan</label>
+                        <input value="@tipoSuscripcion.SuscripcionNombre" class="form-control" disabled />
+                    </div>
+
+                    <!-- Precio -->
+                    <div class="col-md-6">
+                        <label class="fw-bold">Precio ($)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                            <input value="@tipoSuscripcion.Precio" class="form-control" disabled />
+                        </div>
+                    </div>
+
+                    <!-- Límite -->
+                    <div class="col-md-6">
+                        <label class="fw-bold">Límite de Productos</label>
+                        <input value="@tipoSuscripcion.Limite" class="form-control" disabled />
+                    </div>
+
+                    <!-- CÁLCULO VISUAL (Solo para que el usuario sepa qué pasará) -->
+                    <div class="col-md-6">
+                        <label class="fw-bold text-success">Fecha de Inicio (Hoy)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                            <input value="@DateTime.Now.ToString("dd/MM/yyyy")" class="form-control" disabled />
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-bold text-danger">Vence el (Estimado)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-calendar-x"></i></span>
+                            <!-- Calculamos visualmente sumando los días que trae el tipo de suscripción -->
+                            <input value="@DateTime.Now.AddDays(tipoSuscripcion.DuracionDias).ToString("dd/MM/yyyy")" class="form-control" disabled />
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="alert alert-secondary mt-2 text-center">
+                            <small>Este plan tiene una vigencia de <strong>@tipoSuscripcion.DuracionDias días</strong> a partir de su compra.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="mt-4 mb-3" />
+
+                <div class="d-flex gap-3 justify-content-center mt-4">
+                    <button type="submit" class="btn btn-success px-4 py-2" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span> <span>Procesando...</span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-check-circle me-1"></i> Confirmar Compra</span>
+                        }
+                    </button>
+
+                    <button type="button" class="btn btn-secondary px-4 py-2" @onclick="Cancelar">
+                        Cancelar
+                    </button>
+                </div>
+
+            </EditForm>
+        }
+    </div>
+</div>
+
+<style>
+    /* Estilos de Botones y Formulario (Ajustados para consistencia) */
+    .custom-form-card {
+        max-width: 600px;
+        margin: 40px auto;
+        border-radius: 12px;
+    }
+
+    label.required::after {
+        content: " *";
+        color: red;
+        font-weight: bold;
+    }
+
+    .custom-btn-size {
+        min-width: 150px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: transform 0.1s;
+    }
+
+        .custom-btn-size:hover {
+            transform: translateY(-2px);
+        }
+
+    /* Estilos de la Alerta (Mantenidos) */
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+</style>
+
+
+<script>
+    // Se mantienen las funciones showCustomAlert y showErrorAlert
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "🔔";
+        alert.querySelector(".alert-icon").style.color = "#ffcc00";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    function showErrorAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "❌";
+        alert.querySelector(".alert-icon").style.color = "#e63946";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+</script>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+
+    public TipoSuscripcionDTO? tipoSuscripcion= new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            await CargarDatosPlan(Id);
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+     private async Task CargarDatosPlan(int id)
+    {
+        try
+        {
+            // Este método debe devolver: SuscripcionNombre, Precio, Limite, DuracionDias
+            tipoSuscripcion = await PlanService.ObtenerTipoSuscripcionPorId(id);
+
+            if (tipoSuscripcion == null)
+            {
+                await JS.InvokeVoidAsync("showCustomAlert", $"Error: Plan con ID {id} no encontrado.", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            await JS.InvokeVoidAsync("showCustomAlert", "Error de conexión al cargar el Plan.", "error");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void Cancelar()
+    {
+        Nav.NavigateTo("/Plan-suscripcion-index");
+    }
+
+    private async Task Adquirir()
+    {
+        if (isSubmitting) return;
+        
+        try
+        {
+            isSubmitting = true;
+
+            var userId = await ObtenerUserIdAsync();
+            if (userId == null)
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "No se pudo identificar el usuario. Por favor, inicie sesión nuevamente.");
+                return;
+            }
+
+            var request = new PlanRequest
+            {
+                asociadoId = userId.Value,
+                tipoSuscripcionId = Id
+            };
+
+            // 3. Enviar al backend
+            var resultado = await PlanService.CrearPlanSuscripcion(request);
+
+            if (resultado != null)
+            {
+                await JS.InvokeVoidAsync("alert", $"¡Éxito! {resultado.message}");
+                Nav.NavigateTo("/mis-planes"); // Redirigir a la lista de planes del usuario
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Error al adquirir el plan.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error crítico: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+
+    private async Task<int?> ObtenerUserIdAsync()
+    {
+        var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+
+        if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+        {
+            return null;
+        }
+
+        return userId;
+    }
+}

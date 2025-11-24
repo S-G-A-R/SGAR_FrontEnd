@@ -13,7 +13,7 @@
 
 <div class="registro-container">
     <div class="card shadow-lg p-4 custom-form-card">
-        
+
         <h3 class="text-center mb-4 fw-bold text-dark">
             <i class="bi bi-pencil-square me-2"></i> Editar Plan de Suscripción (ID: @Id)
         </h3>
@@ -46,7 +46,7 @@
                 <DataAnnotationsValidator />
 
                 <div class="row g-3">
-                    
+
                     <div class="col-12">
                         <div class="form-group">
                             <label class="required fw-semibold">Nombre del Plan</label>
@@ -73,26 +73,35 @@
                             <ValidationMessage For="@(() => modelo.Limite)" />
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="fw-semibold text-secondary">Fecha de Inicio (Pendiente)</label>
-                            <input value="(Funcionalidad Pendiente)" class="form-control bg-light" disabled />
+                            <label class="required fw-semibold">Dias de duracion del plan</label>
+                            <InputNumber @bind-Value="modelo.DuracionDias" class="form-control" placeholder="Duaracion del plan a agregar" />
+                            <ValidationMessage For="@(() => modelo.DuracionDias)" />
+                        </div>
+                    </div>
+
+
+                  @*   <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="fw-semibold text-secondary">fecha de inicio (pendiente)</label>
+                            <input value="(funcionalidad pendiente)" class="form-control bg-light" disabled />
                         </div>
                     </div>
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="fw-semibold text-secondary">Fecha de Fin (Pendiente)</label>
-                            <input value="(Funcionalidad Pendiente)" class="form-control bg-light" disabled />
+                            <label class="fw-semibold text-secondary">fecha de fin (pendiente)</label>
+                            <input value="(funcionalidad pendiente)" class="form-control bg-light" disabled />
                         </div>
-                    </div>
-                    </div>
+                    </div> *@
+                </div>
 
                 <hr class="mt-4 mb-3" />
 
                 <div class="d-flex gap-3 justify-content-center mt-4">
-                    
+
                     <button type="submit" class="btn btn-primary px-4 py-2 custom-btn-size">
                         <i class="bi bi-check-circle me-1"></i> Actualizar
                     </button>
@@ -122,7 +131,7 @@
         margin: 40px auto;
         border-radius: 12px;
     }
-    
+
     label.required::after {
         content: " *";
         color: red;
@@ -136,10 +145,10 @@
         transition: transform 0.1s;
     }
 
-    .custom-btn-size:hover {
-        transform: translateY(-2px);
-    }
-    
+        .custom-btn-size:hover {
+            transform: translateY(-2px);
+        }
+
     /* Estilos de la Alerta (Mantenidos) */
     .success-alert {
         position: fixed;
@@ -151,15 +160,15 @@
         transform: translateY(-20px);
     }
 
-    .success-alert.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
+        .success-alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-    .success-alert.hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
 
     .alert-box {
         background: #ffffff;
@@ -181,8 +190,6 @@
         font-weight: 500;
         color: #333;
     }
-    
-
 </style>
 
 
@@ -239,6 +246,10 @@
         [Required(ErrorMessage = "El límite de usuarios/entidades es obligatorio.")]
         [Range(1, 100, ErrorMessage = "El límite debe ser un número entero entre 1 y 100.")]
         public int Limite { get; set; }
+
+        [Required(ErrorMessage = "La duracion de los dias es obligatorio.")]
+        [Range(1, 365, ErrorMessage = "La duracion de los dias debe ser entre 1 y 365")]
+        public int DuracionDias { get; set; }
     }
 
     [Parameter]
@@ -246,8 +257,8 @@
 
     private bool isLoading = true;
     private EdicionTipoSuscripcionModeloValidacion modelo = new();
-    
-  
+
+
     protected override async Task OnInitializedAsync()
     {
         if (Id != 0)
@@ -271,6 +282,7 @@
                 modelo.SuscripcionNombre = suscripcionDto.SuscripcionNombre;
                 modelo.Precio = suscripcionDto.Precio;
                 modelo.Limite = suscripcionDto.Limite;
+                modelo.DuracionDias = suscripcionDto.DuracionDias;
             }
             else
             {
@@ -290,7 +302,7 @@
         }
     }
 
-  
+
     private async Task Actualizar()
     {
         try
@@ -300,10 +312,11 @@
             {
                 SuscripcionNombre = modelo.SuscripcionNombre,
                 Precio = modelo.Precio,
-                Limite = modelo.Limite
+                Limite = modelo.Limite,
+                DuracionDias = modelo.DuracionDias
             };
             var resultado = await TipoSuscripcionService.ActualizarTipoSuscripcion(Id, requets);
-            
+
             if (resultado != null && !string.IsNullOrEmpty(resultado.message))
             {
                 await JS.InvokeVoidAsync("showCustomAlert", $"Plan editado con éxito: {resultado.message}");
@@ -317,7 +330,7 @@
         }
         catch (Exception ex)
         {
-             await JS.InvokeVoidAsync("showErrorAlert", $"Error del sistema al actualizar: {ex.Message}");
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error del sistema al actualizar: {ex.Message}");
         }
     }
 
