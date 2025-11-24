@@ -1,0 +1,275 @@
+﻿@page "/categoria-index"
+@using FrontEnd_SGAR.Providers
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject CategoriaService CategoriaService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject CustomAuthStateProvider AuthStateProvider
+
+
+<link rel="stylesheet" href="css/index-organizacion.css" />
+
+<div class="container mt-4">
+
+    <h2 class="title-page text-center mb-4">Gestión de Categorias de productos</h2>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+
+        <!-- IZQUIERDA: Crear -->
+        <button class="btn btn-crear"
+                @onclick='() => Nav.NavigateTo("/empresa-crear")'>
+            <i class="bi bi-plus-circle"></i> Crear nueva Categoria
+        </button>
+
+        <!-- DERECHA: Mostrar -->
+        <div class="d-flex align-items-center gap-2">
+            <label class="fw-semibold">Mostrar:</label>
+            <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
+                <option value="5">5</option>
+                <option selected value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else if (response == null || !response.CategoriasProducto.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No tienes categorias registradas.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded-3">
+            <table class="table custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre de la categoria</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var categoria in response.CategoriasProducto)
+                    {
+                        <tr>
+                            <td>@categoria.id</td>
+                            <td>@categoria.nombreCat</td>
+                            <td class="text-center">
+                                <div class="btn-group gap-1">
+                                    <button class="btn btn-sm btn-outline-warning" title="editar" @onclick="() => Editar(categoria.id)">
+                                        <i class="bi bi-pencil">editar</i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-danger" title="eliminar" @onclick="() => ConfirmarEliminar(categoria)">
+                                        <i class="bi bi-trash3-fill">eliminar</i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+
+        <!-- PAGINACIÓN -->
+        <div class="pagination-container mt-3 d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(!response.HasPreviousPage)"
+                    @onclick="PrevPage">
+                ◀ Anterior
+            </button>
+
+            <span class="fw-bold page-info">
+                Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems Categorias de productos
+            </span>
+
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(!response.HasNextPage)"
+                    @onclick="NextPage">
+                Siguiente ▶
+            </button>
+        </div>
+    }
+
+
+    @if (mostrarModalEliminar && CategoriaAEliminar != null)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header-delete">
+                    <h5 class="m-0 text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">¿Estás seguro que deseas eliminar tu categorias de productos?</p>
+                    <div class="alert alert-warning d-inline-block p-2 mt-2">
+                        <strong>@CategoriaAEliminar.nombreCat</strong>
+                    </div>
+                    <p class="text-danger small mt-3 mb-0">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
+                    <button type="button" class="btn-continuar" @onclick="EliminarCategoria">
+                        <i class="bi bi-trash me-1"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+
+   
+
+</div>
+
+@code {
+
+    private CategoriaProductoResponsePaginada? response = new();
+    private bool isLoading = true;
+    private int currentPage = 0;
+    private int pageSize = 10;
+    private string sortBy = "id";
+    private string direction = "asc";
+    private string errorMessage = "";
+
+    private bool mostrarModalEliminar = false;
+    private CategoriaProductoDTO? CategoriaAEliminar;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCategorias();
+    }
+
+    private async Task CargarCategorias()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = "";
+
+            var userId = await ObtenerUserIdAsync();
+
+            if (userId == null)
+            {
+                errorMessage = "No se pudo identificar al usuario. Por favor, inicie sesión nuevamente.";
+                isLoading = false;
+                return;
+            }
+
+            response = await CategoriaService.ObtenerCategoriasAsync(userId.Value, currentPage, pageSize);
+
+            if (response == null)
+            {
+                errorMessage = "No se recibieron datos del servidor.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar las empresas: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CambiarPageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int newSize))
+        {
+            pageSize = newSize;
+            currentPage = 0;
+            await CargarCategorias();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (response?.HasNextPage == true)
+        {
+            currentPage++;
+            await CargarCategorias();
+        }
+    }
+
+    private async Task PrevPage()
+    {
+        if (response?.HasPreviousPage == true)
+        {
+            currentPage--;
+            await CargarCategorias();
+        }
+    }
+
+    private void Editar(int id)
+    {
+        Nav.NavigateTo($"/caegoria-producto-editar/{id}");
+    }
+
+
+    private async Task<int?> ObtenerUserIdAsync()
+    {
+        var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+
+        if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+        {
+            return null;
+        }
+
+        return userId;
+    }
+
+    private void ConfirmarEliminar(CategoriaProductoDTO categoria)
+    {
+        CategoriaAEliminar = categoria;
+        mostrarModalEliminar = true;
+        StateHasChanged();
+    }
+
+    private void CerrarModalEliminar()
+    {
+        mostrarModalEliminar = false;
+        CategoriaAEliminar = null;
+    }
+
+    private async Task EliminarCategoria()
+    {
+        if (CategoriaAEliminar == null) return;
+
+        try
+        {
+            var resultado = await CategoriaService.EliminarCategoriaAsync(CategoriaAEliminar.id);
+
+            if (resultado.Exito)
+            {
+                CerrarModalEliminar();
+                await CargarCategorias();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", $"No se pudo eliminar: {resultado.Mensaje}");
+                CerrarModalEliminar();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error crítico: {ex.Message}");
+        }
+    }
+
+}
