@@ -1,4 +1,10 @@
-﻿@inject NavigationManager Navigation
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using FrontEnd_SGAR.Providers
+@using System.Security.Claims
+@inject CustomAuthStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@attribute [Authorize]
 
 <nav class="navbar navbar-light bg-white shadow-sm">
     <div class="container-fluid">
@@ -14,18 +20,50 @@
 
         <!-- Dropdown Iniciar Sesión -->
         <div class="ms-auto">
-            <div class="btn-group">
-                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    Iniciar Sesión
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="/login-ciudadano">Ciudadano</a></li>
-                    <li><a class="dropdown-item" href="/login-admin">Administrador</a></li>
-                    <li><a class="dropdown-item" href="/login-organizacion">Organización</a></li>
-                    <li><a class="dropdown-item" href="/login-asociado">Asociado</a></li>
-                    <li><a class="dropdown-item" href="/login-operador">Operador</a></li>
-                </ul>
-            </div>
+            <AuthorizeView>
+
+                <Authorized>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="d-none d-md-inline fw-bold">
+                                <!--Nombre del autenticado-->
+                                @context.User.FindFirst("unique_name")?.Value
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <!-- Rol del autenticado -->
+                                    Rol: @(context.User.FindFirst(ClaimTypes.Role)?.Value ?? context.User.FindFirst("role")?.Value)
+                                </h6>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button class="dropdown-item text-danger" @onclick="CerrarSesion">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                </Authorized>
+
+                <NotAuthorized>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            Iniciar Sesión
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/login-ciudadano">Ciudadano</a></li>
+                            <li><a class="dropdown-item" href="/login-admin">Administrador</a></li>
+                            <li><a class="dropdown-item" href="/login-organizacion">Organización</a></li>
+                            <li><a class="dropdown-item" href="/login-asociado">Asociado</a></li>
+                            <li><a class="dropdown-item" href="/login-operador">Operador</a></li>
+                        </ul>
+                    </div>
+                </NotAuthorized>
+
+            </AuthorizeView>
         </div>
 
         <!-- Offcanvas menú lateral -->
@@ -36,13 +74,41 @@
             </div>
             <div class="offcanvas-body">
                 <ul class="navbar-nav flex-column">
-                    <li class="nav-item"><NavLink class="nav-link" href="/menuC">Ciudadano</NavLink></li>
-                    <li class="nav-item"><NavLink class="nav-link" href="/menuOp">Operador</NavLink></li>
-                    <li class="nav-item"><NavLink class="nav-link" href="/menuOrg">Organización</NavLink></li>
-                    <li class="nav-item"><NavLink class="nav-link" href="/menuAso">Asociado</NavLink></li>
-                    <li class="nav-item"><NavLink class="nav-link" href="/administrador/menuAdmin">Administrador</NavLink></li>
+
+                    <AuthorizeView Roles="Ciudadano">
+                        <li class="nav-item"><NavLink class="nav-link" href="/menuC">Menú Ciudadano</NavLink></li>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="Operador">
+                        <li class="nav-item"><NavLink class="nav-link" href="/menuOp">Menú Operador</NavLink></li>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="Organizacion">
+                        <li class="nav-item"><NavLink class="nav-link" href="/menuOrg">Menú Organización</NavLink></li>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="Asociado">
+                        <li class="nav-item"><NavLink class="nav-link" href="/menuAso">Menú Asociado</NavLink></li>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="Administrador">
+                        <li class="nav-item"><NavLink class="nav-link" href="/administrador/menuAdmin">Menú Administrador</NavLink></li>
+                    </AuthorizeView>
+
+                    <li class="nav-item"><NavLink class="nav-link" href="/">Inicio</NavLink></li>
                 </ul>
             </div>
         </div>
     </div>
 </nav>
+
+@code {
+    private async Task CerrarSesion()
+    {
+        var customAuthProvider = (CustomAuthStateProvider)AuthStateProvider;
+
+        await customAuthProvider.MarkUserAsLoggedOut();
+
+        Navigation.NavigateTo("/", true);
+    }
+}

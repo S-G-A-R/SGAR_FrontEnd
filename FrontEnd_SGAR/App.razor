@@ -1,12 +1,69 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>Not found</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<CascadingAuthenticationState>
+
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+
+            <!-- AuthorizeRouteView PARA HABILITAR LA SEGURIDAD Y EL CONTEXTO -->
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+
+                <NotAuthorized>
+                    <!-- 2. MANEJO DEL CONTEXTO DENTRO DE NotAuthorized -->
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <!-- Usuario no autenticado (no hay token) -->
+                        <LayoutView Layout="@typeof(MainLayout)">
+                            <div class="container my-5">
+                                <div class="alert alert-warning text-center shadow-sm">
+                                    <h4>Acceso Requerido</h4>
+                                    <p>Debes iniciar sesión para ver esta página.</p>
+                                    <a href="/" class="btn btn-primary mt-3">Ir a la página de Login</a>
+                                </div>
+                            </div>
+                        </LayoutView>
+                    }
+                    else
+                    {
+                        <!-- Usuario autenticado pero sin el rol correcto -->
+                        <LayoutView Layout="@typeof(MainLayout)">
+                            <div class="container my-5">
+                                <div class="alert alert-danger text-center shadow-sm">
+                                    <h4>Acceso Denegado (403)</h4>
+                                    <p>Tu rol de usuario (@(context.User.FindFirst("role")?.Value ?? "Desconocido")) no tiene permisos para ver este contenido.</p>
+                                    <a href="/" class="btn btn-secondary mt-3">Volver a Inicio</a>
+                                </div>
+                            </div>
+                        </LayoutView>
+                    }
+                </NotAuthorized>
+
+                <Authorizing>
+                    <!-- Muestra un indicador mientras se verifica el token -->
+                    <LayoutView Layout="@typeof(MainLayout)">
+                        <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Autorizando...</span>
+                            </div>
+                        </div>
+                    </LayoutView>
+                </Authorizing>
+
+            </AuthorizeRouteView>
+
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+
+        <NotFound>
+            <PageTitle>No encontrado</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <div class="container my-5">
+                    <div class="alert alert-info text-center shadow-sm">
+                        <p role="alert">Lo sentimos, no hay nada en esta dirección.</p>
+                    </div>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
+
+</CascadingAuthenticationState>
