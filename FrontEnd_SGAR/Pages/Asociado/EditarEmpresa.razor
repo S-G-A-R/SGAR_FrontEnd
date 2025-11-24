@@ -1,0 +1,247 @@
+﻿@page "/empresa-editar/{id:int}"
+@using FrontEnd_SGAR.Providers
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject EmpresaService EmpresaService
+@attribute [Authorize]
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject CustomAuthStateProvider AuthStateProvider
+
+
+<div id="successAlert" class="success-alert hidden">
+    <div class="alert-box">
+        <div class="alert-icon">🔔</div>
+        <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+    </div>
+</div>
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-building me-2"></i>Editar empresa</h3>
+        <hr />
+
+        @if (isLoading)
+        {
+            <p class="text-center"><em>Cargando datos de la empresa...</em></p>
+        }
+        else
+        {
+            <EditForm Model="modelo" OnValidSubmit="Actualizar">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label class="required">Nombre de la empresa</label>
+                    <InputText @bind-Value="modelo.NombreEmpresa" class="form-control" placeholder="Ingresa el nombre de la empresa" />
+                    <ValidationMessage For="@(() => modelo.NombreEmpresa)" />
+                </div>
+
+                <div class="botones mt-4">
+                    <div class="contenedor-boton">
+                        <button type="submit" class="boton-mapacheAceptar" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Registrando...</span>
+                            }
+                            else
+                            {
+                                <span>Actualizar</span>
+                            }
+                        </button>
+                        <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                        <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                    </div>
+                </div>
+
+            </EditForm>
+
+        }
+    </div>
+</div>
+
+<style>
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        opacity: 0;
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    @@keyframes ring {
+        0% {
+            transform: rotate(0);
+        }
+
+        25% {
+            transform: rotate(10deg);
+        }
+
+        50% {
+            transform: rotate(-10deg);
+        }
+
+        75% {
+            transform: rotate(10deg);
+        }
+
+        100% {
+            transform: rotate(0);
+        }
+    }
+</style>
+
+<script>
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "🔔";
+        alert.querySelector(".alert-icon").style.color = "#ffcc00";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    function showErrorAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "❌";
+        alert.querySelector(".alert-icon").style.color = "#e63946";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+</script>
+
+@code {
+
+    public class EmpresaModelValidacion
+    {
+        // Propiedad oculta para mantener el ID del asociado
+        public int AsociadoId { get; set; }
+
+        [Required(ErrorMessage = "El nombre de la empresa es obligatorio.")]
+        [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
+        public string NombreEmpresa { get; set; } = string.Empty;
+    }
+
+    [Parameter]
+    public int id { get; set; }
+    private int asociadoIdActual;
+    private bool isLoading = true;
+
+    private EmpresaModelValidacion modelo = new();
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (id != 0)
+        {
+            await CargarDatosEmpresa(id);
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CargarDatosEmpresa(int id)
+    {
+        try
+        {
+            var empresaDto = await EmpresaService.ObtenerPorId(id);
+
+            if (empresaDto != null)
+            {
+                modelo.NombreEmpresa = empresaDto.NombreEmpresa;
+            }
+            else
+            {
+                Console.WriteLine($"Error: Tipo de suscripción con ID {id} no encontrado.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar datos de suscripción: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task Actualizar()
+    {
+        if (id == 0) return;
+        var requets = new EmpresaRequest
+        {
+            NombreEmpresa = modelo.NombreEmpresa
+        };
+        var resultado = await EmpresaService.ActualizarEmpresa(id, requets);
+        if (resultado != null)
+        {
+            await JS.InvokeVoidAsync("showCustomAlert", "Tipo de suscripción editado con éxito.");
+            Nav.NavigateTo("/empresa-index");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el tipo de suscripción. Inténtalo de nuevo.");
+        }
+    }
+
+    private void Cancelar()
+    {
+        Nav.NavigateTo("/empresa-index");
+    }
+
+}

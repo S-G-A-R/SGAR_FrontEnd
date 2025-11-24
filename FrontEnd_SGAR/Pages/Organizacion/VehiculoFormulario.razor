@@ -1,0 +1,550 @@
+﻿@page "/vehiculos/crear"
+@page "/vehiculos/editar/{Id:int}"
+@using System.Net.Http.Json
+@using System.Text.Json
+@using System.Net.Http.Headers
+@using System.ComponentModel.DataAnnotations
+@using FrontEnd_SGAR.Services
+@using static FrontEnd_SGAR.DTOs.UserDTO
+@using static FrontEnd_SGAR.DTOs.VehiculoDTO
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject VehiculoServices VehiculoService
+
+
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet" />
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card vehiculo-form">
+        <h3>
+            <i class="bi bi-truck me-2"></i>
+            @(EsEdicion ? "Editar Vehículo" : "Crear Vehículo")
+        </h3>
+        <hr />
+
+        @if (cargando)
+        {
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2">@(EsEdicion ? "Cargando datos del vehículo..." : "Iniciando formulario...")</p>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="modelo" OnValidSubmit="Guardar">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label class="required">Marca</label>
+                        <InputSelect @bind-Value="modelo.IdMarca" class="form-control">
+                            <option value="0">Seleccionar marca</option>
+                            @foreach (var marca in marcas)
+                            {
+                                <option value="@marca.Id">@marca.Nombre - @marca.Modelo</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => modelo.IdMarca)" />
+                    </div>
+
+                    <div class="col-md-6 form-group">
+                        <label class="required">Placa</label>
+                        <InputText @bind-Value="modelo.Placa" class="form-control" placeholder="Ej: N-123456" />
+                        <ValidationMessage For="@(() => modelo.Placa)" />
+                    </div>
+
+                    <div class="col-md-6 form-group">
+                        <label class="required">Código del Vehículo</label>
+                        <InputText @bind-Value="modelo.Codigo" class="form-control" placeholder="Ej: VEH-001" />
+                        <ValidationMessage For="@(() => modelo.Codigo)" />
+                    </div>
+
+                    <div class="col-md-6 form-group">
+                        <label class="required">Tipo de Vehículo</label>
+                        <InputSelect @bind-Value="modelo.IdTipoVehiculo" class="form-control">
+                            <option value="0">Seleccionar tipo</option>
+                            @foreach (var tipo in tiposVehiculo)
+                            {
+                                <option value="@tipo.Id">@tipo.Descripcion</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => modelo.IdTipoVehiculo)" />
+                    </div>
+
+                    <div class="col-md-6 form-group">
+                        <label class="required">Mecánico Asignado</label>
+                        <InputText @bind-Value="modelo.Mecanico" class="form-control" placeholder="Nombre del mecánico" />
+                        <ValidationMessage For="@(() => modelo.Mecanico)" />
+                    </div>
+
+                    <div class="col-md-6 form-group">
+                        <label class="required">Taller Asignado</label>
+                        <InputText @bind-Value="modelo.Taller" class="form-control" placeholder="Nombre del taller" />
+                        <ValidationMessage For="@(() => modelo.Taller)" />
+                    </div>
+
+                    <div class="col-md-6 form-group">
+                        <label>Operador Asignado</label>
+                        <InputSelect @bind-Value="modelo.IdOperador" class="form-control">
+                            <option value="">Sin asignar</option>
+                            @foreach (var operador in operadores)
+                            {
+                                <option value="@operador.Key">@operador.Value</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="col-md-6 form-group">
+                        <label class="required">Estado del Vehículo</label>
+                        <InputSelect @bind-Value="modelo.Estado" class="form-control">
+                            <option value="1">Activo</option>
+                            <option value="0">Inactivo</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="col-12 form-group">
+                        <label>Descripción</label>
+                        <InputTextArea @bind-Value="modelo.Descripcion" class="form-control" rows="3" placeholder="Descripción adicional del vehículo" />
+                    </div>
+
+                    <div class="col-12 form-group">
+                        <label>Fotografía del Vehículo</label>
+                        <div class="foto-container">
+                            <div class="foto-placeholder">
+                                @if (!string.IsNullOrEmpty(imagenPreview))
+                                {
+                                    <img src="@imagenPreview" alt="Previa" class="img-preview" />
+                                    <div class="imagen-overlay">
+                                        <i class="bi bi-camera-fill"></i>
+                                        <p>Cambiar imagen</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-camera" style="font-size: 3rem; color: #ccc;"></i>
+                                    <p class="mt-2">Seleccionar imagen</p>
+                                }
+                            </div>
+                            <InputFile OnChange="CargarImagen" accept="image/*" class="file-input" />
+                        </div>
+                        @if (archivoImagen != null)
+                        {
+                            <small class="text-muted">Archivo: @archivoImagen.Name (@FormatFileSize(archivoImagen.Size))</small>
+                        }
+                    </div>
+                </div>
+
+                <div class="botones mt-4">
+                    <div class="contenedor-boton">
+                        <button type="submit" class="boton-mapacheAceptar" disabled="@guardando">
+                            @if (guardando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            @(EsEdicion ? "Actualizar" : "Guardar")
+                        </button>
+                        <img src="/css/orejaIz.png" class="oreja oreja-izquierda" />
+                        <img src="/css/orejaDe.png" class="oreja oreja-derecha" />
+                    </div>
+                    <button type="button" class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </EditForm>
+        }
+
+        <div id="successAlert" class="success-alert hidden">
+            <div class="alert-box">
+                <div class="alert-icon">🚚</div>
+                <div class="alert-text" id="alertMessage">Mensaje</div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .vehiculo-form {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .foto-container {
+        position: relative;
+        border: 2px dashed #ddd;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s;
+        min-height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .foto-container:hover {
+            border-color: #007bff;
+        }
+
+    .foto-placeholder {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .img-preview {
+        max-width: 300px;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .imagen-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+        border-radius: 8px;
+    }
+
+    .foto-container:hover .imagen-overlay {
+        opacity: 1;
+    }
+
+    .imagen-overlay i {
+        font-size: 2rem;
+        margin-bottom: 5px;
+    }
+
+    .imagen-overlay p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+    .required::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .form-control, .form-select {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.95rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+    .btn-cancelar {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 30px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+        .btn-cancelar:hover {
+            background: #5a6268;
+        }
+
+    .vehiculo-form-mobile {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .img-preview-mobile {
+        max-width: 200px;
+        max-height: 150px;
+    }
+
+    .botones-mobile {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .contenedor-boton-mobile {
+        width: 100%;
+    }
+</style>
+
+<script>
+    function showCustomAlert(message, isSuccess = true) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+        const icon = alert.querySelector(".alert-icon");
+
+        if (isSuccess) {
+            icon.textContent = "✅";
+            icon.style.color = "#28a745";
+        } else {
+            icon.textContent = "❌";
+            icon.style.color = "#dc3545";
+        }
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+</script>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private bool EsEdicion => Id > 0;
+    private bool cargando = true;
+    private bool guardando = false;
+    private string imagenPreview = "";
+    private IBrowserFile? archivoImagen;
+
+    // Modelos y Listas
+    private VehiculoFormModel modelo = new();
+    private Dictionary<int, string> operadores = new();
+    private List<MarcaDto> marcas = new();
+    private List<TipoVehiculoDto> tiposVehiculo = new();
+
+    // Clase Modelo Local
+    public class VehiculoFormModel
+    {
+        [Required(ErrorMessage = "La marca es obligatoria")]
+        [Range(1, int.MaxValue, ErrorMessage = "Seleccione una marca")]
+        public int IdMarca { get; set; }
+
+        [Required(ErrorMessage = "La placa es obligatoria")]
+        [RegularExpression(@"^[A-Z]-\d{6}$|^[A-Z]{2}-\d{4}$", ErrorMessage = "Formato de placa inválido (ej: P-123456)")]
+        public string Placa { get; set; } = "";
+
+        [Required(ErrorMessage = "El código es obligatorio")]
+        public string Codigo { get; set; } = "";
+
+        [Required(ErrorMessage = "El tipo de vehículo es obligatorio")]
+        [Range(1, int.MaxValue, ErrorMessage = "Seleccione un tipo")]
+        public int IdTipoVehiculo { get; set; }
+
+        [Required(ErrorMessage = "El mecánico es obligatorio")]
+        public string Mecanico { get; set; } = "";
+
+        [Required(ErrorMessage = "El taller es obligatorio")]
+        public string Taller { get; set; } = "";
+
+        public int? IdOperador { get; set; }
+        public int? IdFoto { get; set; }
+        public string? ImagenBase64 { get; set; }
+
+        public byte Estado { get; set; } = 1;
+        public string Descripcion { get; set; } = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        try
+        {
+            // 1. Cargar catálogos (Marcas, Tipos, Operadores)
+            var taskMarcas = VehiculoService.ObtenerMarcasAsync();
+            var taskTipos = VehiculoService.ObtenerTiposVehiculoAsync();
+            var taskOperadores = VehiculoService.ObtenerOperadoresConNombresAsync();
+
+            await Task.WhenAll(taskMarcas, taskTipos, taskOperadores);
+
+            marcas = await taskMarcas;
+            tiposVehiculo = await taskTipos;
+            operadores = await taskOperadores;
+
+            // 2. Si es edición, cargar datos del vehículo
+            if (EsEdicion)
+            {
+                var vehiculoExistente = await VehiculoService.ObtenerVehiculoParaEdicionAsync(Id);
+                if (vehiculoExistente != null)
+                {
+                    modelo = vehiculoExistente;
+
+                    // Si el servicio trajo la imagen en Base64, mostrarla
+                    if (!string.IsNullOrEmpty(modelo.ImagenBase64))
+                    {
+                        imagenPreview = $"data:image/jpeg;base64,{modelo.ImagenBase64}";
+                    }
+                    // Si no, intentar cargarla explícitamente si hay ID (Backup)
+                    else if (modelo.IdFoto.HasValue && modelo.IdFoto > 0)
+                    {
+                        var base64 = await VehiculoService.ObtenerImagenBase64Async(modelo.IdFoto.Value);
+                        if (!string.IsNullOrEmpty(base64))
+                            imagenPreview = $"data:image/jpeg;base64,{base64}";
+                    }
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "No se encontró el vehículo");
+                    Nav.NavigateTo("/vehiculos");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error inicializando: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task Guardar()
+    {
+        guardando = true;
+        StateHasChanged();
+
+        // Enviamos el modelo y el archivo (si existe) al servicio
+        var resultado = await VehiculoService.GuardarVehiculoAsync(modelo, archivoImagen, Id);
+
+        if (resultado.Exito)
+        {
+            await JS.InvokeVoidAsync("showCustomAlert", resultado.Mensaje, true);
+            await Task.Delay(1500);
+            Nav.NavigateTo("/vehiculos");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("showCustomAlert", resultado.Mensaje, false);
+        }
+
+        guardando = false;
+    }
+
+    private async Task CargarImagen(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            try
+            {
+                // Validaciones básicas de UI
+                if (file.Size > 10 * 1024 * 1024)
+                {
+                    await JS.InvokeVoidAsync("alert", "La imagen no debe exceder 10MB");
+                    return;
+                }
+
+                var tiposPermitidos = new[] { "image/jpeg", "image/png", "image/gif" };
+                if (!tiposPermitidos.Contains(file.ContentType))
+                {
+                    await JS.InvokeVoidAsync("alert", "Formato no válido. Use JPG o PNG.");
+                    return;
+                }
+
+                archivoImagen = file;
+
+                // Crear preview local
+                var buffer = new byte[file.Size];
+                await file.OpenReadStream(10 * 1024 * 1024).ReadAsync(buffer);
+                imagenPreview = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error imagen: {ex.Message}");
+            }
+        }
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] suffixes = { "B", "KB", "MB", "GB" };
+        int counter = 0;
+        decimal number = bytes;
+        while (Math.Round(number / 1024) >= 1)
+        {
+            number /= 1024;
+            counter++;
+        }
+        return $"{number:n1} {suffixes[counter]}";
+    }
+
+    private void Cancelar() => Nav.NavigateTo("/vehiculos");
+}

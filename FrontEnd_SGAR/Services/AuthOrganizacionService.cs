@@ -1,19 +1,17 @@
 ﻿using FrontEnd_SGAR.Models;
 using Microsoft.JSInterop;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace FrontEnd_SGAR.Services
 {
-    public class AuthService
+    public class AuthOrganizacionService
     {
         private readonly HttpClient _http;
         private readonly IJSRuntime _js;
         private string? _token;
-        private bool _isAuthenticated = false;
 
-        public AuthService(HttpClient http, IJSRuntime js)
+        public AuthOrganizacionService(HttpClient http, IJSRuntime js)
         {
             _http = http;
             _js = js;
@@ -24,7 +22,7 @@ namespace FrontEnd_SGAR.Services
         {
             try
             {
-                var response = await _http.PostAsJsonAsync("api/organization/login", credenciales);
+                var response = await _http.PostAsJsonAsync("ApiSeguridad/Api/organization/login", credenciales);
 
                 if (!response.IsSuccessStatusCode)
                     return null;
@@ -58,20 +56,6 @@ namespace FrontEnd_SGAR.Services
             return _token;
         }
 
-        // Configurar encabezado Authorization
-        public async Task<bool> ConfigurarTokenAsync()
-        {
-            var token = await GetTokenAsync();
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                return true;
-            }
-
-            return false;
-        }
-
         // Decodificar token para obtener claims
         public async Task<JwtSecurityToken?> ObtenerTokenDecodificado()
         {
@@ -96,7 +80,6 @@ namespace FrontEnd_SGAR.Services
         {
             _token = null;
             await _js.InvokeVoidAsync("localStorage.removeItem", "token");
-            _http.DefaultRequestHeaders.Authorization = null;
         }
     }
 }
