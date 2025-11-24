@@ -1,0 +1,220 @@
+﻿@page "/marcas-crear"
+@using FrontEnd_SGAR.DTOs
+@using FrontEnd_SGAR.Services
+@inject MarcaService MarcaService
+@inject NavigationManager Nav
+@using Microsoft.AspNetCore.Authorization
+@inject IJSRuntime JS
+@attribute [Authorize]
+
+<h3 class="titulo-crear">Crear Nueva Marca</h3>
+
+<div class="card-crear">
+
+    @if (cargando)
+    {
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary"></div>
+            <p>Cargando formulario...</p>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="@form" OnValidSubmit="@CrearMarcas">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <InputText class="form-control" @bind-Value="form.Nombre" placeholder="Ingresa el nombre de la marca" />
+                <ValidationMessage For="@(() => form.Nombre)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Modelo</label>
+                <InputText class="form-control" @bind-Value="form.Modelo" placeholder="Ingresa el nombre del modelo" />
+                <ValidationMessage For="@(() => form.Modelo)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Año de Fabricación</label>
+                <InputText class="form-control"
+                           placeholder="Escribe el año de fabricación"
+                           maxlength="4"
+                           type="number"
+                           @bind-Value="form.YearOfFabrication" />
+                <ValidationMessage For="@(() => form.YearOfFabrication)" />
+            </div>
+
+            <div class="btns-acciones">
+                <button type="submit" class="btn btn-primary" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Guardar
+                </button>
+
+                <button type="button" class="btn btn-secondary"
+                        @onclick='() => Nav.NavigateTo("/index-marcas")'>
+                    Cancelar
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    MarcaDTO.MarcaFormModel form = new();
+    bool cargando = true;
+    bool guardando = false;
+
+    protected override Task OnInitializedAsync()
+    {
+        cargando = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task CrearMarcas()
+    {
+        guardando = true;
+
+        var resultado = await MarcaService.CrearMarcaAsync(form);
+
+        guardando = false;
+
+        if (resultado.Exito)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "¡Creado!",
+                text = "La marca se creó correctamente.",
+                icon = "success",
+                confirmButtonText = "Ok"
+            });
+
+            Nav.NavigateTo("/index-marcas");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "Error",
+                text = resultado.Mensaje,
+                icon = "error"
+            });
+        }
+    }
+}
+
+<style>
+
+    /* ================================
+       TÍTULO PRINCIPAL
+    ================================ */
+    .titulo-crear {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #111;
+        font-family: 'Lilita One', sans-serif; /* 👈 fuente bonita */
+        text-align: center;
+    }
+
+    /* ================================
+       CARD DEL FORMULARIO
+    ================================ */
+    .card-crear {
+        max-width: 520px;
+        margin: auto;
+        padding: 2rem 2.2rem;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.10);
+        animation: fadeIn 0.3s ease-in-out;
+        border: 1px solid #ececec;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* ================================
+       LABELS E INPUTS
+    ================================ */
+    label.form-label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    input.form-control {
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 1rem;
+        border: 1px solid #d9d9d9;
+        transition: all .2s ease;
+    }
+
+        input.form-control:focus {
+            border-color: #000;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.12);
+        }
+
+    /* ================================
+       BOTONES
+    ================================ */
+    .btns-acciones {
+        display: flex;
+        gap: 14px;
+        margin-top: 1.4rem;
+    }
+
+    /* BOTÓN GUARDAR - elegante */
+    .btn-primary {
+        background: #000;
+        color: white;
+        border: none;
+        padding: 10px 22px;
+        font-size: 1rem;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-primary:hover {
+            background: #444;
+        }
+
+    /* BOTÓN CANCELAR - gris moderno */
+    .btn-secondary {
+        background: #e3e3e3;
+        color: #111;
+        border: none;
+        padding: 10px 22px;
+        font-size: 1rem;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-secondary:hover {
+            background: #cfcfcf;
+            color: black;
+        }
+
+    /* Spinner centrado cuando guardas */
+    .spinner-border-sm {
+        margin-bottom: 1px;
+    }
+
+
+</style>
+
