@@ -1,11 +1,11 @@
-﻿@page "/empresa-editar/{id:int}"
+﻿@page "/categoria-editar/{id:int}"
 @using FrontEnd_SGAR.Providers
 @using FrontEnd_SGAR.Services
 @using FrontEnd_SGAR.DTOs
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
-@inject EmpresaService EmpresaService
 @attribute [Authorize]
+@inject CategoriaService CategoriaService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject CustomAuthStateProvider AuthStateProvider
@@ -21,12 +21,12 @@
 
 <div class="registro-container">
     <div class="registro-card">
-        <h3><i class="bi bi-building me-2"></i>Editar Empresa</h3>
+        <h3><i class="bi bi-collection-fill"></i> Editar Categoria</h3>
         <hr />
 
         @if (isLoading)
         {
-            <p class="text-center"><em>Cargando datos de la empresa...</em></p>
+            <p class="text-center"><em>Cargando datos de la categoria...</em></p>
         }
         else
         {
@@ -34,9 +34,9 @@
                 <DataAnnotationsValidator />
 
                 <div class="form-group">
-                    <label class="required">Nuevo nombre de la empresa</label>
-                    <InputText @bind-Value="modelo.NombreEmpresa" class="form-control" placeholder="Ingresa el nombre de la empresa" />
-                    <ValidationMessage For="@(() => modelo.NombreEmpresa)" />
+                    <label class="required">Nuevo nombre de la categoria</label>
+                    <InputText @bind-Value="modelo.nombreCat" class="form-control" placeholder="Ingresa el nombre de la categoria" />
+                    <ValidationMessage For="@(() => modelo.nombreCat)" />
                 </div>
 
                 <div class="botones mt-4">
@@ -52,7 +52,6 @@
                                 <span>Actualizar</span>
                             }
                         </button>
-          
                         <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
                         <img src="css/orejaIz.png" class="oreja oreja-derecha" />
                     </div>
@@ -168,29 +167,27 @@
 
 @code {
 
-    public class EmpresaModelValidacion
+    public class CategoriaModelValidacion
     {
-        // Propiedad oculta para mantener el ID del asociado
-        public int AsociadoId { get; set; }
-
-        [Required(ErrorMessage = "El nombre de la empresa es obligatorio.")]
-        [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
-        public string NombreEmpresa { get; set; } = string.Empty;
+        [Required(ErrorMessage = "El nombre de la categoria es obligatorio.")]
+        [StringLength(100, ErrorMessage = "El nombre de la categoria no debe exceder los 100 caracteres.")]
+        public string nombreCat { get; set; } = string.Empty;
     }
+
+    private CategoriaModelValidacion modelo = new();
 
     [Parameter]
     public int id { get; set; }
     private int asociadoIdActual;
     private bool isLoading = true;
 
-    private EmpresaModelValidacion modelo = new();
     private bool isSubmitting = false;
 
     protected override async Task OnInitializedAsync()
     {
         if (id != 0)
         {
-            await CargarDatosEmpresa(id);
+            await CargarDatosCategoriaProducto(id);
         }
         else
         {
@@ -198,24 +195,24 @@
         }
     }
 
-    private async Task CargarDatosEmpresa(int id)
+    private async Task CargarDatosCategoriaProducto(int id)
     {
         try
         {
-            var empresaDto = await EmpresaService.ObtenerPorId(id);
+            var categoriaProductoDTO = await CategoriaService.ObtenerPorId(id);
 
-            if (empresaDto != null)
+            if (categoriaProductoDTO != null)
             {
-                modelo.NombreEmpresa = empresaDto.NombreEmpresa;
+                modelo.nombreCat = categoriaProductoDTO.nombreCat;
             }
             else
             {
-                Console.WriteLine($"Error: Tipo de suscripción con ID {id} no encontrado.");
+                Console.WriteLine($"Error: Categoria producto con ID {id} no encontrado.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al cargar datos de suscripción: {ex.Message}");
+            Console.WriteLine($"Error al cargar categoria producto: {ex.Message}");
         }
         finally
         {
@@ -226,15 +223,15 @@
     private async Task Actualizar()
     {
         if (id == 0) return;
-        var requets = new EmpresaRequest
+        var requets = new CategoriaRequest
         {
-            NombreEmpresa = modelo.NombreEmpresa
+            nombreCat = modelo.nombreCat
         };
-        var resultado = await EmpresaService.ActualizarEmpresa(id, requets);
+        var resultado = await CategoriaService.ActualizarCategoria(id, requets);
         if (resultado != null)
         {
-            await JS.InvokeVoidAsync("showCustomAlert", "Tipo de suscripción editado con éxito.");
-            Nav.NavigateTo("/empresa-index");
+            await JS.InvokeVoidAsync("showCustomAlert", "Categoria editado con éxito.");
+            Nav.NavigateTo("/categoria-index");
         }
         else
         {
@@ -244,7 +241,7 @@
 
     private void Cancelar()
     {
-        Nav.NavigateTo("/empresa-index");
+        Nav.NavigateTo("/categoria-index");
     }
 
 }
