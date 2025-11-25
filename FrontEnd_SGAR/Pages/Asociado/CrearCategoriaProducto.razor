@@ -1,10 +1,10 @@
-﻿@page "/empresa-crear"
+﻿@page "/categoria-crear"
 @using FrontEnd_SGAR.Providers
 @using FrontEnd_SGAR.Services
 @using FrontEnd_SGAR.DTOs
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
-@inject EmpresaService EmpresaService
+@inject CategoriaService CategoriaService
 @attribute [Authorize]
 @inject NavigationManager Nav
 @inject IJSRuntime JS
@@ -19,19 +19,18 @@
     </div>
 </div>
 
-
 <div class="registro-container">
     <div class="registro-card">
-        <h3><i class="bi bi-building me-2"></i>Registrar Empresa</h3>
+        <h3><i class="bi bi-collection-fill"></i> Registrar Categoria</h3>
         <hr />
 
         <EditForm Model="modelo" OnValidSubmit="Registrar">
             <DataAnnotationsValidator />
 
             <div class="form-group">
-                <label class="required">Nombre de la empresa</label>
-                <InputText @bind-Value="modelo.NombreEmpresa" class="form-control" placeholder="Ingresa el nombre de la empresa" />
-                <ValidationMessage For="@(() => modelo.NombreEmpresa)" />
+                <label class="required">Nombre de la nueva categoria</label>
+                <InputText @bind-Value="modelo.nombreCat" class="form-control" placeholder="Ingresa el nombre de la categoria" />
+                <ValidationMessage For="@(() => modelo.nombreCat)" />
             </div>
 
             <div class="botones mt-4">
@@ -160,14 +159,15 @@
 
 @code {
 
-    public class EmpresaModelValidacion
+
+    public class CategoriaModelValidacion
     {
-        [Required(ErrorMessage = "El nombre de la empresa es obligatorio.")]
-        [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
-        public string NombreEmpresa { get; set; } = string.Empty;
+        [Required(ErrorMessage = "El nombre de la categoria es obligatorio.")]
+        [StringLength(100, ErrorMessage = "El nombre de la categoria no debe exceder los 100 caracteres.")]
+        public string nombreCat { get; set; } = string.Empty;
     }
 
-    private EmpresaModelValidacion modelo = new();
+    private CategoriaModelValidacion modelo = new();
     private bool isSubmitting = false;
 
     private async Task Registrar()
@@ -185,18 +185,18 @@
                 return;
             }
 
-            var request = new EmpresaRequest
+            var request = new CategoriaRequest
             {
-                NombreEmpresa = modelo.NombreEmpresa,
-                AsociadoId = userId.Value
+                nombreCat = modelo.nombreCat,
+                asociadoId = userId.Value
             };
-            var resultado = await EmpresaService.CrearEmpresa(request);
+            var resultado = await CategoriaService.CrearCategoria(request);
 
             if (resultado != null && !string.IsNullOrEmpty(resultado.message))
             {
                 // ÉXITO: Llamamos a la función principal pasando solo el mensaje
-                await JS.InvokeVoidAsync("showCustomAlert", $"Empresa registrada: {resultado.message}", "success");
-                Nav.NavigateTo("/empresa-index");
+                await JS.InvokeVoidAsync("showCustomAlert", $"Categoria registrada: {resultado.message}", "success");
+                Nav.NavigateTo("/categoria-index");
             }
             else
             {
@@ -230,6 +230,8 @@
 
     private void Cancelar()
     {
-        Nav.NavigateTo("/empresa-index");
+        Nav.NavigateTo("/categoria-index");
     }
+
 }
+ 
