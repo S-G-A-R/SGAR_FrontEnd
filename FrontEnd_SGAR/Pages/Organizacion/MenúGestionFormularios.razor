@@ -1,0 +1,107 @@
+﻿@page "/menu-formularios"
+
+<div class="menu-container">
+    <h1 class="menu-title">Gestión Formularios</h1>
+    <p class="menu-subtitle">Selecciona la sección de formulario que desee acceder:</p>
+
+    <div class="button-group">
+        
+        <button class="menu-button" @onclick='() => NavegarAFormulario("solicitud")'>
+            Formulario<br>Solicitud Operador
+        </button>
+        <button class="menu-button" @onclick='() => NavegarAFormulario("operador")'>
+            Formulario<br>Gestión Operador
+        </button>
+        <button class="menu-button" @onclick='() => NavegarAFormulario("quejas")'>
+            Formulario<br>Asignación Horario Operador
+        </button>
+    </div>
+
+    <div class="image-container">
+        <img src="Img/menuformulario.jpeg" alt="Imagen Formularios" class="menu-image" />
+    </div>
+
+</div>
+
+@code {
+    [Inject]
+    private NavigationManager Nav { get; set; }
+
+    private void NavegarAFormulario(string ruta)
+    {
+        Nav.NavigateTo($"/formulario-{ruta}");
+    }
+}
+
+<style>
+    .menu-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        background-color: #fff;
+        min-height: 100vh;
+        padding: 50px 20px;
+        color: #000;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .menu-title {
+        font-family: 'Lilita One', cursive;
+        font-size: 3rem;
+        margin-bottom: 10px;
+        font-weight: normal;
+    }
+
+    .menu-subtitle {
+        font-family: 'Lilita One', cursive;
+        font-size: 1.2rem;
+        margin-bottom: 40px;
+        color: #555;
+        font-weight: 300;
+    }
+
+    .button-group {
+        display: flex;
+        flex-direction: row; /* HORIZONTAL */
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap; /* evita que se rompa en pantallas pequeñas */
+        margin-bottom: 50px;
+    }
+
+    .menu-button {
+        background-color: #fff;
+        color: #000;
+        border: none;
+        padding: 15px 20px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(255, 192, 203, 0.3);
+        transition: all 0.3s ease;
+        font-weight: bold;
+    }
+
+        .menu-button:hover {
+            background-color: #4B4B4D;
+            color: #fff;
+            border: 5px solid #EDEDED;
+            box-shadow: 0 6px 20px rgba(173, 172, 173), 0 0 10px /* rgba(173, 172, 173) */;
+            transform: translateY(-3px);
+            font-weight: bold;
+        }
+
+    .image-container {
+        margin-top: 20px;
+    }
+
+    .menu-image {
+        max-width: 300px;
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(255, 192, 203, 0.3);
+    }
+</style>
+
+

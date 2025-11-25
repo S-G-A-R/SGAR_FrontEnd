@@ -1,0 +1,213 @@
+﻿@page "/index-tipovehiculos"
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<h2 class="text-center mb-4 fw-bold">Gestión de Tipos de Vehículos</h2>
+
+<div class="container">
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Tipo:</label>
+                    <input type="number" class="form-control" @bind="FiltroTipo" placeholder="Ej: 1" />
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Descripción:</label>
+                    <input type="text" class="form-control" @bind="FiltroDescripcion" placeholder="Buscar por descripción..." />
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" @onclick="Buscar">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-secondary w-100" @onclick="Limpiar">
+                        <i class="bi bi-x-circle"></i> Limpiar
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="m-0">Listado</h5>
+            <button class="btn btn-success" @onclick='() => Nav.NavigateTo("/tipos-vehiculos/crear")'>
+                <i class="bi bi-plus-circle"></i> Nuevo
+            </button>
+        </div>
+
+        <div class="card-body p-0">
+            @if (Cargando)
+            {
+                <div class="text-center p-4">
+                    <div class="spinner-border" role="status"></div>
+                    <p class="mt-2">Cargando...</p>
+                </div>
+            }
+            else if (TiposVehiculos is null || TiposVehiculos.Count == 0)
+            {
+                <p class="text-center p-4 text-muted">No se encontraron resultados</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in TiposVehiculos)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td>@item.Tipo</td>
+                                    <td>@item.Descripcion</td>
+                                    <td class="text-end">
+
+                                        <button class="btn btn-outline-primary btn-sm me-2"
+                                                @onclick='() => Nav.NavigateTo($"/tipos-vehiculos/editar/{item.Id}")'>
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+
+                                        <button class="btn btn-outline-danger btn-sm"
+                                                @onclick="() => Eliminar(item.Id)">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+
+        <div class="card-footer bg-white d-flex justify-content-between">
+            <button class="btn btn-outline-secondary" @onclick="Anterior" disabled="@(!PuedeAnterior)">
+                <i class="bi bi-chevron-left"></i>
+                Anterior
+            </button>
+
+            <span class="align-self-center fw-semibold">Página @PaginaActual de @TotalPaginas</span>
+
+            <button class="btn btn-outline-secondary" @onclick="Siguiente" disabled="@(!PuedeSiguiente)">
+                Siguiente
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    // ====== FILTROS ======
+    byte? FiltroTipo { get; set; }
+    string? FiltroDescripcion { get; set; }
+
+    // ====== LISTA ======
+    List<TipoVehiculoSalidaDto>? TiposVehiculos { get; set; }
+
+    // ====== PAGINACIÓN ======
+    int PaginaActual = 1;
+    int PageSize = 10;
+    int TotalPaginas = 1;
+
+    bool Cargando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Buscar();
+    }
+
+    async Task Buscar()
+    {
+        Cargando = true;
+
+        var url = $"/api/tipos-vehiculos?page={PaginaActual - 1}&size={PageSize}";
+
+        if (FiltroTipo.HasValue)
+            url += $"&tipo={FiltroTipo}";
+
+        if (!string.IsNullOrWhiteSpace(FiltroDescripcion))
+            url += $"&descripcion={FiltroDescripcion}";
+
+        var response = await Http.GetFromJsonAsync<PageResult<TipoVehiculoSalidaDto>>(url);
+
+        TiposVehiculos = response?.Content ?? new List<TipoVehiculoSalidaDto>();
+
+        TotalPaginas = response?.TotalPages ?? 1;
+
+        Cargando = false;
+    }
+
+    void Limpiar()
+    {
+        FiltroTipo = null;
+        FiltroDescripcion = null;
+        PaginaActual = 1;
+        Buscar();
+    }
+
+    bool PuedeAnterior => PaginaActual > 1;
+    bool PuedeSiguiente => PaginaActual < TotalPaginas;
+
+    void Anterior()
+    {
+        if (PuedeAnterior)
+        {
+            PaginaActual--;
+            Buscar();
+        }
+    }
+
+    void Siguiente()
+    {
+        if (PuedeSiguiente)
+        {
+            PaginaActual++;
+            Buscar();
+        }
+    }
+
+    async Task Eliminar(int id)
+    {
+        var response = await Http.DeleteAsync($"/api/tipos-vehiculos/{id}");
+
+        if (response.IsSuccessStatusCode)
+            await Buscar();
+    }
+
+    // DTO para paginación
+    public class PageResult<T>
+    {
+        public List<T>? Content { get; set; }
+        public int TotalPages { get; set; }
+    }
+
+    public class TipoVehiculoSalidaDto
+    {
+        public int Id { get; set; }
+        public byte Tipo { get; set; }
+        public string Descripcion { get; set; }
+    }
+
+}

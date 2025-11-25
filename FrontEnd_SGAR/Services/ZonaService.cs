@@ -18,5 +18,18 @@ namespace FrontEnd_SGAR.Services
             var zonas = await _http.GetFromJsonAsync<List<Zona>>("ApiNavegacion/zones/");
             return zonas ?? new List<Zona>();
         }
+
+        public async Task<Zona?> ObtenerZonaPorIdAsync(string id)
+        {
+            try
+            {
+                return await _http.GetFromJsonAsync<Zona>($"ApiNavegacion/zones/{id}");
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
     }
 }

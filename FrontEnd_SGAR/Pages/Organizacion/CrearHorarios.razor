@@ -1,0 +1,236 @@
+﻿@page "/horarios/crear"
+@using FrontEnd_SGAR.DTOs
+@using FrontEnd_SGAR.Services
+@inject HorarioService HorarioService
+@inject NavigationManager Nav
+@inject AuthOrganizacionService AuthService
+@inject OrganizacionService OrganizacionService
+@inject ZonaService ZonaService
+
+<h2 class="fw-bold text-primary mb-4">
+    <i class="bi bi-calendar-plus me-2"></i>Crear Horario
+</h2>
+
+@if (cargando)
+{
+    <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 text-muted">Cargando datos...</p>
+    </div>
+}
+else
+{
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body p-4">
+
+            <EditForm Model="nuevoHorario" OnValidSubmit="GuardarHorario">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row g-4">
+
+                    <!-- Organización -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Organización</label>
+                        <input class="form-control form-control-modern"
+                               value="@organizacionActual?.nombreOrganizacion" disabled />
+                    </div>
+
+                    <!-- Zona -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Zona</label>
+                        <select class="form-select form-select-modern"
+                                @bind="nuevoHorario.ZonaId" required>
+                            <option value="">Seleccione una zona</option>
+                            @foreach (var zona in zonas)
+                            {
+                                <option value="@zona.Id">@zona.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Día -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Día</label>
+                        <select class="form-select form-select-modern"
+                                @bind="nuevoHorario.Dia" required>
+                            <option value="">Seleccione un día</option>
+                            @foreach (var d in diasSemana.Select((texto, index) => new { texto, index }))
+                            {
+                                <option value="@(d.index + 1)">@d.texto</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Turno -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Turno</label>
+                        <select class="form-select form-select-modern"
+                                @bind="nuevoHorario.Turno" required>
+                            <option value="0">Seleccione turno</option>
+                            <option value="1">Mañana</option>
+                            <option value="2">Tarde</option>
+                            <option value="3">Noche</option>
+                        </select>
+                    </div>
+
+                    <!-- Hora Entrada -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Hora Entrada</label>
+                        <input type="time" class="form-control form-control-modern"
+                               @bind-value="horaEntrada" required />
+                    </div>
+
+                    <!-- Hora Salida -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Hora Salida</label>
+                        <input type="time" class="form-control form-control-modern"
+                               @bind-value="horaSalida" required />
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <!-- Botones -->
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-primary px-4 py-2 rounded-3 shadow-sm">
+                        <i class="bi bi-check-circle me-1"></i> Guardar
+                    </button>
+
+                    <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-3"
+                            @onclick="Cancelar">
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(mensajeError))
+                {
+                    <div class="alert alert-danger mt-4 rounded-3 shadow-sm">
+                        <i class="bi bi-exclamation-circle me-2"></i>@mensajeError
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(mensajeExito))
+                {
+                    <div class="alert alert-success mt-4 rounded-3 shadow-sm">
+                        <i class="bi bi-check-circle me-2"></i>@mensajeExito
+                    </div>
+                }
+            </EditForm>
+        </div>
+    </div>
+}
+
+<style>
+
+    .form-control-modern,
+    .form-select-modern {
+        border-radius: 12px;
+        padding: 10px 14px;
+        border: 1px solid #d9d9d9;
+        transition: all 0.2s ease;
+    }
+
+        .form-control-modern:focus,
+        .form-select-modern:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 6px rgba(13, 110, 253, .3);
+        }
+
+    .card {
+        border-radius: 18px !important;
+    }
+
+    hr {
+        border-top: 1px solid #e6e6e6;
+    }
+
+</style>
+
+@code {
+    private HorarioGuardarDto nuevoHorario = new();
+    private OrganizacionDTO.OrganizacionDetalle? organizacionActual;
+    private List<ZonaDTO.Zona> zonas = new();
+    private bool cargando = true;
+    private string mensajeError = "";
+    private string mensajeExito = "";
+
+    // Inputs de hora
+    private TimeOnly? horaEntrada;
+    private TimeOnly? horaSalida;
+
+    private readonly List<string> diasSemana = new()
+    {
+        "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        try
+        {
+            // Obtener el token y los claims
+            var jwt = await AuthService.ObtenerTokenDecodificado();
+            var orgIdClaim = jwt?.Claims.FirstOrDefault(c => c.Type == "nameid")?.Value;
+            var rolClaim = jwt?.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+
+            int orgId = 0;
+            int.TryParse(orgIdClaim, out orgId);
+
+            // Solo asigna si el rol es de organización (case-insensitive)
+            if (rolClaim?.ToLower() == "organizacion" && orgId > 0)
+            {
+                organizacionActual = await OrganizacionService.ObtenerPorId(orgId);
+                nuevoHorario.IdOrganizacion = orgId;
+            }
+            else
+            {
+                mensajeError = "No tienes permisos para crear horarios.";
+                return;
+            }
+
+            zonas = await ZonaService.ObtenerZonasAsync();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error cargando datos: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GuardarHorario()
+    {
+        mensajeError = "";
+        mensajeExito = "";
+
+        if (horaEntrada == null || horaSalida == null)
+        {
+            mensajeError = "Debe ingresar ambas horas.";
+            return;
+        }
+        if (horaEntrada >= horaSalida)
+        {
+            mensajeError = "La hora de entrada debe ser anterior a la hora de salida.";
+            return;
+        }
+
+        // Convertir a string "HH:mm" para el DTO
+        nuevoHorario.HoraEntrada = horaEntrada.Value.ToString("HH:mm");
+        nuevoHorario.HoraSalida = horaSalida.Value.ToString("HH:mm");
+
+        var result = await HorarioService.CrearHorarioAsync(nuevoHorario);
+        if (result != null)
+        {
+            mensajeExito = "Horario creado exitosamente.";
+            await Task.Delay(1500);
+            Nav.NavigateTo("/index-horarios");
+        }
+        else
+        {
+            mensajeError = "No se pudo crear el horario.";
+        }
+    }
+    private void Cancelar() => Nav.NavigateTo("/index-horarios");
+}
