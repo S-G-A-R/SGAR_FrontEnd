@@ -55,5 +55,6 @@ builder.Services.AddScoped<CategoriaService>();
 builder.Services.AddScoped<MarcaService>();
 builder.Services.AddScoped<TipoVehiculoService>();
 builder.Services.AddScoped<HorarioService>();
+builder.Services.AddScoped<ProductoService>();
 
 await builder.Build().RunAsync();
