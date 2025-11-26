@@ -1,0 +1,516 @@
+﻿@page "/producto-crear"
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject ProductoService ProductoService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="d-flex justify-content-center py-5">
+    <div class="registro-container">
+        <div class="card shadow-xl p-4 custom-form-card border-0 rounded-4">
+
+            <h3 class="text-center mb-4 fw-bold text-dark">
+                <i class="bi bi-box-seam me-2"></i> Registrar Nuevo Producto
+            </h3>
+            <hr class="mb-4" />
+
+            @if (cargando)
+            {
+                <div class="d-flex justify-content-center align-items-center py-5">
+                    <div class="spinner-border text-primary me-3" role="status"></div>
+                    <p class="fw-semibold">Cargando opciones iniciales...</p>
+                </div>
+            }
+            else if (errorCarga)
+            {
+                <div class="alert alert-danger text-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    @errorMessage
+                </div>
+            }
+            else
+            {
+                <EditForm Model="@modelo">
+                    <DataAnnotationsValidator />
+
+                    <div class="row g-4">
+
+                        <!-- Nombre del Producto -->
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="required fw-semibold">Nombre del Producto</label>
+                                <InputText @bind-Value="modelo.Nombre" class="form-control"
+                                           placeholder="Ej: Servicio de Consultoría Pro" />
+                                <ValidationMessage For="@(() => modelo.Nombre)" />
+                            </div>
+                        </div>
+
+                        <!-- Precio y Tipo -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required fw-semibold">Precio ($)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                                    <InputNumber @bind-Value="modelo.Precio" class="form-control" placeholder="0.00" />
+                                </div>
+                                <ValidationMessage For="@(() => modelo.Precio)" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required fw-semibold">Tipo de Producto</label>
+                                <!-- InputText para el campo 'tipo' -->
+                                <InputText @bind-Value="modelo.Tipo" class="form-control"
+                                           placeholder="Ej: Servicio, Software, Físico" />
+                                <ValidationMessage For="@(() => modelo.Tipo)" />
+                            </div>
+                        </div>
+
+                        <!-- Categoría y Empresa (Selects simulados para IDs) -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required fw-semibold">Categoría</label>
+                                <InputSelect @bind-Value="modelo.CategoriaProductoId" class="form-select">
+                                    <option value="0">-- Seleccione Categoría --</option>
+                                    @foreach (var cat in categorias)
+                                    {
+                                        <option value="@cat.id">@cat.nombreCat</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => modelo.CategoriaProductoId)" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required fw-semibold">Empresa Asociada</label>
+                                <InputSelect @bind-Value="modelo.EmpresaId" class="form-select">
+                                    <option value="0">-- Seleccione Empresa --</option>
+                                    @foreach (var emp in empresas)
+                                    {
+                                        <option value="@emp.id">@emp.NombreEmpresa</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => modelo.EmpresaId)" />
+                            </div>
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="fw-semibold">Descripción del Producto</label>
+                                <InputTextArea @bind-Value="modelo.Descripcion" class="form-control" rows="3"
+                                               placeholder="Detalles, características y beneficios." />
+                                <ValidationMessage For="@(() => modelo.Descripcion)" />
+                            </div>
+                        </div>
+
+                        <div class="col-12 form-group">
+                            <label>Fotografía del Vehículo</label>
+                            <div class="foto-container">
+                                <div class="foto-placeholder">
+                                    @if (!string.IsNullOrEmpty(imagenPreview))
+                                    {
+                                        <img src="@imagenPreview" alt="Previa" class="img-preview" />
+                                        <div class="imagen-overlay">
+                                            <i class="bi bi-camera-fill"></i>
+                                            <p>Cambiar imagen</p>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-camera" style="font-size: 3rem; color: #ccc;"></i>
+                                        <p class="mt-2">Seleccionar imagen</p>
+                                    }
+                                </div>
+                                <InputFile OnChange="CargarImagen" accept="image/*" class="file-input" />
+                            </div>
+                            @if (archivoImagen != null)
+                            {
+                                <small class="text-muted">Archivo: @archivoImagen.Name (@FormatFileSize(archivoImagen.Size))</small>
+                            }
+                        </div>
+
+                    </div>
+
+                    <hr class="mt-5 mb-4" />
+
+
+                    <div class="d-flex gap-3 justify-content-center mt-4">
+
+                        <button type="submit" class="btn btn-success px-4 py-2 custom-btn-size">
+                            <i class="bi bi-check-circle me-1"></i> Crear Plan
+                        </button>
+
+                        <button type="button" class="btn btn-secondary px-4 py-2 custom-btn-size">
+                            <i class="bi bi-x-circle me-1"></i> Cancelar
+                        </button>
+                    </div>
+
+                </EditForm>
+
+            }
+
+
+
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos adaptados de tu formulario original */
+    .registro-container {
+        max-width: 600px;
+        width: 95%;
+    }
+
+    .custom-form-card {
+        background-color: #f8f9fa; /* Un color claro para el fondo del card */
+    }
+
+    .required::after {
+        content: " *";
+        color: red;
+        font-weight: bold;
+    }
+
+    .custom-btn-size {
+        min-width: 180px;
+    }
+    /* Estilos de responsividad para el card */
+    @@media (max-width: 768px) {
+        .custom-form-card {
+            padding: 2rem !important;
+        }
+    }
+
+    .foto-container {
+        position: relative;
+        border: 2px dashed #ddd;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s;
+        min-height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .foto-container:hover {
+            border-color: #007bff;
+        }
+
+    .foto-placeholder {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .img-preview {
+        max-width: 300px;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .imagen-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+        border-radius: 8px;
+    }
+
+    .foto-container:hover .imagen-overlay {
+        opacity: 1;
+    }
+
+    .imagen-overlay i {
+        font-size: 2rem;
+        margin-bottom: 5px;
+    }
+
+    .imagen-overlay p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+</style>
+
+@code {
+
+    private int currentPage = 0;
+    private int pageSize = 10;
+    private string sortBy = "id";
+    private string direction = "asc";
+    private string errorMessage = "";
+
+    private bool guardando = false;
+
+    private string imagenPreview = "";
+    private IBrowserFile? archivoImagen;
+
+    private bool isLoading = true;
+    private bool errorCarga = false;
+    private bool cargando = false;
+    private ProductoModeloValidacion modelo = new();
+
+    private int asociadoId = new();
+    private List<EmpresaDTO> empresas = new();
+    private List<CategoriaProductoDTO> categorias = new();
+
+    public class ProductoModeloValidacion
+    {
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [StringLength(100, ErrorMessage = "Máximo 100 caracteres.")]
+        public string Nombre { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El precio es obligatorio.")]
+        [Range(0.01, 999999.99, ErrorMessage = "El precio debe ser mayor a cero.")]
+        public decimal Precio { get; set; }
+
+        [Required(ErrorMessage = "El tipo de producto es obligatorio.")]
+        public string Tipo { get; set; } = string.Empty;
+
+        [StringLength(500, ErrorMessage = "Máximo 500 caracteres.")]
+        public string? Descripcion { get; set; }
+
+        public int? IdFoto { get; set; }
+        public string? ImagenBase64 { get; set; }
+
+        [Required(ErrorMessage = "Debe seleccionar una Categoría.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Selecciona una categoría válida.")]
+        public int CategoriaProductoId { get; set; }
+
+        [Required(ErrorMessage = "La Empresa es obligatoria.")]
+        public int EmpresaId { get; set; }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        errorCarga = false;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var id = await ObtenerUserIdAsync();
+
+            if (id == null)
+            {
+                errorMessage = "No se pudo identificar al usuario (ID no encontrado en localStorage).";
+                errorCarga = true;
+                return;
+            }
+            asociadoId = id.Value;
+
+            var cargarCategoriaTask = CargarTodasCategoriasAsync();
+            var cargarEmpresaTask = CargarTodasEmpresasAsync();
+
+            await Task.WhenAll(cargarCategoriaTask, cargarEmpresaTask);
+
+            categorias = cargarCategoriaTask.Result;
+            empresas = cargarEmpresaTask.Result;
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error inicializando y cargando opciones: {ex.Message}");
+            errorMessage = $"Error al cargar opciones: {ex.Message}";
+            errorCarga = true;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    // Método que llama al servicio repetidamente hasta obtener todas las categorías.
+    private async Task<List<CategoriaProductoDTO>> CargarTodasCategoriasAsync()
+    {
+        var todasCategorias = new List<CategoriaProductoDTO>();
+        int page = 0;
+        const int pageSize = 100;
+        int totalPages = 1;
+
+        while (page < totalPages)
+        {
+            // Se asume que ProductoService.CargarCategoriasAsync devuelve CategoriaProductoResponsePaginada
+            var response = await ProductoService.CargarCategoriasAsync(asociadoId, page, pageSize);
+
+            if (response?.CategoriasProducto != null)
+            {
+                todasCategorias.AddRange(response.CategoriasProducto);
+                totalPages = response.TotalPages;
+            }
+            else
+            {
+                if (page == 0) throw new Exception("Fallo al cargar las categorías desde la API o el endpoint retornó un valor nulo.");
+                break;
+            }
+            page++;
+        }
+        return todasCategorias;
+    }
+
+    // Método que llama al servicio repetidamente hasta obtener todas las empresas.
+    private async Task<List<EmpresaDTO>> CargarTodasEmpresasAsync()
+    {
+        var todasEmpresas = new List<EmpresaDTO>();
+        int page = 0;
+        const int pageSize = 100;
+        int totalPages = 1;
+
+        while (page < totalPages)
+        {
+            // Se asume que ProductoService.CargarEmpresasAsync devuelve EmpresasResponsePaginada
+            var response = await ProductoService.CargarEmpresasAsync(asociadoId, page, pageSize);
+
+            if (response?.Empresas != null)
+            {
+                todasEmpresas.AddRange(response.Empresas);
+                totalPages = response.TotalPages;
+            }
+            else
+            {
+                if (page == 0) throw new Exception("Fallo al cargar las empresas desde la API o el endpoint retornó un valor nulo.");
+                break;
+            }
+            page++;
+        }
+        return todasEmpresas;
+    }
+
+    // --- MÉTODO PARA OBTENER USER ID (MÉTODO PROPORCIONADO POR EL USUARIO) ---
+    private async Task<int?> ObtenerUserIdAsync()
+    {
+        var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+
+        if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+        {
+            return null;
+        }
+
+        return userId;
+    }
+
+    private async Task CargarImagen(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            try
+            {
+                // Validaciones básicas de UI
+                if (file.Size > 10 * 1024 * 1024)
+                {
+                    await JS.InvokeVoidAsync("alert", "La imagen no debe exceder 10MB");
+                    return;
+                }
+
+                var tiposPermitidos = new[] { "image/jpeg", "image/png", "image/gif" };
+                if (!tiposPermitidos.Contains(file.ContentType))
+                {
+                    await JS.InvokeVoidAsync("alert", "Formato no válido. Use JPG o PNG.");
+                    return;
+                }
+
+                archivoImagen = file;
+
+                // Crear preview local
+                var buffer = new byte[file.Size];
+                await file.OpenReadStream(10 * 1024 * 1024).ReadAsync(buffer);
+                imagenPreview = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error imagen: {ex.Message}");
+            }
+        }
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] suffixes = { "B", "KB", "MB", "GB" };
+        int counter = 0;
+        decimal number = bytes;
+        while (Math.Round(number / 1024) >= 1)
+        {
+            number /= 1024;
+            counter++;
+        }
+        return $"{number:n1} {suffixes[counter]}";
+    }
+
+    private async Task RegistrarProducto()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            if (modelo.CategoriaProductoId <= 0 || modelo.EmpresaId <= 0)
+            {
+                errorMessage = "Seleccione Categoría y Empresa."; return;
+            }
+
+            // Llamamos al nuevo método del servicio que maneja Multipart
+            var resultado = await ProductoService.GuardarProductosAsync(modelo, archivoImagen);
+
+            if (resultado.Exito)
+            {
+                // Éxito
+                modelo = new ProductoModeloValidacion { CategoriaProductoId = 0, EmpresaId = 0, Precio = 0.00M };
+                imagenPreview = "";
+                archivoImagen = null;
+                await JS.InvokeVoidAsync("alert", "Producto creado exitosamente.");
+            }
+            else
+            {
+                errorMessage = resultado.Mensaje;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error crítico: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+}
