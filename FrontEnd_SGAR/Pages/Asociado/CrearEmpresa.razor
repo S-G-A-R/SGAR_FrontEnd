@@ -12,13 +12,6 @@
 
 <link href="css/registro-organizacion.css" rel="stylesheet" />
 
-<div id="successAlert" class="custom-alert hidden">
-    <div class="alert-box">
-        <div class="alert-icon" id="alertIcon">🔔</div>
-        <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
-    </div>
-</div>
-
 
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -62,6 +55,15 @@
 
                 </EditForm>
             </div>
+
+            <!-- ✅ Notificación tipo campana -->
+            <div id="successAlert" class="success-alert hidden">
+                <div class="alert-box">
+                    <div class="alert-icon">🔔</div>
+                    <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -146,17 +148,56 @@
         font-weight: 500;
         color: #333;
     }
+
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
 </style>
 
 <script>
     function showCustomAlert(message) {
         const alert = document.getElementById("successAlert");
         const text = document.getElementById("alertMessage");
-        const icon = document.getElementById("alertIcon");
 
-        icon.textContent = "🔔";
-        icon.style.color = "#ffcc00"; // Éxito
-        icon.classList.add("pulse"); // Aplicar clase de animación
+        alert.querySelector(".alert-icon").textContent = "🔔";
+        alert.querySelector(".alert-icon").style.color = "#ffcc00";
 
         text.textContent = message;
         alert.classList.remove("hidden");
@@ -165,18 +206,15 @@
         setTimeout(() => {
             alert.classList.remove("show");
             alert.classList.add("hidden");
-            icon.classList.remove("pulse"); // Limpiar animación
         }, 3000);
     }
 
     function showErrorAlert(message) {
         const alert = document.getElementById("successAlert");
         const text = document.getElementById("alertMessage");
-        const icon = document.getElementById("alertIcon");
 
-        icon.textContent = "❌";
-        icon.style.color = "#e63946"; // Error
-        icon.classList.add("pulse"); // Aplicar clase de animación
+        alert.querySelector(".alert-icon").textContent = "❌";
+        alert.querySelector(".alert-icon").style.color = "#e63946";
 
         text.textContent = message;
         alert.classList.remove("hidden");
@@ -185,10 +223,11 @@
         setTimeout(() => {
             alert.classList.remove("show");
             alert.classList.add("hidden");
-            icon.classList.remove("pulse"); // Limpiar animación
         }, 3000);
     }
 </script>
+
+
 
 @code {
 
@@ -229,9 +268,9 @@
 
             if (resultado != null && !string.IsNullOrEmpty(resultado.message))
             {
+
                 await JS.InvokeVoidAsync("showCustomAlert", $"Empresa registrada: {resultado.message}");
-                
-                // Redirigir al index de empresas
+                await Task.Delay(1200);
                 Nav.NavigateTo("/empresa-index"); 
             }
             else

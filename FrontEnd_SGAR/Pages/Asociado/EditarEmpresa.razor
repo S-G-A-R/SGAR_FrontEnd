@@ -12,12 +12,6 @@
 
 <link href="css/registro-organizacion.css" rel="stylesheet" />
 
-<div id="successAlert" class="custom-alert hidden">
-    <div class="alert-box">
-        <div class="alert-icon" id="alertIcon">🔔</div>
-        <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
-    </div>
-</div>
 
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -73,6 +67,15 @@
                     </EditForm>
                 }
             </div>
+
+
+            <div id="successAlert" class="custom-alert hidden">
+                <div class="alert-box">
+                    <div class="alert-icon" id="alertIcon">🔔</div>
+                    <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -281,9 +284,8 @@
             if (resultado != null)
             {
                 await JS.InvokeVoidAsync("showCustomAlert", "Empresa editada con éxito.");
-
-                // ⭐ SOLUCIÓN CLAVE: Forzar la recarga de la página de índice para actualizar la lista.
-                Nav.NavigateTo("/empresa-index", forceLoad: true);
+                await Task.Delay(1000);
+                Nav.NavigateTo("/empresa-index");
             }
             else
             {

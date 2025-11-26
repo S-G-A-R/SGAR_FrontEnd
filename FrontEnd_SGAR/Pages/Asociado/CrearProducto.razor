@@ -35,7 +35,7 @@
             }
             else
             {
-                <EditForm Model="@modelo">
+                <EditForm Model="@modelo" OnValidSubmit="RegistrarProducto">
                     <DataAnnotationsValidator />
 
                     <div class="row g-4">
@@ -67,7 +67,7 @@
                                 <label class="required fw-semibold">Tipo de Producto</label>
                                 <!-- InputText para el campo 'tipo' -->
                                 <InputText @bind-Value="modelo.Tipo" class="form-control"
-                                           placeholder="Ej: Servicio, Software, Físico" />
+                                           placeholder="Ej: Físico " />
                                 <ValidationMessage For="@(() => modelo.Tipo)" />
                             </div>
                         </div>
@@ -112,7 +112,7 @@
                         </div>
 
                         <div class="col-12 form-group">
-                            <label>Fotografía del Vehículo</label>
+                            <label>Imagen del Producto</label>
                             <div class="foto-container">
                                 <div class="foto-placeholder">
                                     @if (!string.IsNullOrEmpty(imagenPreview))
@@ -145,10 +145,10 @@
                     <div class="d-flex gap-3 justify-content-center mt-4">
 
                         <button type="submit" class="btn btn-success px-4 py-2 custom-btn-size">
-                            <i class="bi bi-check-circle me-1"></i> Crear Plan
+                            <i class="bi bi-check-circle me-1"></i> Crear Producto
                         </button>
 
-                        <button type="button" class="btn btn-secondary px-4 py-2 custom-btn-size">
+                        <button type="button" class="btn btn-secondary px-4 py-2 custom-btn-size" @onclick="Cancelar">
                             <i class="bi bi-x-circle me-1"></i> Cancelar
                         </button>
                     </div>
@@ -157,7 +157,13 @@
 
             }
 
-
+            <!-- ✅ Notificación tipo campana -->
+            <div id="successAlert" class="success-alert hidden">
+                <div class="alert-box">
+                    <div class="alert-icon">🔔</div>
+                    <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+                </div>
+            </div>
 
 
         </div>
@@ -165,6 +171,48 @@
 </div>
 
 <style>
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+
     /* Estilos adaptados de tu formulario original */
     .registro-container {
         max-width: 600px;
@@ -269,6 +317,43 @@
     }
 </style>
 
+<script>
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "🔔";
+        alert.querySelector(".alert-icon").style.color = "#ffcc00";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+
+    function showErrorAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+
+        alert.querySelector(".alert-icon").textContent = "❌";
+        alert.querySelector(".alert-icon").style.color = "#e63946";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => {
+            alert.classList.remove("show");
+            alert.classList.add("hidden");
+        }, 3000);
+    }
+</script>
+
+
 @code {
 
     private int currentPage = 0;
@@ -307,7 +392,7 @@
         [StringLength(500, ErrorMessage = "Máximo 500 caracteres.")]
         public string? Descripcion { get; set; }
 
-        public int? IdFoto { get; set; }
+        public int? FotoId { get; set; }
         public string? ImagenBase64 { get; set; }
 
         [Required(ErrorMessage = "Debe seleccionar una Categoría.")]
@@ -484,7 +569,10 @@
         {
             if (modelo.CategoriaProductoId <= 0 || modelo.EmpresaId <= 0)
             {
-                errorMessage = "Seleccione Categoría y Empresa."; return;
+                errorMessage = "Seleccione Categoría y Empresa.";
+                // Mostrar error en la campana
+                await JS.InvokeVoidAsync("showErrorAlert", errorMessage);
+                return;
             }
 
             // Llamamos al nuevo método del servicio que maneja Multipart
@@ -492,25 +580,36 @@
 
             if (resultado.Exito)
             {
-                // Éxito
+                // Éxito: limpiar formulario
                 modelo = new ProductoModeloValidacion { CategoriaProductoId = 0, EmpresaId = 0, Precio = 0.00M };
-                imagenPreview = "";
+                imagenPreview = string.Empty;
                 archivoImagen = null;
-                await JS.InvokeVoidAsync("alert", "Producto creado exitosamente.");
+
+                await JS.InvokeVoidAsync("showCustomAlert", "Producto creado exitosamente.");
+                await Task.Delay(1200);
+                Nav.NavigateTo("/producto-index");
             }
             else
             {
                 errorMessage = resultado.Mensaje;
+
+                await JS.InvokeVoidAsync("showErrorAlert", resultado.Mensaje);
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"Error crítico: {ex.Message}";
+            await JS.InvokeVoidAsync("showErrorAlert", errorMessage);
         }
         finally
         {
             isLoading = false;
         }
+    }
+
+    private void Cancelar()
+    {
+        Nav.NavigateTo("/producto-index");
     }
 
 }

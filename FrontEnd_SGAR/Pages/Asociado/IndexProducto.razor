@@ -1,36 +1,24 @@
-﻿@page "/categoria-index"
-@using FrontEnd_SGAR.Providers
+﻿@page "/producto-index"
 @using FrontEnd_SGAR.Services
 @using FrontEnd_SGAR.DTOs
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
-@inject CategoriaService CategoriaService
+@inject ProductoService ProductoService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
-@inject CustomAuthStateProvider AuthStateProvider
-
 
 <link rel="stylesheet" href="css/index-organizacion.css" />
-
-<!-- Alerta tipo campana -->
-<div id="successAlert" class="success-alert hidden">
-    <div class="alert-box">
-        <div class="alert-icon" id="alertIcon">🔔</div>
-        <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
-    </div>
-</div>
 
 <div class="container mt-5">
 
     <h1 class="display-4 fw-bolder text-center mb-5 titulo-principal">
-        <i class="bi bi-tags-fill me-3"></i> Gestión de Categorías de Productos
+        <i class="bi bi-box-seam me-3"></i> Mis Productos
     </h1>
 
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
 
-        <button class="btn btn-success px-4 py-2 fw-semibold shadow-sm"
-                @onclick='() => Nav.NavigateTo("/categoria-crear")'>
-            <i class="bi bi-plus-circle me-2"></i> Crear Nueva Categoría
+        <button class="btn btn-success px-4 py-2 fw-semibold shadow-sm" @onclick='() => Nav.NavigateTo("/producto-crear")'>
+            <i class="bi bi-plus-circle me-2"></i> Crear Nuevo Producto
         </button>
 
         <div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
@@ -47,7 +35,7 @@
 
     <div class="p-4 rounded-3 shadow-lg bg-white main-content-card">
 
-        @if (isLoading)
+        @if (cargando)
         {
             <div class="text-center p-5 custom-loader-container">
                 <div class="loader-dots-container d-flex justify-content-center align-items-center mb-3 gap-2">
@@ -55,35 +43,43 @@
                     <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden"></span></div>
                     <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden"></span></div>
                 </div>
-                <p class="mt-2 text-secondary fw-bold fs-5">Cargando Categorías...</p>
+                <p class="mt-2 text-secondary fw-bold fs-5">Cargando Productos...</p>
             </div>
         }
-        else if (response == null || !response.CategoriasProducto.Any())
+        else if (response == null || response.Productos == null || !response.Productos.Any())
         {
             <div class="alert alert-info text-center py-4 my-4 border-0 rounded-3">
                 <i class="bi bi-info-circle-fill me-2 fs-4"></i>
-                <h4 class="mb-0">No tienes categorías registradas.</h4>
+                <h4 class="mb-0">No hay productos registrados.</h4>
             </div>
         }
         else
         {
             <div class="row g-4 mt-3">
-                @foreach (var cat in response.CategoriasProducto)
+                @foreach (var producto in response.Productos)
                 {
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="card h-100 border-0 card-empresa card-shadow-border">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title fw-bold text-dark mb-2"><i class="bi bi-tag me-2"></i> @cat.nombreCat</h5>
-                                <p class="text-muted small mb-2"><span class="fw-semibold">ID:</span> @cat.id</p>
 
-                                <div class="d-flex justify-content-center gap-3 mt-auto pt-3 border-top">
-                                    <button class="btn btn-warning btn-icon-lg" title="Editar" @onclick="() => Editar(cat.id)">
+                                @if (!string.IsNullOrEmpty(producto.ImagenBase64))
+                                {
+                                    <img src="data:image/jpeg;base64,@producto.ImagenBase64" class="img-fluid mb-3" style="height:150px;object-fit:cover;border-radius:8px;" />
+                                }
+
+                                <h5 class="card-title fw-bold text-dark mb-2">@producto.Nombre</h5>
+                                <p class="text-muted small mb-2">@producto.Descripcion</p>
+                                <p class="fw-semibold mt-auto mb-2">Precio: @producto.Precio.ToString("C")</p>
+
+                                <div class="d-flex justify-content-center gap-3 mt-3 pt-3 border-top">
+                                    <button class="btn btn-warning btn-icon-lg" title="Editar" @onclick="() => Editar(producto.Id)">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-danger btn-icon-lg" title="Eliminar" @onclick="() => ConfirmarEliminar(cat)">
+                                    <button class="btn btn-danger btn-icon-lg" title="Eliminar" @onclick="() => ConfirmarEliminar(producto)">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -96,7 +92,7 @@
                         <i class="bi bi-arrow-left"></i> Anterior
                     </button>
 
-                    <span class="fw-bold page-info text-secondary">Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems Categorías</span>
+                    <span class="fw-bold page-info text-secondary">Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems Productos</span>
 
                     <button class="btn btn-outline-secondary px-3 py-2 fw-bold" disabled="@(!response.HasNextPage)" @onclick="NextPage">
                         Siguiente <i class="bi bi-arrow-right"></i>
@@ -114,7 +110,7 @@
 
     </div>
 
-    @if (mostrarModalEliminar && CategoriaAEliminar != null)
+    @if (mostrarModalEliminar && productoAEliminar != null)
     {
         <div class="modal-overlay">
             <div class="modal-content">
@@ -122,15 +118,15 @@
                     <h5 class="m-0 text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-2">¿Estás seguro que deseas eliminar esta categoría?</p>
+                    <p class="mb-2">¿Estás seguro que deseas eliminar este producto?</p>
                     <div class="alert alert-warning d-inline-block p-2 mt-2">
-                        <strong>@CategoriaAEliminar.nombreCat</strong>
+                        <strong>@productoAEliminar.Nombre</strong>
                     </div>
                     <p class="text-danger small mt-3 mb-0">Esta acción no se puede deshacer.</p>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
-                    <button type="button" class="btn-continuar" @onclick="EliminarCategoria"> <i class="bi bi-trash me-1"></i> Eliminar</button>
+                    <button type="button" class="btn-continuar" @onclick="EliminarProducto"> <i class="bi bi-trash me-1"></i> Eliminar</button>
                 </div>
             </div>
         </div>
@@ -152,122 +148,116 @@
     .modal-actions { display:flex; gap:10px; padding:20px; justify-content:center; }
     .btn-continuar { background:#dc3545; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; }
     .btn-cancelar { background:#6c757d; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; }
-    .success-alert { position: fixed; top: 20px; right: 20px; z-index: 9999; transition: all 0.4s ease; opacity: 0; transform: translateY(-20px); }
-    .success-alert.show { opacity:1; transform: translateY(0); }
-    .success-alert.hidden { opacity:0; pointer-events:none; }
-    .alert-box { background:#fff; border-radius:20px; padding:15px 25px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
     .alert-icon { font-size:1.8rem; color:#ffcc00; }
 </style>
 
-<script>
-    function showCustomAlert(message) {
-        const alert = document.getElementById("successAlert");
-        const text = document.getElementById("alertMessage");
-        const icon = document.getElementById("alertIcon");
-
-        icon.textContent = "🔔";
-        icon.style.color = "#ffcc00";
-
-        text.textContent = message;
-        alert.classList.remove("hidden");
-        alert.classList.add("show");
-
-        setTimeout(() => { alert.classList.remove("show"); alert.classList.add("hidden"); }, 3000);
-    }
-
-    function showErrorAlert(message) {
-        const alert = document.getElementById("successAlert");
-        const text = document.getElementById("alertMessage");
-        const icon = document.getElementById("alertIcon");
-
-        icon.textContent = "❌";
-        icon.style.color = "#e63946";
-
-        text.textContent = message;
-        alert.classList.remove("hidden");
-        alert.classList.add("show");
-
-        setTimeout(() => { alert.classList.remove("show"); alert.classList.add("hidden"); }, 3000);
-    }
-</script>
-
 @code {
-
-    private CategoriaProductoResponsePaginada? response = new();
-    private bool isLoading = true;
+    private ProductoResponsePaginada? response;
+    private bool cargando = true;
     private int currentPage = 0;
     private int pageSize = 10;
     private string errorMessage = "";
+    private int asociadoId;
 
     private bool mostrarModalEliminar = false;
-    private CategoriaProductoDTO? CategoriaAEliminar;
+    private ProductoDTO? productoAEliminar;
 
     protected override async Task OnInitializedAsync()
     {
-        await CargarCategorias();
-    }
-
-    private async Task CargarCategorias()
-    {
+        cargando = true;
         try
         {
-            isLoading = true;
-            errorMessage = string.Empty;
-
-            var userId = await ObtenerUserIdAsync();
-            if (userId == null)
+            var id = await ObtenerUserIdAsync();
+            if (id == null)
             {
-                errorMessage = "No se pudo identificar al usuario. Por favor, inicie sesión nuevamente.";
-                isLoading = false;
+                errorMessage = "No se pudo identificar al usuario.";
+                cargando = false;
                 return;
             }
+            asociadoId = id.Value;
 
-            response = await CategoriaService.ObtenerCategoriasAsync(userId.Value, currentPage, pageSize);
-            if (response == null) errorMessage = "No se recibieron datos del servidor.";
+            await CargarProductos();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al cargar las categorias: {ex.Message}";
+            errorMessage = ex.Message;
         }
         finally
         {
-            isLoading = false;
+            cargando = false;
+        }
+    }
+
+    private async Task CargarProductos()
+    {
+        try
+        {
+            cargando = true;
+            errorMessage = string.Empty;
+
+            response = await ProductoService.ObtenerProductoAsociadoAsync(asociadoId, currentPage, pageSize);
+
+            if (response == null)
+            {
+                errorMessage = "No se pudo obtener la lista de productos.";
+                return;
+            }
+
+            foreach (var producto in response.Productos)
+            {
+                if (producto.FotoId.HasValue && string.IsNullOrEmpty(producto.ImagenBase64))
+                {
+                    try
+                    {
+                        var base64 = await ProductoService.ObtenerImagenBase64Async(producto.FotoId.Value);
+                        if (!string.IsNullOrEmpty(base64)) producto.ImagenBase64 = base64;
+                    }
+                    catch (Exception ex) { Console.WriteLine($"[IndexProducto] Error cargando imagen producto {producto.Id}: {ex.Message}"); }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            cargando = false;
             StateHasChanged();
         }
     }
 
     private async Task CambiarPageSize(ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out int newSize))
+        if (int.TryParse(e.Value?.ToString(), out var nuevo))
         {
-            pageSize = newSize;
+            pageSize = nuevo;
             currentPage = 0;
-            await CargarCategorias();
+            await CargarProductos();
         }
     }
 
     private async Task NextPage()
     {
-        if (response?.HasNextPage == true) { currentPage++; await CargarCategorias(); }
+        if (response?.HasNextPage == true)
+        {
+            currentPage++;
+            await CargarProductos();
+        }
     }
 
     private async Task PrevPage()
     {
-        if (response?.HasPreviousPage == true) { currentPage--; await CargarCategorias(); }
+        if (response?.HasPreviousPage == true && currentPage > 0)
+        {
+            currentPage--;
+            await CargarProductos();
+        }
     }
 
-    private void Editar(int id) => Nav.NavigateTo($"/categoria-editar/{id}");
-
-    private async Task<int?> ObtenerUserIdAsync()
+    private void ConfirmarEliminar(ProductoDTO producto)
     {
-        var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
-        if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId)) return null;
-        return userId;
-    }
-
-    private void ConfirmarEliminar(CategoriaProductoDTO categoria)
-    {
-        CategoriaAEliminar = categoria;
+        productoAEliminar = producto;
         mostrarModalEliminar = true;
         StateHasChanged();
     }
@@ -275,22 +265,22 @@
     private void CerrarModalEliminar()
     {
         mostrarModalEliminar = false;
-        CategoriaAEliminar = null;
+        productoAEliminar = null;
     }
 
-    private async Task EliminarCategoria()
+    private async Task EliminarProducto()
     {
-        if (CategoriaAEliminar == null) return;
+        if (productoAEliminar == null) return;
 
         try
         {
-            var resultado = await CategoriaService.EliminarCategoriaAsync(CategoriaAEliminar.id);
+            var resultado = await ProductoService.EliminarProductoAsync(productoAEliminar.Id);
             if (resultado.Exito)
             {
                 CerrarModalEliminar();
-                await JS.InvokeVoidAsync("showCustomAlert", "Categoría eliminada correctamente.");
+                await JS.InvokeVoidAsync("showCustomAlert", "Producto eliminado correctamente.");
                 await Task.Delay(900);
-                await CargarCategorias();
+                await CargarProductos();
             }
             else
             {
@@ -305,4 +295,13 @@
         }
     }
 
+    private void CrearNuevo() => Nav.NavigateTo("/producto-crear");
+    private void Editar(int id) => Nav.NavigateTo($"/producto-editar/{id}");
+
+    private async Task<int?> ObtenerUserIdAsync()
+    {
+        var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
+        if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId)) return null;
+        return userId;
+    }
 }

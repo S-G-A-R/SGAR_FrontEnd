@@ -16,6 +16,27 @@ namespace FrontEnd_SGAR.Services
             _http = http;
         }
 
+        public async Task<ProductoResponsePaginada?> ObtenerProductoAsociadoAsync(int id, int page = 0, int size = 10)
+        {
+            try
+            {
+                // Corregir URL: agregar & entre asociadoId y page
+                var url = $"ApiVenta/api/productos/buscar?asociadoId={id}&page={page}&size={size}&sortBy=id&direction=asc";
+
+                Console.WriteLine($"[ProductoService] URL: {url}");
+
+                var response = await _http.GetFromJsonAsync<ProductoResponsePaginada>(url);
+                return response;
+            }
+            catch (HttpRequestException httpEx)
+            {
+                Console.WriteLine($"[producto] Error HTTP: {httpEx.Message}");
+                return null;
+            }
+        }
+
+
+
         public async Task<CategoriaProductoResponsePaginada?> CargarCategoriasAsync(int id, int page = 0, int size = 10)
         {
             try
@@ -72,10 +93,12 @@ namespace FrontEnd_SGAR.Services
         {
             try
             {
-                var content = new MultipartFormDataContent();
-                // Límite de 10MB
-                var fileContent = new StreamContent(archivo.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024));
+                using var content = new MultipartFormDataContent();
+                using var stream = archivo.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+                using var fileContent = new StreamContent(stream);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType);
+
+                fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data") { Name = "\"imagen\"", FileName = $"\"{archivo.Name}\"" };
                 content.Add(fileContent, "imagen", archivo.Name);
 
                 var response = await _http.PostAsync("ApiVenta/api/imagenes-productos", content);
@@ -88,9 +111,10 @@ namespace FrontEnd_SGAR.Services
                     var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     var fotoElement = JsonSerializer.Deserialize<JsonElement>(jsonResponse, opciones);
 
-                    if (fotoElement.TryGetProperty("id", out var idProp))
+                    if (fotoElement.ValueKind == JsonValueKind.Object && fotoElement.TryGetProperty("id", out var idProp))
                     {
-                        return idProp.GetInt32();
+                        if (idProp.TryGetInt32(out int idVal))
+                            return idVal;
                     }
                 }
                 return null;
@@ -102,17 +126,56 @@ namespace FrontEnd_SGAR.Services
             }
         }
 
+        public async Task<(bool Exito, string Mensaje)> EliminarProductoAsync(int id)
+        {
+            try
+            {
+                var productUrl = $"ApiVenta/api/productos/{id}";
+                var imageDeleteUrl = $"ApiVenta/api/imagenes-productos/producto/{id}";
+
+                try
+                {
+                    var imgResp = await _http.DeleteAsync(imageDeleteUrl);
+                    if (!imgResp.IsSuccessStatusCode && imgResp.StatusCode != System.Net.HttpStatusCode.NotFound)
+                    {
+                        var imgErr = await imgResp.Content.ReadAsStringAsync();
+                        Console.WriteLine($"[ProductoService] Advertencia al eliminar imagen del producto {id}: {imgResp.StatusCode} - {imgErr}");
+                    }
+                }
+                catch (Exception exImg)
+                {
+                    Console.WriteLine($"[ProductoService] Error al intentar eliminar imagen del producto {id}: {exImg.Message}");
+                }
+
+                var response = await _http.DeleteAsync(productUrl);
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return (true, "Eliminado correctamente");
+                }
+                else
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    return (false, $"Error del servidor: {errorMsg}");
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error de conexión: {ex.Message}");
+            }
+        }
+
         public async Task<(bool Exito, string Mensaje)> GuardarProductosAsync(ProductoModeloValidacion modelo, IBrowserFile? archivoImagen, int id = 0)
         {
             try
             {
-                // A. Si hay imagen nueva, subirla primero
                 if (archivoImagen != null)
                 {
                     var idFotoNueva = await SubirImagenAsync(archivoImagen);
                     if (idFotoNueva.HasValue)
                     {
-                        modelo.IdFoto = idFotoNueva.Value;
+                        modelo.FotoId = idFotoNueva.Value;
                     }
                     else
                     {
@@ -120,35 +183,27 @@ namespace FrontEnd_SGAR.Services
                     }
                 }
 
-                // B. Preparar el MultipartFormData para el Producto
-                var formData = new MultipartFormDataContent();
-
-                formData.Add(new StringContent(modelo.Nombre), "nombre");
-                formData.Add(new StringContent(modelo.Precio.ToString()), "precio");
-                formData.Add(new StringContent(modelo.Tipo), "tipo");
-                formData.Add(new StringContent(modelo.Descripcion ?? ""), "descripcion"); // Manejo de null
-
-                // Enviar IDs
-                formData.Add(new StringContent(modelo.CategoriaProductoId.ToString()), "categoriaProductoId");
-                formData.Add(new StringContent(modelo.EmpresaId.ToString()), "empresaId");
-
-                // Solo enviar IdFoto si tiene valor
-                if (modelo.IdFoto.HasValue)
+                var payload = new
                 {
-                    formData.Add(new StringContent(modelo.IdFoto.Value.ToString()), "idFoto");
-                }
+                    nombre = modelo.Nombre ?? string.Empty,
+                    precio = modelo.Precio,
+                    tipo = modelo.Tipo ?? string.Empty,
+                    descripcion = modelo.Descripcion ?? string.Empty,
+                    categoriaProductoId = modelo.CategoriaProductoId,
+                    empresaId = modelo.EmpresaId,
+                    fotoId = modelo.FotoId 
+                };
 
                 HttpResponseMessage response;
                 bool esEdicion = id > 0;
 
                 if (esEdicion)
                 {
-                    // CORRECCIÓN: Apuntar al endpoint de productos, no de vehículos
-                    response = await _http.PutAsync($"ApiVenta/api/productos/{id}", formData);
+                    response = await _http.PutAsJsonAsync($"ApiVenta/api/productos/{id}", payload);
                 }
                 else
                 {
-                    response = await _http.PostAsync("ApiVenta/api/productos", formData);
+                    response = await _http.PostAsJsonAsync("ApiVenta/api/productos", payload);
                 }
 
                 if (response.IsSuccessStatusCode)

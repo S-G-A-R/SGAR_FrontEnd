@@ -12,52 +12,102 @@
 
 <link href="css/registro-organizacion.css" rel="stylesheet" />
 
-<div id="successAlert" class="success-alert hidden">
-    <div class="alert-box">
-        <div class="alert-icon">🔔</div>
-        <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
-    </div>
-</div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9">
 
-<div class="registro-container">
-    <div class="registro-card">
-        <h3><i class="bi bi-collection-fill"></i> Registrar Categoria</h3>
-        <hr />
+            <div class="card p-4 shadow-lg form-card">
 
-        <EditForm Model="modelo" OnValidSubmit="Registrar">
-            <DataAnnotationsValidator />
+                <h3 class="card-title text-center fw-bold mb-4">
+                    <i class="bi bi-collection-fill"></i> Registrar Categoria
+                </h3>
 
-            <div class="form-group">
-                <label class="required">Nombre de la nueva categoria</label>
-                <InputText @bind-Value="modelo.nombreCat" class="form-control" placeholder="Ingresa el nombre de la categoria" />
-                <ValidationMessage For="@(() => modelo.nombreCat)" />
+                <hr class="mb-4" />
+
+                <EditForm Model="modelo" OnValidSubmit="Registrar">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-group mb-4">
+                        <label class="form-label fw-semibold required" for="nombreEmpresa">Nombre de la categoria</label>
+                        <InputText @bind-Value="modelo.nombreCat" class="form-control form-control-lg" placeholder="Ingresa el nombre de la categoria" />
+                        <ValidationMessage For="@(() => modelo.nombreCat)" class="text-danger small mt-1" />
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-3 mt-5">
+
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-bold" @onclick="Cancelar">
+                            Cancelar
+                        </button>
+
+                        <button type="submit" class="btn btn-primary btn-registrar px-5 py-2 fw-bold" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Registrando...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-plus-circle me-2"></i>
+                                <span>Registrar</span>
+                            }
+                        </button>
+                    </div>
+
+                </EditForm>
             </div>
 
-            <div class="botones mt-4">
-                <div class="contenedor-boton">
-                    <button type="submit" class="boton-mapacheAceptar" disabled="@isSubmitting">
-                        @if (isSubmitting)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <span>Registrando...</span>
-                        }
-                        else
-                        {
-                            <span>Registrar</span>
-                        }
-                    </button>
-                    <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
-                    <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+            <!-- ✅ Notificación tipo campana -->
+            <div id="successAlert" class="success-alert hidden">
+                <div class="alert-box">
+                    <div class="alert-icon">🔔</div>
+                    <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
                 </div>
-                <button type="button" class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
             </div>
 
-        </EditForm>
+        </div>
+
     </div>
 </div>
 
 <style>
-    .success-alert {
+    /* Estilos del Card Principal */
+    .form-card {
+        border-radius: 1rem;
+        border: 1px solid #dee2e6;
+    }
+
+    /* Estilos del Formulario */
+    .form-group label.required:after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .form-control-lg {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+
+    /* Estilo del Botón Registrar */
+    .btn-registrar {
+        background-color: #007bff; /* Azul primario */
+        border-color: #007bff;
+        transition: background-color 0.2s, transform 0.2s;
+    }
+
+        .btn-registrar:hover:not(:disabled) {
+            background-color: #0056b3;
+            border-color: #004085;
+            transform: translateY(-1px);
+        }
+
+        .btn-registrar:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+    /* --- Estilos de la Alerta (Mantenidos) --- */
+    .custom-alert {
         position: fixed;
         top: 20px;
         left: 50%;
@@ -67,9 +117,54 @@
         opacity: 0;
     }
 
-        .success-alert.show {
+        .custom-alert.show {
             opacity: 1;
             transform: translateX(-50%) translateY(10px);
+        }
+
+        .custom-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 15px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        /* La animación se maneja con la clase .pulse */
+    }
+
+        /* CLASES DE ANIMACIÓN SIMPLE (Reemplazando keyframes) */
+        .alert-icon.pulse {
+            animation: pulse-simple 0.6s ease-out;
+        }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .success-alert.hidden {
@@ -96,28 +191,6 @@
     .alert-text {
         font-weight: 500;
         color: #333;
-    }
-
-    @@keyframes ring {
-        0% {
-            transform: rotate(0);
-        }
-
-        25% {
-            transform: rotate(10deg);
-        }
-
-        50% {
-            transform: rotate(-10deg);
-        }
-
-        75% {
-            transform: rotate(10deg);
-        }
-
-        100% {
-            transform: rotate(0);
-        }
     }
 </style>
 
@@ -194,8 +267,8 @@
 
             if (resultado != null && !string.IsNullOrEmpty(resultado.message))
             {
-                // ÉXITO: Llamamos a la función principal pasando solo el mensaje
-                await JS.InvokeVoidAsync("showCustomAlert", $"Categoria registrada: {resultado.message}", "success");
+                await JS.InvokeVoidAsync("showCustomAlert", $"Categoria registrada: {resultado.message}");
+                await Task.Delay(1200);
                 Nav.NavigateTo("/categoria-index");
             }
             else
@@ -234,4 +307,3 @@
     }
 
 }
- 
