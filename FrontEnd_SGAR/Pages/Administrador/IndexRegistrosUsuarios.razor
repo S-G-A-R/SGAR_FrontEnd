@@ -1,0 +1,440 @@
+﻿@page "/Administrador-index"
+@using FrontEnd_SGAR.Services
+@using FrontEnd_SGAR.DTOs
+@using FrontEnd_SGAR.Providers
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject AdministradorService AdministradorService
+
+
+<link rel="stylesheet" href="css/index-organizacion.css" />
+
+<div class="container mt-4">
+
+    <h2 class="title-page text-center mb-4">Gestión de usuarios</h2>
+
+    <!-- BUSCADOR -->
+    <div class="row g-3 align-items-end mb-3 search-section">
+
+        <!-- FILTRO NOMBRE -->
+        <div class="col-md-3">
+            <label class="form-label">Nombre:</label>
+            <input class="form-control" placeholder="Nombre..."
+                   @bind="filtros.Nombre" />
+        </div>
+
+        <!-- FILTRO TELÉFONO -->
+        <div class="col-md-2">
+            <label class="form-label">Teléfono:</label>
+            <input class="form-control" placeholder="Teléfono..."
+                   @bind="filtros.Telefono" />
+        </div>
+
+        <!-- FILTRO EMAIL -->
+        <div class="col-md-3">
+            <label class="form-label">Email:</label>
+            <input type="email" class="form-control"
+                   placeholder="Email..."
+                   @bind="filtros.Email" />
+        </div>
+
+        <!-- FILTRO (ROLES) -->
+        <div class="col-md-2">
+            <label class="form-label">Rol:</label>
+            <select class="form-select"
+                    @bind="filtros.idrol">
+                <option value="">Todos</option>
+                <option value="1">Ciudadano</option>
+                <option value="2">Operador</option>
+                <option value="3">Asociado</option>
+                <option value="4">Administrador</option>
+            </select>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="col-md-2 d-flex align-items-end gap-2">
+            <button class="btn btn-buscar w-100" @onclick="BuscarOrganizaciones">
+                <i class="bi bi-search"></i> Buscar
+            </button>
+
+            <button class="btn btn-limpiar w-100" @onclick="LimpiarFiltros">
+                <i class="bi bi-eraser"></i> Limpiar
+            </button>
+        </div>
+
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+
+        <button class="btn btn-crear"
+                @onclick='() => Nav.NavigateTo("/organizacion-crear")'>
+            <i class="bi bi-plus-circle"></i> Crear Organización
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+            <label class="fw-semibold">Mostrar:</label>
+            <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
+                <option value="5">5</option>
+                <option selected value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+
+    </div>
+
+
+    @if (isLoading)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else if (displayedUsers == null || !displayedUsers.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay organizaciones registradas.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded-3">
+            <table class="table custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
+                        <th>Fotografia</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var org in displayedUsers)
+                    {
+                        <tr>
+                            <td>@org.Id</td>
+                            <td>@org.Nombre</td>
+                            <td>@org.Apellido</td>
+                            <td>@org.Telefono</td>
+                            <td>@org.Email</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(org.foto))
+                                {
+                                    <img src="@org.foto" alt="foto" style="width:48px;height:48px;border-radius:6px;object-fit:cover;" />
+                                }
+                            </td>
+                            <td>@(Nombreroles.ContainsKey(org.idRol.ToString()) ? Nombreroles[org.idRol.ToString()] : org.idRol.ToString())</td>
+                            <td class="text-center">
+                                <div class="btn-group gap-1">
+                                    <button class="btn btn-sm btn-outline-warning" title="Editar" @onclick="() => Editar(org.Id)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-danger" title="Eliminar" @onclick="() => Eliminar(org.Id)">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINACIÓN -->
+        <div class="pagination-container mt-3 d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(response == null || !response.HasPreviousPage)"
+                    @onclick="PrevPage">
+                ◀ Anterior
+            </button>
+
+            <span class="fw-bold page-info">
+                Página @(response?.PageNumber ?? 0) de @(response?.TotalPages ?? 0) | Total: @(response?.TotalCount ?? 0) organizaciones
+            </span>
+
+            <button class="btn btn-outline-secondary btn-sm"
+                    disabled="@(response == null || !response.HasNextPage)"
+                    @onclick="NextPage">
+                Siguiente ▶
+            </button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        </div>
+    }
+</div>
+
+
+<style>
+    .title-page {
+        font-family: 'Lilita One', sans-serif;
+        font-size: 32px;
+        font-weight: normal; /* evita que se engrose demasiado */
+        color: #050303; /* moradito suave, puedes cambiar */
+        letter-spacing: 1px;
+    }
+
+    .custom-table thead {
+        background-color: #050303;
+        color: white;
+        text-align: center;
+    }
+
+    .custom-table th,
+    .custom-table td {
+        vertical-align: middle;
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .custom-table tbody tr:hover {
+        background-color: #EEEEEE;
+        transition: 0.2s ease-in-out;
+    }
+
+    .btn-group .btn {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-info {
+        color: #050303;
+        font-size: 15px;
+    }
+
+    /* media query corregida y con llaves equilibradas */
+    @@media (max-width: 768px) {
+        .custom-table th, .custom-table td {
+            font-size: 12px;
+            padding: 6px;
+        }
+    }
+
+    .btn-group .btn i {
+        font-size: 16px;
+    }
+
+    .btn-outline-info {
+        color: #0dcaf0;
+        border-color: #0dcaf0;
+    }
+
+    .btn-outline-warning {
+        color: #ffc107;
+        border-color: #ffc107;
+    }
+
+    .btn-outline-danger {
+        color: #dc3545;
+        border-color: #dc3545;
+    }
+
+        .btn-outline-info:hover,
+        .btn-outline-warning:hover,
+        .btn-outline-danger:hover {
+            color: white;
+        }
+
+    /* BOTÓN BUSCAR */
+    .btn-buscar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #000;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+    }
+
+        .btn-buscar:hover {
+            background: #BABABA;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* BOTÓN LIMPIAR */
+    .btn-limpiar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #8d44ad;
+        width: 50%;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px;
+        transition: .2s;
+    }
+
+        .btn-limpiar:hover {
+            background: #D9C7FF;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* BOTÓN CREAR */
+    .btn-crear {
+        border: 2px solid #000;
+        background: #fff;
+        color: #2e7d32;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: .2s;
+        width: auto; /* que se adapte al contenido */
+        padding: 6px 12px; /* puedes ajustarlo */
+    }
+
+        .btn-crear:hover {
+            background: #5C9E77;
+            color: white;
+            transform: scale(1.05);
+        }
+</style>
+
+
+@code {
+    private UserResponsePaginada? response;
+    private List<User> displayedUsers = new();
+    private Dictionary<string, string> Nombreroles = new();
+
+    private FilterModel filtros = new();
+    private bool isLoading = true;
+    private int currentPage = 0;
+    private int pageSize = 10;
+    private string errorMessage = "";
+
+    private class FilterModel
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Telefono { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string idrol { get; set; } = string.Empty;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            // cargar roles
+            var roles = await AdministradorService.ObtenerRolAsync();
+            Nombreroles = roles?.ToDictionary(r => r.Id.ToString(), r => r.NombreRol) ?? new Dictionary<string, string>();
+
+            await CargarUsuarios();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CargarUsuarios()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            response = await AdministradorService.ObtenerUsuarioAsync(currentPage, pageSize);
+            displayedUsers = response?.Items ?? new List<User>();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CambiarPageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int newSize))
+        {
+            pageSize = newSize;
+            currentPage = 0;
+            await CargarUsuarios();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (response?.HasNextPage == true)
+        {
+            currentPage++;
+            await CargarUsuarios();
+        }
+    }
+
+    private async Task PrevPage()
+    {
+        if (response?.HasPreviousPage == true && currentPage > 0)
+        {
+            currentPage--;
+            await CargarUsuarios();
+        }
+    }
+
+    private void BuscarOrganizaciones()
+    {
+        if (response == null) return;
+
+        var query = response.Items.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(filtros.Nombre))
+            query = query.Where(u => u.Nombre.Contains(filtros.Nombre, StringComparison.OrdinalIgnoreCase) || u.Apellido.Contains(filtros.Nombre, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(filtros.Telefono))
+            query = query.Where(u => (u.Telefono ?? string.Empty).Contains(filtros.Telefono, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(filtros.Email))
+            query = query.Where(u => (u.Email ?? string.Empty).Contains(filtros.Email, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(filtros.idrol))
+            query = query.Where(u => u.idRol.ToString() == filtros.idrol);
+
+        displayedUsers = query.ToList();
+    }
+
+    private void LimpiarFiltros()
+    {
+        filtros = new FilterModel();
+        if (response != null) displayedUsers = response.Items.ToList();
+    }
+
+    private void Editar(int id)
+    {
+        Nav.NavigateTo($"/organizacion-editar/{id}");
+    }
+
+    private async Task Eliminar(int id)
+    {
+        await JS.InvokeVoidAsync("alert", $"Eliminar usuario {id} (no implementado)");
+    }
+}
