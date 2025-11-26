@@ -20,7 +20,7 @@
 
         <!-- IZQUIERDA: Crear -->
         <button class="btn btn-crear"
-                @onclick='() => Nav.NavigateTo("/empresa-crear")'>
+                @onclick='() => Nav.NavigateTo("/categoria-crear")'>
             <i class="bi bi-plus-circle"></i> Crear nueva Categoria
         </button>
 
@@ -136,6 +136,70 @@
 
 </div>
 
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 400px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .modal-header-delete {
+        background: #dc3545;
+        color: white;
+        padding: 15px 20px;
+        text-align: center;
+    }
+
+    .modal-body {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        padding: 20px;
+        justify-content: center;
+    }
+
+    .btn-continuar {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .btn-cancelar {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+</style>
+
 @code {
 
     private CategoriaProductoResponsePaginada? response = new();
@@ -218,7 +282,7 @@
 
     private void Editar(int id)
     {
-        Nav.NavigateTo($"/caegoria-producto-editar/{id}");
+        Nav.NavigateTo($"/categoria-editar/{id}");
     }
 
 
