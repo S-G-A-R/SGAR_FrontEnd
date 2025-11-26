@@ -4,6 +4,165 @@
 @inject HorarioService HorarioService
 @inject NavigationManager Nav
 
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+
+        <!-- Título -->
+        <h3>
+            <i class="bi bi-clock-history me-2"></i>Detalle del Horario
+        </h3>
+        <hr />
+
+       
+
+        @if (cargando)
+        {
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Cargando datos...</p>
+            </div>
+        }
+        else if (horario == null)
+        {
+            <div class="alert alert-danger text-center rounded-3 shadow-sm mt-4">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                No se encontró el horario.
+            </div>
+        }
+        else
+        {
+            <div class="row g-4 mt-2">
+
+                <!-- Organización -->
+                <div class="col-md-6">
+                    <label>Organización</label>
+                    <div class="dato-box">
+                        <i class="bi bi-building me-2"></i>@horario.OrganizacionNombre
+                    </div>
+                </div>
+
+                <!-- Zona -->
+                <div class="col-md-6">
+                    <label>Zona</label>
+                    <div class="dato-box">
+                        <i class="bi bi-geo-alt me-2"></i>@horario.ZonaNombre
+                    </div>
+                </div>
+
+                <!-- Día -->
+                <div class="col-md-6">
+                    <label>Día</label>
+                    <div class="dato-box">
+                        <i class="bi bi-calendar-day me-2"></i>@ObtenerDiaTexto(horario.Dia)
+                    </div>
+                </div>
+
+                <!-- Turno -->
+                <div class="col-md-6">
+                    <label>Turno</label>
+                    <div class="dato-box">
+                        <i class="bi bi-clock-fill me-2"></i>@ObtenerTurnoTexto(horario.Turno)
+                    </div>
+                </div>
+
+                <!-- Hora Entrada -->
+                <div class="col-md-6">
+                    <label>Hora Entrada</label>
+                    <div class="dato-box">
+                        <i class="bi bi-door-open me-2"></i>@horario.HoraEntrada
+                    </div>
+                </div>
+
+                <!-- Hora Salida -->
+                <div class="col-md-6">
+                    <label>Hora Salida</label>
+                    <div class="dato-box">
+                        <i class="bi bi-door-closed me-2"></i>@horario.HoraSalida
+                    </div>
+                </div>
+
+            </div>
+        }
+        <div class="text-center mt-4 mb-2">
+            <button class="btn-cancelar" @onclick="Volver">
+                <i class="bi bi-arrow-left me-2"></i>Volver
+            </button>
+        </div>
+      
+    </div>
+
+</div>
+
+<style>
+    /* Igual que "Mi Cuenta" / Crear Horario */
+    .dato-box {
+        background: #d9d9d9 !important;
+        border: 2px solid #b5b5b5 !important;
+        border-radius: 10px;
+        padding: 12px 15px;
+        width: 100%;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    private HorarioDTO? horario;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            horario = await HorarioService.ObtenerPorIdAsync(id);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private string ObtenerTurnoTexto(byte turno) => turno switch
+    {
+        1 => "Mañana",
+        2 => "Tarde",
+        3 => "Noche",
+        _ => "N/A"
+    };
+
+    private string ObtenerDiaTexto(string dia) => dia switch
+    {
+        "1" => "Lunes",
+        "2" => "Martes",
+        "3" => "Miércoles",
+        "4" => "Jueves",
+        "5" => "Viernes",
+        "6" => "Sábado",
+        "7" => "Domingo",
+        _ => dia
+    };
+
+    private void Volver() => Nav.NavigateTo("/index-horarios");
+}
+
+
+
+
+
+
+
+
+@* @page "/horarios/detalle/{id:int}"
+@using FrontEnd_SGAR.DTOs
+@using FrontEnd_SGAR.Services
+@inject HorarioService HorarioService
+@inject NavigationManager Nav
+
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -127,109 +286,4 @@
     private void Volver() => Nav.NavigateTo("/index-horarios");
 }
 
-
-@* @page "/horarios/detalle/{id:int}"
-@using FrontEnd_SGAR.DTOs
-@using FrontEnd_SGAR.Services
-@inject HorarioService HorarioService
-@inject NavigationManager Nav
-
-<h3 class="mb-4 text-center">Detalle del Horario</h3>
-
-@if (cargando)
-{
-    <div class="text-center p-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
-        <p class="mt-2">Cargando datos...</p>
-    </div>
-}
-else if (horario == null)
-{
-    <div class="alert alert-danger text-center">No se encontró el horario.</div>
-}
-else
-{
-    <EditForm Model="horario">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label class="form-label">Organización</label>
-                <input class="form-control" value="@horario.OrganizacionNombre" disabled />
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Zona</label>
-                <input class="form-control" value="@horario.ZonaNombre" disabled />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Día</label>
-                <input class="form-control" value="@ObtenerDiaTexto(horario.Dia)" disabled />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Turno</label>
-                <input class="form-control" value="@ObtenerTurnoTexto(horario.Turno)" disabled />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Hora Entrada</label>
-                <input class="form-control" value="@horario.HoraEntrada" disabled />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Hora Salida</label>
-                <input class="form-control" value="@horario.HoraSalida" disabled />
-            </div>
-        </div>
-
-        <div class="mt-4">
-            <button type="button" class="btn btn-secondary" @onclick="Volver">
-                ← Volver
-            </button>
-        </div>
-    </EditForm>
-}
-
-@code {
-    [Parameter]
-    public int id { get; set; }
-
-    private HorarioDTO? horario;
-    private bool cargando = true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            horario = await HorarioService.ObtenerPorIdAsync(id);
-        }
-        catch
-        {
-            horario = null;
-        }
-        finally
-        {
-            cargando = false;
-        }
-    }
-
-    private string ObtenerTurnoTexto(byte turno) => turno switch
-    {
-        1 => "Mañana",
-        2 => "Tarde",
-        3 => "Noche",
-        _ => "N/A"
-    };
-
-    private string ObtenerDiaTexto(string dia) => dia switch
-    {
-        "1" => "Lunes",
-        "2" => "Martes",
-        "3" => "Miércoles",
-        "4" => "Jueves",
-        "5" => "Viernes",
-        "6" => "Sábado",
-        "7" => "Domingo",
-        _ => dia
-    };
-
-    private void Volver() => Nav.NavigateTo("/index-horarios");
-}
  *@
