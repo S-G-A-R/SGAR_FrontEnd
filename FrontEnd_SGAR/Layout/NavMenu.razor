@@ -42,45 +42,45 @@
                             <!-- Botón para ADMINISTRADOR -->
                             <AuthorizeView Roles="Administrador" Context="innerContext">
                                 <li>
-                                    <a class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuAdmin")'>
+                                    <button class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuAdmin")'>
                                         <i class="bi bi-shield-lock-fill me-2 text-danger"></i> Menu Admininitrador
-                                    </a>
+                                    </button>
                                 </li>
                             </AuthorizeView>
 
                             <!-- Botón para ASOCIADO -->
                             <AuthorizeView Roles="Asociado" Context="innerContext">
                                 <li>
-                                    <a class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuAsociado")'>
+                                    <button class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuAsociado")'>
                                         <i class="bi bi-briefcase-fill me-2 text-primary"></i> Menu Asociado
-                                    </a>
+                                    </button>
                                 </li>
                             </AuthorizeView>
 
                             <!-- Botón para OPERADOR -->
                             <AuthorizeView Roles="Operador" Context="innerContext">
                                 <li>
-                                    <a class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuOperador")'>
-                                        <i class="bi bi-truck me-2 text-warning"></i> Menu Operador
-                                    </a>
+                                    <button class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuOperador")'>
+                                        <i type="submit" class="bi bi-truck me-2 text-warning"></i> Menu Operador
+                                    </button>
                                 </li>
                             </AuthorizeView>
 
                             <!-- Botón para ORGANIZACIÓN -->
                             <AuthorizeView Roles="Organizacion" Context="innerContext">
                                 <li>
-                                    <a class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuOrganizacion")'>
+                                    <button class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuOrganizacion")'>
                                         <i class="bi bi-building-fill me-2 text-info"></i> Menu Organización
-                                    </a>
+                                    </button>
                                 </li>
                             </AuthorizeView>
 
                             <!-- Botón para CIUDADANO -->
                             <AuthorizeView Roles="Ciudadano" Context="innerContext">
                                 <li>
-                                    <a class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuCiudadano")'>
+                                    <button class="dropdown-item" @onclick='() => Navigation.NavigateTo("/MenuCiudadano")'>
                                         <i class="bi bi-person-badge me-2 text-success"></i> Menú Ciudadano
-                                    </a>
+                                    </button>
                                 </li>
                             </AuthorizeView>
 
