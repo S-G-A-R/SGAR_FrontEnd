@@ -11,59 +11,108 @@
 @inject CustomAuthStateProvider AuthStateProvider
 
 
-<div id="successAlert" class="success-alert hidden">
+<div id="successAlert" class="custom-alert hidden">
     <div class="alert-box">
-        <div class="alert-icon">🔔</div>
+        <div class="alert-icon" id="alertIcon">🔔</div>
         <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
     </div>
 </div>
 
-<div class="registro-container">
-    <div class="registro-card">
-        <h3><i class="bi bi-building me-2"></i>Editar empresa</h3>
-        <hr />
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9">
 
-        @if (isLoading)
-        {
-            <p class="text-center"><em>Cargando datos de la empresa...</em></p>
-        }
-        else
-        {
-            <EditForm Model="modelo" OnValidSubmit="Actualizar">
-                <DataAnnotationsValidator />
+            <div class="card p-4 shadow-lg form-card">
 
-                <div class="form-group">
-                    <label class="required">Nombre de la empresa</label>
-                    <InputText @bind-Value="modelo.NombreEmpresa" class="form-control" placeholder="Ingresa el nombre de la empresa" />
-                    <ValidationMessage For="@(() => modelo.NombreEmpresa)" />
-                </div>
+                <h3 class="card-title text-center fw-bold mb-4">
+                    <i class="bi bi-pencil-square me-2 text-primary"></i> Editar Empresa
+                </h3>
+                <hr class="mb-4" />
 
-                <div class="botones mt-4">
-                    <div class="contenedor-boton">
-                        <button type="submit" class="boton-mapacheAceptar" disabled="@isSubmitting">
-                            @if (isSubmitting)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                <span>Registrando...</span>
-                            }
-                            else
-                            {
-                                <span>Actualizar</span>
-                            }
-                        </button>
-                        <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
-                        <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                @if (isLoading)
+                {
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-primary fw-bold">Cargando datos de la empresa...</p>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <EditForm Model="modelo" OnValidSubmit="Actualizar" class="needs-validation" novalidate>
+                        <DataAnnotationsValidator />
 
-            </EditForm>
+                        <div class="form-group mb-4">
+                            <label class="form-label fw-semibold required" for="nombreEmpresa">Nombre de la empresa</label>
+                            <InputText id="nombreEmpresa" @bind-Value="modelo.NombreEmpresa" class="form-control form-control-lg" placeholder="Ingresa el nombre de la empresa" />
+                            <ValidationMessage For="@(() => modelo.NombreEmpresa)" class="text-danger small mt-1" />
+                        </div>
 
-        }
+                        <div class="d-flex justify-content-end gap-3 mt-5">
+                            
+                            <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-bold" @onclick="Cancelar">
+                                Cancelar
+                            </button>
+
+                            <button type="submit" class="btn btn-primary btn-actualizar px-5 py-2 fw-bold" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <span>Actualizando...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-save me-2"></i>
+                                    <span>Actualizar</span>
+                                }
+                            </button>
+                        </div>
+
+                    </EditForm>
+                }
+            </div>
+        </div>
     </div>
 </div>
 
 <style>
-    .success-alert {
+    /* Estilos del Card Principal */
+    .form-card {
+        border-radius: 1rem;
+        border: 1px solid #dee2e6; 
+    }
+
+    /* Estilos del Formulario */
+    .form-group label.required:after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .form-control-lg {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+
+    /* Estilo del Botón Actualizar */
+    .btn-actualizar {
+        background-color: #007bff; /* Azul primario */
+        border-color: #007bff;
+        transition: background-color 0.2s, transform 0.2s;
+    }
+    .btn-actualizar:hover:not(:disabled) {
+        background-color: #0056b3;
+        border-color: #004085;
+        transform: translateY(-1px);
+    }
+    .btn-actualizar:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    /* --- Estilos de la Alerta (Sin Keyframes) --- */
+    .custom-alert {
         position: fixed;
         top: 20px;
         left: 50%;
@@ -73,19 +122,19 @@
         opacity: 0;
     }
 
-        .success-alert.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(10px);
-        }
+    .custom-alert.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(10px);
+    }
 
-        .success-alert.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
+    .custom-alert.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
 
     .alert-box {
         background: #ffffff;
-        border-radius: 20px;
+        border-radius: 15px;
         padding: 15px 25px;
         display: flex;
         align-items: center;
@@ -95,45 +144,32 @@
 
     .alert-icon {
         font-size: 1.8rem;
-        color: #ffcc00;
-        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-icon.pulse {
+        /* Clase de animación que el JS intentará aplicar */
+        transition: transform 0.15s ease-in-out;
+    }
+    .alert-icon.pulse:active {
+        transform: scale(1.1);
     }
 
     .alert-text {
         font-weight: 500;
         color: #333;
     }
-
-    @@keyframes ring {
-        0% {
-            transform: rotate(0);
-        }
-
-        25% {
-            transform: rotate(10deg);
-        }
-
-        50% {
-            transform: rotate(-10deg);
-        }
-
-        75% {
-            transform: rotate(10deg);
-        }
-
-        100% {
-            transform: rotate(0);
-        }
-    }
 </style>
 
 <script>
+    // Se adaptan las funciones JS para usar el ID 'alertIcon' y evitar keyframes
     function showCustomAlert(message) {
         const alert = document.getElementById("successAlert");
         const text = document.getElementById("alertMessage");
+        const icon = document.getElementById("alertIcon");
 
-        alert.querySelector(".alert-icon").textContent = "🔔";
-        alert.querySelector(".alert-icon").style.color = "#ffcc00";
+        icon.textContent = "🔔";
+        icon.style.color = "#ffcc00"; 
+        icon.classList.add("pulse"); 
 
         text.textContent = message;
         alert.classList.remove("hidden");
@@ -142,15 +178,18 @@
         setTimeout(() => {
             alert.classList.remove("show");
             alert.classList.add("hidden");
+            icon.classList.remove("pulse"); 
         }, 3000);
     }
 
     function showErrorAlert(message) {
         const alert = document.getElementById("successAlert");
         const text = document.getElementById("alertMessage");
+        const icon = document.getElementById("alertIcon");
 
-        alert.querySelector(".alert-icon").textContent = "❌";
-        alert.querySelector(".alert-icon").style.color = "#e63946";
+        icon.textContent = "❌";
+        icon.style.color = "#e63946"; 
+        icon.classList.add("pulse"); 
 
         text.textContent = message;
         alert.classList.remove("hidden");
@@ -159,6 +198,7 @@
         setTimeout(() => {
             alert.classList.remove("show");
             alert.classList.add("hidden");
+            icon.classList.remove("pulse"); 
         }, 3000);
     }
 </script>
@@ -167,7 +207,6 @@
 
     public class EmpresaModelValidacion
     {
-        // Propiedad oculta para mantener el ID del asociado
         public int AsociadoId { get; set; }
 
         [Required(ErrorMessage = "El nombre de la empresa es obligatorio.")]
@@ -177,7 +216,6 @@
 
     [Parameter]
     public int id { get; set; }
-    private int asociadoIdActual;
     private bool isLoading = true;
 
     private EmpresaModelValidacion modelo = new();
@@ -207,35 +245,56 @@
             }
             else
             {
-                Console.WriteLine($"Error: Tipo de suscripción con ID {id} no encontrado.");
+                await JS.InvokeVoidAsync("showErrorAlert", $"Empresa con ID {id} no encontrada.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al cargar datos de suscripción: {ex.Message}");
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error al cargar datos: {ex.Message}");
         }
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
 
     private async Task Actualizar()
     {
         if (id == 0) return;
+
+        isSubmitting = true;
+        StateHasChanged();
+
         var requets = new EmpresaRequest
         {
             NombreEmpresa = modelo.NombreEmpresa
         };
-        var resultado = await EmpresaService.ActualizarEmpresa(id, requets);
-        if (resultado != null)
+
+        try
         {
-            await JS.InvokeVoidAsync("showCustomAlert", "Tipo de suscripción editado con éxito.");
-            Nav.NavigateTo("/empresa-index");
+            var resultado = await EmpresaService.ActualizarEmpresa(id, requets);
+
+            if (resultado != null)
+            {
+                await JS.InvokeVoidAsync("showCustomAlert", "Empresa editada con éxito.");
+
+                // ⭐ SOLUCIÓN CLAVE: Forzar la recarga de la página de índice para actualizar la lista.
+                Nav.NavigateTo("/empresa-index", forceLoad: true);
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", "Error al editar la empresa. Inténtalo de nuevo.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("showErrorAlert", "Error al editar el tipo de suscripción. Inténtalo de nuevo.");
+             await JS.InvokeVoidAsync("showErrorAlert", $"Error al actualizar la empresa: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
         }
     }
 
@@ -243,5 +302,4 @@
     {
         Nav.NavigateTo("/empresa-index");
     }
-
 }

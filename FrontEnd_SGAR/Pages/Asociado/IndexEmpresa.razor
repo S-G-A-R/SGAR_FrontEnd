@@ -12,21 +12,21 @@
 
 <link rel="stylesheet" href="css/index-organizacion.css" />
 
-<div class="container mt-4">
+<div class="container mt-5">
 
-    <h2 class="title-page text-center mb-4">Gestión de empresa</h2>
+    <h1 class="display-4 fw-bolder text-center mb-5 titulo-principal">
+        <i class="bi bi-briefcase-fill me-3"></i> Gestión de Empresas
+    </h1>
 
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
 
-        <!-- IZQUIERDA: Crear -->
-        <button class="btn btn-crear"
-                @onclick='() => Nav.NavigateTo("/empresa-crear")'>
-            <i class="bi bi-plus-circle"></i> Crear nueva empresa
+        <button class="btn btn-success px-4 py-2 fw-semibold shadow-sm"
+            @onclick='() => Nav.NavigateTo("/empresa-crear")'>
+            <i class="bi bi-plus-circle me-2"></i> Crear Nueva Empresa
         </button>
 
-        <!-- DERECHA: Mostrar -->
-        <div class="d-flex align-items-center gap-2">
-            <label class="fw-semibold">Mostrar:</label>
+        <div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
+            <label class="fw-semibold text-secondary">Mostrar:</label>
             <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
                 <option value="5">5</option>
                 <option selected value="10">10</option>
@@ -37,82 +37,111 @@
 
     </div>
 
-    @if (isLoading)
-    {
-        <div class="text-center p-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
+    <div class="p-4 rounded-3 shadow-lg bg-white main-content-card">
+
+        @if (isLoading)
+        {
+            <div class="text-center p-5 custom-loader-container">
+                <div class="loader-dots-container d-flex justify-content-center align-items-center mb-3 gap-2">
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                </div>
+                <p class="mt-2 text-secondary fw-bold fs-5">Cargando Empresas...</p>
             </div>
-        </div>
-    }
-    else if (response == null || !response.Empresas.Any())
-    {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No tienes empresas registradas.
-        </div>
-    }
-    else
-    {
-        <div class="table-responsive shadow-sm rounded-3">
-            <table class="table custom-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre de la empresa</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var em in response.Empresas)
-                    {
-                        <tr>
-                            <td>@em.id</td>
-                            <td>@em.NombreEmpresa</td>
-                            <td class="text-center">
-                                <div class="btn-group gap-1">
-                                    <button class="btn btn-sm btn-outline-warning" title="editar" @onclick="() => Editar(em.id)">
-                                        <i class="bi bi-pencil">editar</i>
+        }
+        else if (response == null || !response.Empresas.Any())
+        {
+            <div class="alert alert-info text-center py-4 my-4 border-0 rounded-3">
+                <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+                <h4 class="mb-0">No tienes empresas registradas.</h4>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4 mt-3">
+                @foreach (var em in response.Empresas)
+                {
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 card-empresa card-shadow-border">
+
+                            <div class="card-body d-flex flex-column">
+
+                                <h4 class="card-title fw-bold text-dark mb-3">
+                                    <i class="bi bi-buildings me-2 text-dark"></i> @em.NombreEmpresa
+                                </h4>
+
+                                <p class="text-muted small mb-2">
+                                    <span class="fw-semibold">ID:</span> @em.id
+                                </p>
+
+                                <div class="d-flex justify-content-center gap-3 mt-3 pt-3 border-top">
+
+
+                                    <button class="btn btn-warning btn-icon-lg" title="Editar" @onclick="() => Editar(em.id)">
+                                        <i class="bi bi-pencil"></i>
                                     </button>
 
-                                    <button class="btn btn-sm btn-outline-danger" title="eliminar" @onclick="() => ConfirmarEliminar(em)">
-                                        <i class="bi bi-trash3-fill">eliminar</i>
+                                    <button class="btn btn-danger btn-icon-lg" title="Eliminar"
+                                        @onclick="() => ConfirmarEliminar(em)">
+                                        <i class="bi bi-trash3"></i>
                                     </button>
+
                                 </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
 
+                            </div>
 
-        <!-- PAGINACIÓN -->
-        <div class="pagination-container mt-3 d-flex justify-content-between align-items-center">
-            <button class="btn btn-outline-secondary btn-sm"
-                    disabled="@(!response.HasPreviousPage)"
-                    @onclick="PrevPage">
-                ◀ Anterior
-            </button>
+                        </div>
+                    </div>
+                }
+            </div>
 
-            <span class="fw-bold page-info">
-                Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems Empresas
-            </span>
+            <div
+                class="pagination-footer mt-5 pt-3 border-top d-flex flex-column flex-md-row justify-content-center align-items-center gap-3">
 
-            <button class="btn btn-outline-secondary btn-sm"
-                    disabled="@(!response.HasNextPage)"
-                    @onclick="NextPage">
-                Siguiente ▶
-            </button>
-        </div>
-    }
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn btn-outline-secondary px-3 py-2 fw-bold" disabled="@(!response.HasPreviousPage)"
+                        @onclick="PrevPage">
+                        <i class="bi bi-arrow-left"></i> Anterior
+                    </button>
+
+                    <span class="fw-bold page-info text-secondary">
+                        Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems Empresas
+                    </span>
+
+                    <button class="btn btn-outline-secondary px-3 py-2 fw-bold" disabled="@(!response.HasNextPage)"
+                        @onclick="NextPage">
+                        Siguiente <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger mt-4 shadow" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Error:</strong> @errorMessage
+            </div>
+        }
+    </div>
+
 
     @if (mostrarModalEliminar && EmpresaAEliminar != null)
     {
         <div class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header-delete">
-                    <h5 class="m-0 text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                    <h5 class="m-0 text-white">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+                    </h5>
                 </div>
+
                 <div class="modal-body">
                     <p class="mb-2">¿Estás seguro que deseas eliminar esta empresa?</p>
                     <div class="alert alert-warning d-inline-block p-2 mt-2">
@@ -120,6 +149,7 @@
                     </div>
                     <p class="text-danger small mt-3 mb-0">Esta acción no se puede deshacer.</p>
                 </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
                     <button type="button" class="btn-continuar" @onclick="EliminarEmpresa">
@@ -133,13 +163,68 @@
 </div>
 
 <style>
+    /* Estilos del Título Principal */
+    .titulo-principal {
+        color: #0d161f;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        letter-spacing: 1px;
+    }
+
+    /* Contenedor Principal (similar al ejemplo) */
+    .main-content-card {
+        background-color: white !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+
+    /* Estilo de la Tarjeta de Empresa */
+    .card-empresa {
+        border-radius: 14px;
+        transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+        box-shadow: 0 0 10px rgba(131, 130, 130, 0.3);
+    }
+
+    .card-empresa:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 0 15px rgba(100, 100, 100, 0.2);
+    }
+
+
+    /* Botones de Iconos de Tarjetas */
+    .btn-icon-lg {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        padding: 0;
+    }
+
+    /* Estilo de Paginación Mejorado */
+    .pagination-footer {
+        padding: 15px 0;
+    }
+
+    .btn-outline-secondary {
+        transition: background-color .15s, color .15s;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: white;
+    }
+
+
+    /* Estilos del Modal de Eliminación */
     .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -153,7 +238,7 @@
         width: 100%;
         max-width: 400px;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
     .modal-header-delete {
@@ -182,6 +267,11 @@
         padding: 10px 20px;
         border-radius: 8px;
         cursor: pointer;
+        transition: background-color .15s ease-in-out;
+    }
+
+    .btn-continuar:hover {
+        background: #c82333;
     }
 
     .btn-cancelar {
@@ -191,8 +281,21 @@
         padding: 10px 20px;
         border-radius: 8px;
         cursor: pointer;
+        transition: background-color .15s ease-in-out;
     }
 
+    .btn-cancelar:hover {
+        background: #5a6268;
+    }
+
+    .card-empresa .border-top {
+        border-color: #dfdfdf !important;
+    }
+
+    .btn-icon-lg {
+        width: 42px;
+        height: 42px;
+    }
 </style>
 
 @code {
@@ -229,6 +332,7 @@
                 return;
             }
 
+            // Aquí se asume que ObtenerEmpresasAsync maneja la paginación y el filtro por userId
             response = await EmpresaService.ObtenerEmpresasAsync(userId.Value, currentPage, pageSize);
 
             if (response == null)
@@ -277,12 +381,16 @@
 
     private void Editar(int id)
     {
+        // ⭐ IMPORTANTE: Para resolver el problema de la recarga, asegúrate de
+        // usar Nav.NavigateTo(..., forceLoad: true) en la página de Edición
+        // después de guardar los cambios exitosamente.
         Nav.NavigateTo($"/empresa-editar/{id}");
     }
 
 
     private async Task<int?> ObtenerUserIdAsync()
     {
+        // Se asume que obtienes el userId desde localStorage
         var userIdString = await JS.InvokeAsync<string>("localStorage.getItem", "userId");
 
         if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
@@ -317,6 +425,7 @@
             if (resultado.Exito)
             {
                 CerrarModalEliminar();
+                // Recargar empresas después de eliminar con éxito
                 await CargarEmpresas();
             }
             else
@@ -330,6 +439,4 @@
             await JS.InvokeVoidAsync("alert", $"Error crítico: {ex.Message}");
         }
     }
-
-  
 }
