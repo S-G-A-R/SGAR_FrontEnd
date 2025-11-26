@@ -15,66 +15,64 @@
 
 <div class="registro-container">
     <div class="registro-card">
+
         <h3><i class="bi bi-building me-2"></i>Crear Organización</h3>
         <hr />
 
         <EditForm Model="modelo" OnValidSubmit="Registrar">
             <DataAnnotationsValidator />
 
-            <div class="form-group">
-                <label class="required">Nombre de organización</label>
-                <InputText @bind-Value="modelo.NombreOrganizacion" class="form-control" placeholder="Ingresa el nombre" />
-                <ValidationMessage For="@(() => modelo.NombreOrganizacion)" />
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="required">Nombre de organización</label>
+                    <InputText @bind-Value="modelo.NombreOrganizacion" class="dato-box" placeholder="Ingresa el nombre" />
+                    <ValidationMessage For="@(() => modelo.NombreOrganizacion)" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="required">Teléfono</label>
+                    <InputText @bind-Value="modelo.Telefono" class="dato-box" placeholder="8 dígitos (ej: 1234 5678)" />
+                    <ValidationMessage For="@(() => modelo.Telefono)" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="required">Correo electrónico</label>
+                    <InputText @bind-Value="modelo.Email" class="dato-box" placeholder="ejemplo@correo.com" />
+                    <ValidationMessage For="@(() => modelo.Email)" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="required">Contraseña</label>
+                    <InputText @bind-Value="modelo.Password" type="password" class="dato-box" placeholder="De 5 a 8 caracteres" />
+                    <ValidationMessage For="@(() => modelo.Password)" />
+                </div>
+
+                <div class="col-md-6 position-relative">
+                    <label class="required">Municipio</label>
+                    <InputText class="dato-box"
+                               placeholder="Escribe o selecciona un municipio"
+                               @bind-Value="modelo.MunicipioSeleccionado"
+                               @oninput="OnInputMunicipio"
+                               @onfocus="MostrarDropdown"
+                               @onblur="OnBlurCerrar" />
+
+                    @if (mostrarDropdown && municipiosFiltrados.Any())
+                    {
+                        <ul class="list-group position-absolute w-100 shadow"
+                            style="z-index: 2000; max-height: 200px; overflow-y: auto;">
+                            @foreach (var m in municipiosFiltrados)
+                            {
+                                <li class="list-group-item list-group-item-action"
+                                    @onmousedown="(() => SeleccionarMunicipio(m.Nombre))">
+                                    @m.Nombre
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
+                </div>
             </div>
-
-            <div class="form-group">
-                <label class="required">Teléfono</label>
-                <InputText @bind-Value="modelo.Telefono" class="form-control" placeholder="8 dígitos (ej: 1234 5678)" />
-                <ValidationMessage For="@(() => modelo.Telefono)" />
-            </div>
-
-            <div class="form-group">
-                <label class="required">Correo electrónico</label>
-                <InputText @bind-Value="modelo.Email" class="form-control" placeholder="ejemplo@correo.com" />
-                <ValidationMessage For="@(() => modelo.Email)" />
-            </div>
-
-            <div class="form-group">
-                <label class="required">Contraseña</label>
-                <InputText @bind-Value="modelo.Password" type="password" class="form-control" placeholder="De 5 a 8 caracteres" />
-                <ValidationMessage For="@(() => modelo.Password)" />
-            </div>
-
-
-            <div class="form-group position-relative">
-                <label class="required">Municipio</label>
-
-                <InputText class="form-control"
-                           placeholder="Escribe o selecciona un municipio"
-                           @bind-Value="modelo.MunicipioSeleccionado"
-                           @oninput="OnInputMunicipio"
-                           @onfocus="MostrarDropdown"
-                           @onblur="OnBlurCerrar" />
-
-
-                @if (mostrarDropdown && municipiosFiltrados.Any())
-                {
-                    <ul class="list-group position-absolute w-100 shadow"
-                        style="z-index: 2000; max-height: 200px; overflow-y: auto;">
-
-                        @foreach (var m in municipiosFiltrados)
-                        {
-                            <li class="list-group-item list-group-item-action"
-                                @onmousedown="(() => SeleccionarMunicipio(m.Nombre))">
-                                @m.Nombre
-                            </li>
-                        }
-                    </ul>
-                }
-
-                <ValidationMessage For="@(() => modelo.MunicipioSeleccionado)" />
-            </div>
-
 
             <div class="form-group mt-3">
                 <label>Tipos de notificación</label>
@@ -85,21 +83,22 @@
                 </div>
             </div>
 
-            <div class="botones mt-4 d-flex gap-2 justify-content-center">
-                <!-- Botón Crear -->
-                <button type="submit" class="btn-buscar" style="width: 150px;">
-                    <i class="bi bi-check-circle me-1"></i> Crear
-                </button>
-
-                <!-- Botón Cancelar -->
-                <button type="button" class="btn-limpiar" style="width: 150px;" @onclick="Cancelar">
-                    <i class="bi bi-x-circle me-1"></i> Cancelar
+            <div class="botones mt-4" style="text-align:center;">
+                <div class="contenedor-boton">
+                    <button type="submit" class="boton-mapacheAceptar" style="width: 150px;">
+                        Crear
+                    </button>
+                    <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                    <img src="css/orejaDe.png" class="oreja oreja-derecha" />
+                </div>
+                <button type="button" class="btn-cancelar" style="width: 150px;" @onclick="Cancelar">
+                    Cancelar
                 </button>
             </div>
 
         </EditForm>
 
-        <!-- ✅ Notificación tipo campana -->
+        <!-- ALERTA DE CAMPANA (igual que tenías) -->
         <div id="successAlert" class="success-alert hidden">
             <div class="alert-box">
                 <div class="alert-icon">🔔</div>
@@ -111,6 +110,33 @@
 </div>
 
 <style>
+    /* CARD Y CONTAINER */
+    .registro-container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 20px;
+    }
+
+    .registro-card {
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        background-color: #fff;
+    }
+
+    /* INPUTS ESTILO Mi Cuenta */
+    .dato-box {
+        background: #d9d9d9;
+        border: 2px solid #b5b5b5;
+        border-radius: 10px;
+        padding: 10px 15px;
+        width: 100%;
+        font-size: 16px;
+        pointer-events: auto;
+    }
+
+    /* ALERTA DE CAMPANA EXISTENTE */
     .success-alert {
         position: fixed;
         top: 20px;
@@ -151,44 +177,6 @@
         font-weight: 500;
         color: #333;
     }
-
-    /* BOTÓN BUSCAR */
-    .btn-buscar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #10520B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold; /* ← Aquí se hace negrita */
-    }
-
-        .btn-buscar:hover {
-            background: #49BFBF;
-            color: black;
-            transform: scale(1.05);
-        }
-
-    /* BOTÓN LIMPIAR */
-    .btn-limpiar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #520B0B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold; /* ← Aquí se hace negrita */
-    }
-
-        .btn-limpiar:hover {
-            background: #AD3440;
-            color: black;
-            transform: scale(1.05);
-        }
 </style>
 
 <script>

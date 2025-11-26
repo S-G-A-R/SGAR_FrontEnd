@@ -11,141 +11,144 @@
 
 <link href="css/registro-organizacion.css" rel="stylesheet" />
 
-<div class="registro-container">
-    <div class="registro-card">
-        <h3 class="text-danger"><i class="bi bi-trash-fill me-2"></i>Eliminar Organización</h3>
-        <hr />
+<div class="registro-container d-flex justify-content-center mt-5">
+    <div class="card-modal">
 
-        <p class="alert alert-warning text-center">
-            ⚠️ **¿Está seguro que desea eliminar la siguiente organización de forma permanente?** Esta acción no se puede deshacer.
-        </p>
+        <div class="card-modal-header">
+            <i class="bi bi-trash-fill text-danger"></i>
+            <h5>Eliminar Organización</h5>
+        </div>
 
-        @if (organizacionDetalle == null || !municipioCargado)
-        {
-            <p><em>Cargando organización con ID: @Id...</em></p>
-        }
-        else
-        {
-            <div class="form-group">
-                <label>ID: </label>
-                <span>@organizacionDetalle.Id</span>
-            </div>
+        <div class="card-modal-body">
+            <p class="fw-bold text-center mb-3">
+                ¿Está seguro que desea eliminar esta organización? Esta acción no se puede deshacer.
+            </p>
 
-            <div class="form-group">
-                <label>Nombre de organización: </label>
-                <span>@organizacionDetalle.nombreOrganizacion</span>
-            </div>
+            @if (organizacionDetalle == null || !municipioCargado)
+            {
+                <p><em>Cargando organización con ID: @Id...</em></p>
+            }
+            else
+            {
+                <div class="info-box">
+                    <p><strong>ID:</strong> @organizacionDetalle.Id</p>
+                    <p><strong>Nombre:</strong> @organizacionDetalle.nombreOrganizacion</p>
+                    <p><strong>Correo:</strong> @organizacionDetalle.email</p>
+                    <p><strong>Municipio:</strong> @nombreMunicipioDisplay</p>
+                    <p><strong>Rol:</strong> @nombreRolDisplay</p>
 
-            <div class="form-group">
-                <label>Correo electrónico: </label>
-                <span>@organizacionDetalle.email</span>
-            </div>
-
-            <div class="form-group">
-                <label>Municipio: </label>
-                <span>@nombreMunicipioDisplay</span>
-            </div>
-
-            <div class="form-group">
-                <label>Rol: </label>
-                <span>@nombreRolDisplay</span>
-            </div>
-
-            <div class="form-group mb-4">
-                <label>Notificaciones Activas:</label>
-                <div class="d-flex flex-column gap-1 mt-1">
-
-                    <span class="d-flex align-items-center">
+                    <p class="mt-2 mb-1 fw-bold">Notificaciones Activas:</p>
+                    <p>
                         <i class="@(notifProximidad ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-2"></i>
                         Notificación por proximidad
-                    </span>
-
-                    <span class="d-flex align-items-center">
+                    </p>
+                    <p>
                         <i class="@(notifInicioRuta ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-2"></i>
                         Notificación al iniciar ruta
-                    </span>
-
-                    <span class="d-flex align-items-center">
+                    </p>
+                    <p>
                         <i class="@(notifTiempoReal ? "bi bi-check-circle-fill text-success" : "bi bi-x-circle-fill text-danger") me-2"></i>
-                        Notificación Seguimiento en tiempo real
-                    </span>
-
+                        Seguimiento en tiempo real
+                    </p>
                 </div>
-            </div>
+            }
+        </div>
 
-            <div class="botones mt-4 d-flex gap-2 justify-content-center">
-                <button type="button" class="btn-eliminar" @onclick="ConfirmarEliminar">
-                    <i class="bi bi-trash me-1"></i> Confirmar Eliminación
-                </button>
+        <div class="card-modal-actions">
+            <button class="btn-eliminar" @onclick="ConfirmarEliminar">
+                <i class="bi bi-trash me-2"></i>Eliminar
+            </button>
 
-                <button type="button" class="btn-volver" @onclick="Volver">
-                    <i class="bi bi-arrow-left-circle me-1"></i> Cancelar 
-                </button>
-            </div>
-        }
+            <button class="btn-cancelar" @onclick="Volver">
+                <i class="bi bi-x-lg me-2"></i>Cancelar
+            </button>
+        </div>
+
     </div>
 </div>
 
 <style>
-    /* Estilo para los títulos de los campos */
-    .form-group label {
-        font-weight: bold;
-        color: #333;
-    }
-
-    .form-group span {
-        font-weight: normal;
-    }
-
-    /* Estilo del botón de Volver (similar a tu btn-limpiar, pero azul para cancelar) */
-    .btn-volver {
-        border: 2px solid #000;
+    /* Tarjeta estilo formulario moderno */
+    .card-modal {
         background: #fff;
-        color: #124682;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold; /* ← Aquí se hace negrita */
+        width: 450px;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        /* Eliminamos animación de modal si quieres que sea estático */
     }
 
-        .btn-volver:hover {
-            background: #94BBE9;
-            color: black;
-            transform: scale(1.05);
+    .card-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+        .card-modal-header h5 {
+            margin: 0;
+            font-weight: 700;
         }
 
-    /* ESTILO NUEVO: Botón de Eliminación (Rojo de peligro) */
+    .card-modal-body {
+        margin-top: 15px;
+    }
+
+    .info-box {
+        background: #f8f9fa;
+        padding: 12px 15px;
+        border-radius: 10px;
+        border-left: 4px solid #dc3545;
+    }
+
+    .card-modal-actions {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* Botón Eliminar */
     .btn-eliminar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #520B0B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold; /* ← Aquí se hace negrita */
+        background: #d9534f;
+        border: 2px solid #b94440;
+        color: white;
+        padding: 10px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: 0.2s ease-in-out;
     }
 
         .btn-eliminar:hover {
-            background: #AD3440;
-            color: black;
-            transform: scale(1.05);
+            background: #c64541;
+            border-color: #a93734;
+        }
+
+    /* Botón Cancelar */
+    .btn-cancelar {
+        background: #cfcfcf;
+        border: 2px solid #b5b5b5;
+        color: #333;
+        padding: 10px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: 0.2s ease-in-out;
+    }
+
+        .btn-cancelar:hover {
+            background: #bfbfbf;
+            border-color: #9e9e9e;
         }
 </style>
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+    [Parameter] public int Id { get; set; }
 
     private OrganizacionDetalle? organizacionDetalle;
-    // Las notificaciones no son necesarias en la vista de eliminación, pero se mantienen las variables.
     private bool notifProximidad;
     private bool notifInicioRuta;
     private bool notifTiempoReal;
-
     private string nombreMunicipioDisplay = "Cargando...";
     private string nombreRolDisplay = "Cargando...";
     private bool municipioCargado = false;
@@ -155,109 +158,59 @@
         await LoadOrganizacionDetalle(Id);
         await LoadMunicipioNombre();
 
-        // El Rol 5 siempre es Organización
         if (organizacionDetalle != null && organizacionDetalle.idRol == 5)
-        {
             nombreRolDisplay = "Organización";
-        }
         else
-        {
             nombreRolDisplay = "Rol Desconocido (" + (organizacionDetalle?.idRol.ToString() ?? "N/A") + ")";
-        }
 
         municipioCargado = true;
     }
 
-    // --- LÓGICA DE ELIMINACIÓN CON SWEETALERT2 ---
     private async Task ConfirmarEliminar()
     {
         if (organizacionDetalle == null) return;
 
-        // 1. LLAMADA CORREGIDA: Usamos ConfirmarSweetAlert en lugar de Swal.fire
-        bool confirmed = await JS.InvokeAsync<bool>(
-            "ConfirmarSweetAlert", // <-- Llamamos a la nueva función wrapper
-            new
-            {
-                title = "¿Estás seguro?",
-                html = $"¡Vas a eliminar permanentemente la organización **{organizacionDetalle.nombreOrganizacion}** (ID: {Id})!",
-                icon = "warning",
-                showCancelButton = true,
-                confirmButtonText = "Sí, eliminar",
-                cancelButtonText = "Cancelar",
-                reverseButtons = true,
-                confirmButtonColor = "#DC3545",
-                cancelButtonColor = "#3f51b5"
-            }
-        );
+        bool confirmed = await JS.InvokeAsync<bool>("ConfirmarSweetAlert", new
+        {
+            title = "¿Estás seguro?",
+            html = $"¡Vas a eliminar permanentemente la organización <strong>{organizacionDetalle.nombreOrganizacion}</strong> (ID: {Id})!",
+            icon = "warning",
+            showCancelButton = true,
+            confirmButtonText = "Sí, eliminar",
+            cancelButtonText = "Cancelar",
+            reverseButtons = true,
+            confirmButtonColor = "#DC3545",
+            cancelButtonColor = "#3f51b5"
+        });
 
         if (confirmed)
         {
             try
             {
                 bool exito = await OrganizacionService.Eliminar(Id);
-
                 if (exito)
                 {
-                    // 2. ÉXITO (Usamos la función MostrarAlerta con la configuración de éxito)
                     await JS.InvokeVoidAsync("MostrarAlerta", new
                     {
                         title = "¡Eliminación Exitosa!",
-                        html = $"La organización con ID **{Id}** ha sido eliminada.",
+                        html = $"La organización con ID <strong>{Id}</strong> ha sido eliminada.",
                         icon = "success",
                         showConfirmButton = false,
                         timer = 2000
                     });
-
-                    // Esperamos un momento para que el usuario vea la alerta
                     await Task.Delay(500);
                     Nav.NavigateTo("/index-organizacion");
                 }
-                else
-                {
-                    // 3. FALLO DE API (Usamos la función MostrarAlerta con la configuración de error)
-                    await JS.InvokeVoidAsync("MostrarAlerta", new
-                    {
-                        title = "Error de Eliminación",
-                        html = $"No se pudo eliminar la organización **{organizacionDetalle.nombreOrganizacion}**. (Registro no encontrado o error en el servidor)",
-                        icon = "error",
-                        confirmButtonText = "Entendido"
-                    });
-                }
             }
-            catch (Exception ex)
-            {
-                // 4. ERROR DE CONEXIÓN (Usamos la función MostrarAlerta con la configuración de error)
-                await JS.InvokeVoidAsync("MostrarAlerta", new
-                {
-                    title = "Error de Conexión",
-                    html = $"Ocurrió un error al intentar comunicar con el servicio: **{ex.Message}**",
-                    icon = "error",
-                    confirmButtonText = "Aceptar"
-                });
-            }
+            catch (Exception ex) { await JS.InvokeVoidAsync("MostrarAlerta", new { title = "Error", html = $"Error: {ex.Message}", icon = "error" }); }
         }
     }
 
-    // --- LÓGICA DE CARGA ---
     private async Task LoadOrganizacionDetalle(int id)
     {
         try
         {
             organizacionDetalle = await OrganizacionService.ObtenerPorId(id);
-
-            if (organizacionDetalle == null)
-            {
-                // ❌ CAMBIO NECESARIO 1: Reemplazar showErrorAlert por MostrarAlerta con opciones SweetAlert
-                await JS.InvokeVoidAsync("MostrarAlerta", new
-                {
-                    title = "Error de Carga",
-                    html = $"No se encontró la organización con ID **{id}**.",
-                    icon = "error",
-                    confirmButtonText = "OK"
-                });
-            }
-
-            // Mapeo de notificaciones: ESTO SE MANTIENE
             if (organizacionDetalle != null && !string.IsNullOrEmpty(organizacionDetalle.notificacion))
             {
                 string notif = organizacionDetalle.notificacion;
@@ -266,21 +219,8 @@
                 notifTiempoReal = notif.Length > 2 && notif[2] == '1';
             }
         }
-        catch (Exception ex)
-        {
-            // ❌ CAMBIO NECESARIO 2: Reemplazar showErrorAlert por MostrarAlerta con opciones SweetAlert
-            await JS.InvokeVoidAsync("MostrarAlerta", new
-            {
-                title = "Error de Carga",
-                html = $"Error al cargar la organización: **{ex.Message}**",
-                icon = "error",
-                confirmButtonText = "Aceptar"
-            });
-            organizacionDetalle = null;
-        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("MostrarAlerta", new { title = "Error de Carga", html = $"Error: {ex.Message}", icon = "error" }); organizacionDetalle = null; }
     }
-
-   
 
     private async Task LoadMunicipioNombre()
     {
@@ -289,30 +229,17 @@
             nombreMunicipioDisplay = "ID de Municipio No Disponible";
             return;
         }
-
         try
         {
             var municipios = await MunicipioService.ObtenerMunicipiosAsync();
-            var municipioEncontrado = municipios.FirstOrDefault(m =>
-                m.Id.Equals(organizacionDetalle.idMunicipio, StringComparison.OrdinalIgnoreCase));
-
-            if (municipioEncontrado != null)
-            {
-                nombreMunicipioDisplay = $"{municipioEncontrado.Nombre} ({municipioEncontrado.IdDepartamento?.Nombre})";
-            }
-            else
-            {
-                nombreMunicipioDisplay = "Municipio No Encontrado (ID: " + organizacionDetalle.idMunicipio + ")";
-            }
+            var municipioEncontrado = municipios.FirstOrDefault(m => m.Id.Equals(organizacionDetalle.idMunicipio, StringComparison.OrdinalIgnoreCase));
+            nombreMunicipioDisplay = municipioEncontrado != null
+                ? $"{municipioEncontrado.Nombre} ({municipioEncontrado.IdDepartamento?.Nombre})"
+                : "Municipio No Encontrado (ID: " + organizacionDetalle.idMunicipio + ")";
         }
-        catch (Exception)
-        {
-            nombreMunicipioDisplay = "Error al cargar municipios";
-        }
+        catch { nombreMunicipioDisplay = "Error al cargar municipios"; }
     }
 
-    private void Volver()
-    {
-        Nav.NavigateTo("/index-organizacion");
-    }
+    private void Volver() => Nav.NavigateTo("/index-organizacion");
 }
+

@@ -5,7 +5,7 @@
 @using static FrontEnd_SGAR.DTOs.OrganizacionDTO
 @using Microsoft.AspNetCore.Components.Forms
 @inject OrganizacionService OrganizacionService
-@inject MunicipioService MunicipioService 
+@inject MunicipioService MunicipioService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -13,139 +13,139 @@
 
 <div class="registro-container">
     <div class="registro-card">
+        <!-- Título -->
         <h3><i class="bi bi-building me-2"></i>Detalle de Organización</h3>
         <hr />
 
-        @if (organizacionDetalle == null || !municipioCargado) // Verificar si ambos están cargados
+        @if (organizacionDetalle == null || !municipioCargado)
         {
-                <p><em>Cargando o no se encontró la organización con ID: @Id...</em></p>
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Cargando datos...</p>
+            </div>
         }
         else
         {
-                <div class="form-group">
-                    <label>ID: </label>
-                    @organizacionDetalle.Id
+            <div class="row g-4 mt-2">
+
+                <!-- ID -->
+                <div class="col-md-6">
+                    <label>ID</label>
+                    <div class="dato-box">@organizacionDetalle.Id</div>
                 </div>
 
-                <div class="form-group">
-                    <label>Nombre de organización: </label>
-                   @organizacionDetalle.nombreOrganizacion
+                <!-- Nombre -->
+                <div class="col-md-6">
+                    <label>Nombre de organización</label>
+                    <div class="dato-box">@organizacionDetalle.nombreOrganizacion</div>
                 </div>
 
-                <div class="form-group">
-                    <label>Teléfono: </label>
-                   @organizacionDetalle.telefono
+                <!-- Teléfono -->
+                <div class="col-md-6">
+                    <label>Teléfono</label>
+                    <div class="dato-box">@organizacionDetalle.telefono</div>
                 </div>
 
-                <div class="form-group">
-                    <label>Correo electrónico: </label>
-                   @organizacionDetalle.email
+                <!-- Correo -->
+                <div class="col-md-6">
+                    <label>Correo electrónico</label>
+                    <div class="dato-box">@organizacionDetalle.email</div>
                 </div>
 
-                <div class="form-group">
-                    <label>Municipio: </label>
-                  @nombreMunicipioDisplay
+                <!-- Municipio -->
+                <div class="col-md-6">
+                    <label>Municipio</label>
+                    <div class="dato-box">@nombreMunicipioDisplay</div>
                 </div>
 
-                <div class="form-group">
-                    <label>Rol: </label>
-                   @nombreRolDisplay
+                <!-- Rol -->
+                <div class="col-md-6">
+                    <label>Rol</label>
+                    <div class="dato-box">@nombreRolDisplay</div>
                 </div>
 
-                <div class="form-group mt-3">
-                    <label>Tipos de notificación: </label>
-                    <div class="form-check-group">
-                        <label>
-                            <InputCheckbox @bind-Value="notifProximidad" disabled /> Notificación por proximidad
-                        </label><br />
-                        <label>
-                            <InputCheckbox @bind-Value="notifInicioRuta" disabled /> Notificación al iniciar ruta
-                        </label><br />
-                        <label>
-                            <InputCheckbox @bind-Value="notifTiempoReal" disabled /> Seguimiento en tiempo real
-                        </label>
+                <!-- Notificaciones -->
+                <div class="col-12">
+                    <label>Tipos de notificación</label>
+                    <div class="dato-box flex-column">
+                        <label><InputCheckbox @bind-Value="notifProximidad" disabled /> Notificación por proximidad</label>
+                        <label><InputCheckbox @bind-Value="notifInicioRuta" disabled /> Notificación al iniciar ruta</label>
+                        <label><InputCheckbox @bind-Value="notifTiempoReal" disabled /> Seguimiento en tiempo real</label>
                     </div>
                 </div>
 
-                <div class="botones mt-4 d-flex gap-2 justify-content-center">
-                        <button type="button" class="btn-limpiar" style="width: 150px;" @onclick="Volver">
-                        <i class="bi bi-arrow-left-circle me-1"></i> Volver
-                    </button>
-                </div>
+            </div>
+
+            <div class="text-center mt-4 mb-2">
+                <button class="btn-cancelar" @onclick="Volver">
+                    <i class="bi bi-arrow-left me-2"></i>Volver
+                </button>
+            </div>
         }
     </div>
 </div>
 
 <style>
-    /* Mantiene el texto de la opción de notificación más oscuro */
-    .form-check-group label {
-        font-weight: normal;
-        color: #333;
-        opacity: 1;
+    /* Igual que "Detalle de Horario" */
+    .dato-box {
+        background: #d9d9d9 !important;
+        border: 2px solid #b5b5b5 !important;
+        border-radius: 10px;
+        padding: 12px 15px;
+        width: 100%;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
     }
 
-    /* Hace que el InputCheckbox deshabilitado se vea más fuerte (si el navegador lo permite) */
-    .form-check-group input[type="checkbox"]:disabled {
-        opacity: 1;
-        filter: none; 
-        cursor: default;
+        .dato-box.flex-column {
+            flex-direction: column;
+            gap: 5px;
+            align-items: flex-start;
+        }
+
+    .btn-cancelar {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 25px;
+        height: 48px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.2s;
     }
 
-/* BOTÓN */
-.btn-limpiar {
-    border: 2px solid #000;
-    background: #fff;
-    color: #520B0B;
-    width: 50%;
-    font-size: 14px;
-    border-radius: 6px;
-    padding: 7px;
-    transition: .2s;
-    font-weight: bold; /* ← Aquí se hace negrita */
-}
-
-    .btn-limpiar:hover {
-        background: #AD3440;
-        color: black;
-        transform: scale(1.05);
-    }
+        .btn-cancelar:hover {
+            background-color: #5a6268;
+        }
 </style>
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+    [Parameter] public int Id { get; set; }
 
     private OrganizacionDetalle? organizacionDetalle;
     private bool notifProximidad;
     private bool notifInicioRuta;
     private bool notifTiempoReal;
 
-    // Variables para el nombre descriptivo
     private string nombreMunicipioDisplay = "Cargando...";
     private string nombreRolDisplay = "Cargando...";
     private bool municipioCargado = false;
 
-
     protected override async Task OnInitializedAsync()
     {
-        // Cargar ambas tareas en paralelo o secuencialmente
         await LoadOrganizacionDetalle(Id);
         await LoadMunicipioNombre();
 
-        // El Rol 5 siempre es Organización
         if (organizacionDetalle != null && organizacionDetalle.idRol == 5)
-        {
             nombreRolDisplay = "Organización";
-        }
         else
-        {
             nombreRolDisplay = "Rol Desconocido (" + (organizacionDetalle?.idRol.ToString() ?? "N/A") + ")";
-        }
 
         municipioCargado = true;
     }
 
-    // --- LÓGICA DE CARGA DE ORGANIZACIÓN ---
     private async Task LoadOrganizacionDetalle(int id)
     {
         try
@@ -171,7 +171,6 @@
         }
     }
 
-    // --- LÓGICA DE CARGA DE NOMBRE DEL MUNICIPIO ---
     private async Task LoadMunicipioNombre()
     {
         if (organizacionDetalle == null || string.IsNullOrEmpty(organizacionDetalle.idMunicipio))
@@ -182,46 +181,19 @@
 
         try
         {
-            // 1. Obtener la lista completa de municipios
             var municipios = await MunicipioService.ObtenerMunicipiosAsync();
-
-            // 2. Buscar el nombre del municipio por el ID que tenemos
-            var municipioEncontrado = municipios.FirstOrDefault(m =>
-                m.Id.Equals(organizacionDetalle.idMunicipio, StringComparison.OrdinalIgnoreCase));
-
-            if (municipioEncontrado != null)
-            {
-                nombreMunicipioDisplay = $"{municipioEncontrado.Nombre} ({municipioEncontrado.IdDepartamento?.Nombre})";
-            }
-            else
-            {
-                nombreMunicipioDisplay = "Municipio No Encontrado (ID: " + organizacionDetalle.idMunicipio + ")";
-            }
+            var municipioEncontrado = municipios.FirstOrDefault(m => m.Id.Equals(organizacionDetalle.idMunicipio, StringComparison.OrdinalIgnoreCase));
+            nombreMunicipioDisplay = municipioEncontrado != null
+                ? $"{municipioEncontrado.Nombre} ({municipioEncontrado.IdDepartamento?.Nombre})"
+                : "Municipio No Encontrado (ID: " + organizacionDetalle.idMunicipio + ")";
         }
-        catch (Exception)
+        catch
         {
             nombreMunicipioDisplay = "Error al cargar municipios";
         }
     }
 
-    private void Volver()
-    {
-        Nav.NavigateTo("/index-organizacion");
-    }
+    private void Volver() => Nav.NavigateTo("/index-organizacion");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

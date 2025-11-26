@@ -65,7 +65,6 @@
 
                 <div class="form-group position-relative">
                     <label class="required">Municipio</label>
-
                     <InputText class="form-control"
                                placeholder="Escribe o selecciona un municipio"
                                @bind-Value="modelo.MunicipioSeleccionado"
@@ -73,12 +72,10 @@
                                @onfocus="MostrarDropdown"
                                @onblur="OnBlurCerrar" />
 
-
                     @if (mostrarDropdown && municipiosFiltrados.Any())
                     {
                         <ul class="list-group position-absolute w-100 shadow"
                             style="z-index: 2000; max-height: 200px; overflow-y: auto;">
-
                             @foreach (var m in municipiosFiltrados)
                             {
                                 <li class="list-group-item list-group-item-action"
@@ -101,19 +98,22 @@
                     </div>
                 </div>
 
-                <div class="botones mt-4 d-flex gap-2 justify-content-center">
-                    <button type="submit" class="btn-buscar" style="width: 150px;">
-                        <i class="bi bi-save me-1"></i> Guardar Cambios
-                    </button>
-
-                    <button type="button" class="btn-limpiar" style="width: 150px;" @onclick="Cancelar">
+                <div class="botones mt-4">
+                    <div class="contenedor-boton">
+                        <button type="submit" class="boton-mapacheAceptar">
+                          Actualizar
+                        </button>
+                        <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                        <img src="css/orejaDe.png" class="oreja oreja-derecha" />
+                    </div>
+                    <button type="button" class="btn-cancelar" @onclick="Cancelar">
                         <i class="bi bi-x-circle me-1"></i> Cancelar
                     </button>
                 </div>
             </EditForm>
         }
 
-
+        <!-- ALERTA TIPO CAMPANA -->
         <div id="successAlert" class="success-alert hidden">
             <div class="alert-box">
                 <div class="alert-icon">🔔</div>
@@ -126,7 +126,7 @@
 
 <style>
     /* ---------------------------------- */
-    /* ESTILOS CSS DE LAS ALERTAS Y BOTONES */
+    /* ESTILOS ALERTA Y BOTONES MAPACHE */
     /* ---------------------------------- */
     .success-alert {
         position: fixed;
@@ -155,7 +155,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
 
     .alert-icon {
@@ -169,44 +169,9 @@
         color: #333;
     }
 
-    /* BOTÓN BUSCAR */
-    .btn-buscar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #10520B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold;
-    }
-
-        .btn-buscar:hover {
-            background: #49BFBF;
-            color: black;
-            transform: scale(1.05);
-        }
-
-    /* BOTÓN LIMPIAR */
-    .btn-limpiar {
-        border: 2px solid #000;
-        background: #fff;
-        color: #520B0B;
-        width: 50%;
-        font-size: 14px;
-        border-radius: 6px;
-        padding: 7px;
-        transition: .2s;
-        font-weight: bold;
-    }
-
-        .btn-limpiar:hover {
-            background: #AD3440;
-            color: black;
-            transform: scale(1.05);
-        }
+   
 </style>
+
 
 <script>
     function showCustomAlert(message) {
