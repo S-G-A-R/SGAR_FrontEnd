@@ -242,6 +242,7 @@
 
             if (empresaDto != null)
             {
+                modelo.AsociadoId = empresaDto.AsociadoId;
                 modelo.NombreEmpresa = empresaDto.NombreEmpresa;
             }
             else
@@ -269,6 +270,7 @@
 
         var requets = new EmpresaRequest
         {
+            AsociadoId = modelo.AsociadoId,
             NombreEmpresa = modelo.NombreEmpresa
         };
 

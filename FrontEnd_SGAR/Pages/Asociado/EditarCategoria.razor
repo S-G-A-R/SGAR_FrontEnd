@@ -169,6 +169,8 @@
 
     public class CategoriaModelValidacion
     {
+        public int asociadoId { get; set; }
+
         [Required(ErrorMessage = "El nombre de la categoria es obligatorio.")]
         [StringLength(100, ErrorMessage = "El nombre de la categoria no debe exceder los 100 caracteres.")]
         public string nombreCat { get; set; } = string.Empty;
@@ -203,6 +205,7 @@
 
             if (categoriaProductoDTO != null)
             {
+                modelo.asociadoId = categoriaProductoDTO.asociadoId;
                 modelo.nombreCat = categoriaProductoDTO.nombreCat;
             }
             else
@@ -225,6 +228,7 @@
         if (id == 0) return;
         var requets = new CategoriaRequest
         {
+            asociadoId = modelo.asociadoId,
             nombreCat = modelo.nombreCat
         };
         var resultado = await CategoriaService.ActualizarCategoria(id, requets);
