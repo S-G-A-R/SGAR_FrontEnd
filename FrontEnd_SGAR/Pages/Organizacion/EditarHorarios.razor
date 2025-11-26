@@ -1,4 +1,4 @@
-﻿@* @page "/horarios/editar/{id:int}"
+﻿@page "/horarios/editar/{id:int}"
 @using FrontEnd_SGAR.DTOs
 @using FrontEnd_SGAR.Services
 @inject HorarioService HorarioService
@@ -6,89 +6,278 @@
 @inject AuthOrganizacionService AuthService
 @inject OrganizacionService OrganizacionService
 @inject ZonaService ZonaService
+@inject IJSRuntime JS
 
-<h3 class="mb-4">Editar Horario</h3>
 
-@if (cargando)
-{
-    <div class="text-center p-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
-        <p class="mt-2">Cargando datos...</p>
-    </div>
-}
-else if (mensajeError != "")
-{
-    <div class="alert alert-danger">@mensajeError</div>
-}
-else
-{
-    <EditForm Model="nuevoHorario" OnValidSubmit="ActualizarHorario">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+<link href="css/registro-organizacion.css" rel="stylesheet" />
 
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Organización</label>
-                <input class="form-control" value="@organizacionActual?.nombreOrganizacion" disabled />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Zona</label>
-                <select class="form-select" @bind="nuevoHorario.ZonaId" required>
-                    <option value="">Seleccione una zona</option>
-                    @foreach (var zona in zonas)
-                    {
-                        <option value="@zona.Id">@zona.Nombre</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Día</label>
-                <select class="form-select" @bind="nuevoHorario.Dia" required>
-                    <option value="">Seleccione un día</option>
-                    @foreach (var d in diasSemana.Select((texto, index) => new { texto, index }))
-                    {
-                        <option value="@(d.index + 1)" selected="@(nuevoHorario.Dia == (d.index + 1).ToString())">@d.texto</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Turno</label>
-                <select class="form-select" @bind="nuevoHorario.Turno" required>
-                    <option value="0">Seleccione turno</option>
-                    <option value="1">Mañana</option>
-                    <option value="2">Tarde</option>
-                    <option value="3">Noche</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Hora Entrada</label>
-                <input type="time" class="form-control" @bind-value="horaEntrada" required />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Hora Salida</label>
-                <input type="time" class="form-control" @bind-value="horaSalida" required />
-            </div>
-        </div>
+<div class="registro-container">
+    <div class="registro-card">
 
-        <div class="mt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-check-circle me-1"></i>Actualizar
-            </button>
-            <button type="button" class="btn btn-secondary" @onclick="Cancelar">
-                <i class="bi bi-x-circle me-1"></i>Cancelar
-            </button>
-        </div>
+        <h3><i class="bi bi-pencil-square me-2"></i>Editar Horario</h3>
+        <hr />
 
-        @if (!string.IsNullOrEmpty(mensajeExito))
+        @if (cargando)
         {
-            <div class="alert alert-success mt-3">@mensajeExito</div>
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-3 text-muted">Cargando datos...</p>
+            </div>
         }
-    </EditForm>
-} *@
+        else if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger mt-3 rounded-3 shadow-sm text-center">
+                <i class="bi bi-exclamation-circle me-2"></i>@mensajeError
+            </div>
+        }
+        else
+        {
+            <EditForm Model="nuevoHorario" OnValidSubmit="ActualizarHorario">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-@page "/horarios/editar/{id:int}"
+                <div class="row g-4 mt-2">
+
+                    <!-- ORGANIZACIÓN -->
+                    <div class="col-md-6">
+                        <label>Organización</label>
+                        <div class="dato-box">@organizacionActual?.nombreOrganizacion</div>
+                    </div>
+
+                    <!-- ZONA -->
+                    <div class="col-md-6">
+                        <label>Zona</label>
+                        <select class="dato-box form-select border-0"
+                                style="background:white;"
+                                @bind="nuevoHorario.ZonaId"
+                                required>
+                            <option value="">Seleccione una zona</option>
+                            @foreach (var zona in zonas)
+                            {
+                                <option value="@zona.Id">@zona.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- DÍA -->
+                    <div class="col-md-6">
+                        <label>Día</label>
+                        <select class="dato-box form-select border-0"
+                                style="background:white;"
+                                @bind="nuevoHorario.Dia"
+                                required>
+                            <option value="">Seleccione un día</option>
+                            @foreach (var d in diasSemana.Select((texto, index) => new { texto, index }))
+                            {
+                                <option value="@(d.index + 1)">@d.texto</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- TURNO -->
+                    <div class="col-md-6">
+                        <label>Turno</label>
+                        <select class="dato-box form-select border-0"
+                                style="background:white;"
+                                @bind="nuevoHorario.Turno"
+                                required>
+                            <option value="0">Seleccione turno</option>
+                            <option value="1">Mañana</option>
+                            <option value="2">Tarde</option>
+                            <option value="3">Noche</option>
+                        </select>
+                    </div>
+
+                    <!-- HORA ENTRADA -->
+                    <div class="col-md-6">
+                        <label>Hora Entrada</label>
+                        <input type="time"
+                               class="dato-box border-0 w-100"
+                               style="background:white;"
+                               @bind-value="horaEntrada"
+                               required />
+                    </div>
+
+                    <!-- HORA SALIDA -->
+                    <div class="col-md-6">
+                        <label>Hora Salida</label>
+                        <input type="time"
+                               class="dato-box border-0 w-100"
+                               style="background:white;"
+                               @bind-value="horaSalida"
+                               required />
+                    </div>
+                </div>
+
+                <!-- BOTONES -->
+                <div class="botones mt-5" style="text-align:center;">
+
+                    <div class="contenedor-boton">
+                        <button type="submit" class="boton-mapacheAceptar">
+                            Actualizar
+                        </button>
+                        <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                        <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                    </div>
+
+                    <button type="button" class="btn-cancelar mt-2"
+                            @onclick="Cancelar">
+                        Cancelar
+                    </button>
+
+                </div>
+
+                @if (!string.IsNullOrEmpty(mensajeExito))
+                {
+                    <div class="alert alert-success mt-4 rounded-3 shadow-sm text-center">
+                        <i class="bi bi-check-circle me-2"></i>@mensajeExito
+                    </div>
+                }
+
+            </EditForm>
+        }
+
+    </div>
+</div>
+
+<style>
+    .dato-box {
+        background: #d9d9d9 !important;
+        border: 2px solid #b5b5b5 !important;
+        border-radius: 10px;
+        padding: 10px 15px;
+        width: 100%;
+        font-size: 16px;
+    }
+
+    select.dato-box,
+    input[type=time].dato-box {
+        height: 45px;
+    }
+</style>
+
+@code {
+    // --- TU CÓDIGO EXACTO SIN CAMBIOS ---
+    [Parameter] public int id { get; set; }
+
+    private HorarioGuardarDto nuevoHorario = new();
+    private OrganizacionDTO.OrganizacionDetalle? organizacionActual;
+    private List<ZonaDTO.Zona> zonas = new();
+    private bool cargando = true;
+    private string mensajeError = "";
+    private string mensajeExito = "";
+    private TimeOnly? horaEntrada;
+    private TimeOnly? horaSalida;
+
+    private readonly List<string> diasSemana = new()
+    {
+        "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        try
+        {
+            var jwt = await AuthService.ObtenerTokenDecodificado();
+            var orgIdClaim = jwt?.Claims.FirstOrDefault(c => c.Type == "nameid")?.Value;
+            var rolClaim = jwt?.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+
+            int orgId = 0;
+            int.TryParse(orgIdClaim, out orgId);
+
+            if (rolClaim?.ToLower() != "organizacion" || orgId <= 0)
+            {
+                mensajeError = "No tienes permisos para editar horarios.";
+                return;
+            }
+
+            organizacionActual = await OrganizacionService.ObtenerPorId(orgId);
+            zonas = await ZonaService.ObtenerZonasAsync();
+
+            var horarioExistente = await HorarioService.ObtenerPorIdAsync(id);
+            if (horarioExistente == null)
+            {
+                mensajeError = "Horario no encontrado.";
+                return;
+            }
+
+            nuevoHorario.IdOrganizacion = horarioExistente.IdOrganizacion;
+            nuevoHorario.ZonaId = horarioExistente.ZonaId;
+            nuevoHorario.Dia = horarioExistente.Dia;
+            nuevoHorario.Turno = horarioExistente.Turno;
+
+            horaEntrada = TimeOnly.Parse(horarioExistente.HoraEntrada);
+            horaSalida = TimeOnly.Parse(horarioExistente.HoraSalida);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error cargando datos: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task ActualizarHorario()
+    {
+        mensajeError = "";
+        mensajeExito = "";
+
+        if (horaEntrada == null || horaSalida == null)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "Campos incompletos",
+                text = "Debe ingresar ambas horas.",
+                icon = "warning"
+            }); 
+            return;
+        }
+        if (horaEntrada >= horaSalida)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "Horas inválidas",
+                text = "La hora de entrada debe ser anterior a la hora de salida.",
+                icon = "warning"
+            });
+            return;
+        }
+
+        nuevoHorario.HoraEntrada = horaEntrada.Value.ToString("HH:mm");
+        nuevoHorario.HoraSalida = horaSalida.Value.ToString("HH:mm");
+
+        var result = await HorarioService.ActualizarHorarioAsync(id, nuevoHorario);
+        if (result != null)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "¡Horario actualizado!",
+                text = "Los cambios se guardaron exitosamente.",
+                icon = "success",
+                confirmButtonText = "Ok"
+            });
+
+            Nav.NavigateTo("/index-horarios");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "Error",
+                text = "No se pudo actualizar el horario.",
+                icon = "error"
+            });
+        }
+    }
+
+    private void Cancelar() => Nav.NavigateTo("/index-horarios");
+}
+
+
+@* @page "/horarios/editar/{id:int}"
 @using FrontEnd_SGAR.DTOs
 @using FrontEnd_SGAR.Services
 @inject HorarioService HorarioService
@@ -310,3 +499,4 @@ else
 
     private void Cancelar() => Nav.NavigateTo("/index-horarios");
 }
+ *@

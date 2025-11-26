@@ -6,6 +6,7 @@
 @inject OrganizacionService OrganizacionService
 @inject ZonaService ZonaService
 
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet" />
 
 <div class="horarios-container">
@@ -56,9 +57,9 @@
             </div>
             @if (TieneFiltrosActivos())
             {
-                <div class="mt-3">
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="LimpiarFiltros">
-                        <i class="bi bi-x-circle me-1"></i>Limpiar filtros
+                <div class="mt-2">
+                    <button class="btn btn-limpiar" @onclick="LimpiarFiltros">
+                        <i class="bi bi-eraser"></i>Limpiar filtros
                     </button>
                 </div>
             }
@@ -66,8 +67,9 @@
     </div>
     <p></p>
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <button class="btn-crear" @onclick="CrearNuevo">
-            <i class="bi bi-plus-circle me-1"></i>Crear Horario
+     
+        <button class="btn btn-crear" @onclick="CrearNuevo">
+            <i class="bi bi-calendar-date"></i> Crear Horario
         </button>
     </div>
 
@@ -131,34 +133,7 @@
                 </tbody>
             </table>
         </div>
-      @*   @if (response?.TotalPages > 1)
-        {
-            <nav class="mt-4">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(response.HasPreviousPage ? "" : "disabled")">
-                        <button class="page-link" @onclick="PaginaAnterior">
-                            <i class="bi bi-chevron-left"></i> Anterior
-                        </button>
-                    </li>
-                    @for (int i = Math.Max(1, response.CurrentPage - 2); i <= Math.Min(response.TotalPages, response.CurrentPage + 2); i++)
-                    {
-                        <li class="page-item @(i == response.CurrentPage ? "active" : "")">
-                            <button class="page-link" @onclick="() => IrAPagina(i)">@i</button>
-                        </li>
-                    }
-                    <li class="page-item @(response.HasNextPage ? "" : "disabled")">
-                        <button class="page-link" @onclick="PaginaSiguiente">
-                            Siguiente <i class="bi bi-chevron-right"></i>
-                        </button>
-                    </li>
-                </ul>
-            </nav>
-            <div class="text-center mt-2">
-                <small class="text-muted">
-                    Página @response.CurrentPage de @response.TotalPages - Total: @response.TotalCount horarios
-                </small>
-            </div>
-        } *@
+
         @if (response != null && response.TotalPages > 0)
         {
             <div class="pagination-container mt-3 d-flex justify-content-between align-items-center">
@@ -190,13 +165,15 @@
             <i class="bi bi-clock-history" style="font-size: 4rem; color: #ccc;"></i>
             <h4>No hay horarios registrados</h4>
             <p>@(TieneFiltrosActivos() ? "No se encontraron horarios con los filtros aplicados" : "Comienza creando tu primer horario")</p>
-            <button class="btn btn-primary" @onclick="CrearNuevo">
-                <i class="bi bi-plus-circle me-1"></i>Crear Horario
+            <button class="btn btn-crear" @onclick="CrearNuevo">
+                <i class="bi bi-calendar-date me-2"></i> Crear Horario
             </button>
+
         </div>
     }
 
     @*Nuevo estilo eliminar*@
+   
     @if (mostrarModalEliminar)
     {
         <div class="card-modal-overlay" @onclick="CerrarModalEliminar">
@@ -220,47 +197,21 @@
 
                     <p class="text-danger text-center mt-2"><small>Esta acción no se puede deshacer.</small></p>
                 </div>
+                <div class="card-modal-actions mt-3">
 
-                <div class="card-modal-actions">
-                    <button class="btn btn-danger" @onclick="EliminarConfirmado">
-                        <i class="bi bi-trash me-1"></i>Eliminar
+                    <button class="btn-eliminar" @onclick="EliminarConfirmado">
+                        <i class="bi bi-trash me-2"></i>Eliminar
                     </button>
-                    <button class="btn btn-secondary" @onclick="CerrarModalEliminar">
-                        <i class="bi bi-x me-1"></i>Cancelar
+
+                    <button class="btn-cancelar" @onclick="CerrarModalEliminar">
+                        <i class="bi bi-x-lg me-2"></i>Cancelar
                     </button>
+
                 </div>
             </div>
         </div>
     }
 
-
-   @*  @if (mostrarModalEliminar)
-    {
-        <div class="modal-overlay" @onclick="CerrarModalEliminar">
-            <div class="modal-content" @onclick:stopPropagation="true">
-                <div class="modal-header-delete">
-                    <h4><i class="bi bi-exclamation-triangle me-2"></i>Eliminar Horario</h4>
-                </div>
-                <div class="modal-body">
-                    <p><strong>¿Está seguro de eliminar este horario?</strong></p>
-                    <p>ID: <strong>@horarioAEliminar?.Id</strong></p>
-                    <p>Día: <strong>@ObtenerDiaTexto(horarioAEliminar!.Dia)</strong></p>
-                    <p>Turno: <strong>@ObtenerTurnoTexto(horarioAEliminar!.Turno)</strong></p>
-                    <p>Hora Entrada:<strong> @horarioAEliminar.HoraEntrada</strong></p>
-                    <p>Hora Salida:<strong> @horarioAEliminar.HoraSalida</strong></p>
-                    <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn btn-danger" @onclick="EliminarConfirmado">
-                        <i class="bi bi-trash me-1"></i>Eliminar
-                    </button>
-                    <button class="btn btn-secondary" @onclick="CerrarModalEliminar">
-                        <i class="bi bi-x me-1"></i>Cancelar
-                    </button>
-                </div>
-            </div>
-        </div>
-    } *@
 
     @if (!string.IsNullOrEmpty(mensajeError))
     {
@@ -303,20 +254,7 @@
         justify-content: space-between;
     }
 
-    .btn-crear {
-        background: #fff;
-        color: #2e7d32;
-        border: 2px solid #2e7d32;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: .2s;
-        padding: 6px 16px;
-    }
-
-        .btn-crear:hover {
-            background: #2e7d32;
-            color: #fff;
-        }
+  
 
     .table-responsive {
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -498,6 +436,76 @@
         font-size: 14px;
         padding: 6px 12px;
     }
+
+    /* BOTÓN LIMPIAR */
+    .btn-limpiar {
+        border: 2px solid #000;
+        background: #fff;
+        color: #524170;
+        width: auto;
+        font-size: 14px;
+        border-radius: 6px;
+        padding: 7px 14px;
+        transition: .2s;
+    }
+
+        .btn-limpiar:hover {
+            background: #D9C7FF;
+            color: black;
+            transform: scale(1.05);
+        }
+
+    /* BOTÓN CREAR */
+    .btn-crear {
+        border: 2px solid #000;
+        background: #fff;
+        color: #2e7d32;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: .2s;
+        width: auto; /* que se adapte al contenido */
+        padding: 6px 12px; /* puedes ajustarlo */
+    }
+
+        .btn-crear:hover {
+            background: #5C9E77;
+            color: white;
+            transform: scale(1.05);
+        }
+
+    /* Botón Eliminar estilo orejitas */
+    .btn-eliminar {
+        background: #d9534f;
+        border: 2px solid #b94440;
+        color: white;
+        padding: 10px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: 0.2s ease-in-out;
+    }
+
+        .btn-eliminar:hover {
+            background: #c64541;
+            border-color: #a93734;
+        }
+
+    /* Botón Cancelar estilo orejitas */
+    .btn-cancelar {
+        background: #cfcfcf;
+        border: 2px solid #b5b5b5;
+        color: #333;
+        padding: 10px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        margin-left: 12px;
+        transition: 0.2s ease-in-out;
+    }
+
+        .btn-cancelar:hover {
+            background: #bfbfbf;
+            border-color: #9e9e9e;
+        }
 </style>
 
 @code {
