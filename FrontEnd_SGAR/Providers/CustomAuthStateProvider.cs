@@ -26,19 +26,39 @@ namespace FrontEnd_SGAR.Providers
                     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
                 }
 
-                // Validar si el token expiró
+                // 1. Leer el token
                 var jwtToken = _tokenHandler.ReadJwtToken(token);
+
+                // 2. Validar si expiró
                 if (jwtToken.ValidTo < DateTime.UtcNow)
                 {
-                    // Token expirado, limpiar localStorage
                     await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "token");
                     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
                 }
 
-                // Token válido, crear claims del usuario
-                var claims = jwtToken.Claims.ToList();
-                var identity = new ClaimsIdentity(claims, "jwt");
-                var user = new ClaimsPrincipal(identity);
+                // 3. --- MAPEO MANUAL DE CLAIMS (LA SOLUCIÓN) ---
+                var claimsIdentity = new ClaimsIdentity("jwt");
+
+                foreach (var claim in jwtToken.Claims)
+                {
+                    // Si el claim es "role", lo agregamos como ClaimTypes.Role
+                    if (claim.Type == "role")
+                    {
+                        claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, claim.Value));
+                    }
+                    // Si el claim es "unique_name" o "name", lo agregamos como ClaimTypes.Name
+                    else if (claim.Type == "unique_name" || claim.Type == "name")
+                    {
+                        claimsIdentity.AddClaim(new Claim(ClaimTypes.Name, claim.Value));
+                    }
+                    else
+                    {
+                        // Agregamos el resto de claims tal cual
+                        claimsIdentity.AddClaim(claim);
+                    }
+                }
+
+                var user = new ClaimsPrincipal(claimsIdentity);
 
                 return new AuthenticationState(user);
             }
@@ -61,7 +81,8 @@ namespace FrontEnd_SGAR.Providers
 
         public async Task MarkUserAsLoggedOut()
         {
-            await _jsRuntime.InvokeVoidAsync("localStorage.clear");
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "token"); // Usar removeItem es más seguro que clear
+                                                                                  // await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "userId"); // Si guardas userId aparte
             NotifyAuthenticationStateChanged();
         }
     }
