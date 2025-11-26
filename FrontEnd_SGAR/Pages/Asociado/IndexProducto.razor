@@ -4,10 +4,12 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 @inject ProductoService ProductoService
+@inject PlanService PlanService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <link rel="stylesheet" href="css/index-organizacion.css" />
+
 
 <div class="container mt-5">
 
@@ -15,143 +17,330 @@
         <i class="bi bi-box-seam me-3"></i> Mis Productos
     </h1>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-
-        <button class="btn btn-success px-4 py-2 fw-semibold shadow-sm" @onclick='() => Nav.NavigateTo("/producto-crear")'>
-            <i class="bi bi-plus-circle me-2"></i> Crear Nuevo Producto
-        </button>
-
-        <div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
-            <label class="fw-semibold text-secondary">Mostrar:</label>
-            <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
-                <option value="5">5</option>
-                <option selected value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-            </select>
-        </div>
-
-    </div>
-
-    <div class="p-4 rounded-3 shadow-lg bg-white main-content-card">
-
-        @if (cargando)
-        {
-            <div class="text-center p-5 custom-loader-container">
-                <div class="loader-dots-container d-flex justify-content-center align-items-center mb-3 gap-2">
-                    <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden"></span></div>
-                    <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden"></span></div>
-                    <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden"></span></div>
-                </div>
-                <p class="mt-2 text-secondary fw-bold fs-5">Cargando Productos...</p>
-            </div>
-        }
-        else if (response == null || response.Productos == null || !response.Productos.Any())
-        {
-            <div class="alert alert-info text-center py-4 my-4 border-0 rounded-3">
-                <i class="bi bi-info-circle-fill me-2 fs-4"></i>
-                <h4 class="mb-0">No hay productos registrados.</h4>
-            </div>
-        }
-        else
-        {
-            <div class="row g-4 mt-3">
-                @foreach (var producto in response.Productos)
-                {
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <div class="card h-100 border-0 card-empresa card-shadow-border">
-                            <div class="card-body d-flex flex-column">
-
-                                @if (!string.IsNullOrEmpty(producto.ImagenBase64))
-                                {
-                                    <img src="data:image/jpeg;base64,@producto.ImagenBase64" class="img-fluid mb-3" style="height:150px;object-fit:cover;border-radius:8px;" />
-                                }
-
-                                <h5 class="card-title fw-bold text-dark mb-2">@producto.Nombre</h5>
-                                <p class="text-muted small mb-2">@producto.Descripcion</p>
-                                <p class="fw-semibold mt-auto mb-2">Precio: @producto.Precio.ToString("C")</p>
-
-                                <div class="d-flex justify-content-center gap-3 mt-3 pt-3 border-top">
-                                    <button class="btn btn-warning btn-icon-lg" title="Editar" @onclick="() => Editar(producto.Id)">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-danger btn-icon-lg" title="Eliminar" @onclick="() => ConfirmarEliminar(producto)">
-                                        <i class="bi bi-trash3"></i>
-                                    </button>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <div class="pagination-footer mt-5 pt-3 border-top d-flex flex-column flex-md-row justify-content-center align-items-center gap-3">
-                <div class="d-flex gap-3 align-items-center">
-                    <button class="btn btn-outline-secondary px-3 py-2 fw-bold" disabled="@(!response.HasPreviousPage)" @onclick="PrevPage">
-                        <i class="bi bi-arrow-left"></i> Anterior
-                    </button>
-
-                    <span class="fw-bold page-info text-secondary">Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems Productos</span>
-
-                    <button class="btn btn-outline-secondary px-3 py-2 fw-bold" disabled="@(!response.HasNextPage)" @onclick="NextPage">
-                        Siguiente <i class="bi bi-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-        }
-
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="alert alert-danger mt-4 shadow" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Error:</strong> @errorMessage
-            </div>
-        }
-
-    </div>
-
-    @if (mostrarModalEliminar && productoAEliminar != null)
+    @if (bloquearVista)
     {
-        <div class="modal-overlay">
-            <div class="modal-content">
-                <div class="modal-header-delete">
-                    <h5 class="m-0 text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-2">¿Estás seguro que deseas eliminar este producto?</p>
-                    <div class="alert alert-warning d-inline-block p-2 mt-2">
-                        <strong>@productoAEliminar.Nombre</strong>
-                    </div>
-                    <p class="text-danger small mt-3 mb-0">Esta acción no se puede deshacer.</p>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
-                    <button type="button" class="btn-continuar" @onclick="EliminarProducto"> <i class="bi bi-trash me-1"></i> Eliminar</button>
-                </div>
+        <div class="alert alert-warning text-center">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            No puedes crear categorías porque no tienes una suscripción activa.
+            @if (verificacion != null && !string.IsNullOrEmpty(verificacion.Mensaje))
+            {
+                <div class="mt-2">@verificacion.Mensaje</div>
+            }
+            <div class="mt-3">
+                <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/plan-suscripcion-index")'>Ver planes</button>
             </div>
         </div>
     }
+    else
+    {
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+
+            <button class="btn btn-success px-4 py-2 fw-semibold shadow-sm" @onclick='() => Nav.NavigateTo("/producto-crear")'>
+                <i class="bi bi-plus-circle me-2"></i> Crear Nuevo Producto
+            </button>
+
+            <div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
+                <label class="fw-semibold text-secondary">Mostrar:</label>
+                <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
+                    <option value="5">5</option>
+                    <option selected value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="p-4 rounded-3 shadow-lg bg-white main-content-card">
+
+            @if (cargando)
+            {
+                <div class="text-center p-5 custom-loader-container">
+                    <div class="loader-dots-container d-flex justify-content-center align-items-center mb-3 gap-2">
+                        <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden"></span></div>
+                        <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden"></span></div>
+                        <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden"></span></div>
+                    </div>
+                    <p class="mt-2 text-secondary fw-bold fs-5">Cargando Productos...</p>
+                </div>
+            }
+            else if (response == null || response.Productos == null || !response.Productos.Any())
+            {
+                <div class="alert alert-info text-center py-4 my-4 border-0 rounded-3">
+                    <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+                    <h4 class="mb-0">No hay productos registrados.</h4>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4 mt-3">
+                    @foreach (var producto in response.Productos)
+                    {
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 border-0 card-empresa card-shadow-border">
+                                <div class="card-body d-flex flex-column">
+
+                                    @if (!string.IsNullOrEmpty(producto.ImagenBase64))
+                                    {
+                                        <img src="data:image/jpeg;base64,@producto.ImagenBase64" class="img-fluid mb-3" style="height:150px;object-fit:cover;border-radius:8px;" />
+                                    }
+
+                                    <h5 class="card-title fw-bold text-dark mb-2">@producto.Nombre</h5>
+                                    <p class="text-muted small mb-2">@producto.Descripcion</p>
+                                    <p class="fw-semibold mt-auto mb-2">Precio: @producto.Precio.ToString("C")</p>
+
+                                    <div class="d-flex justify-content-center gap-3 mt-3 pt-3 border-top">
+                                        <button class="btn btn-warning btn-icon-lg" title="Editar" @onclick="() => Editar(producto.Id)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-icon-lg" title="Eliminar" @onclick="() => ConfirmarEliminar(producto)">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="pagination-footer mt-5 pt-3 border-top d-flex flex-column flex-md-row justify-content-center align-items-center gap-3">
+                    <div class="d-flex gap-3 align-items-center">
+                        <button class="btn btn-outline-secondary px-3 py-2 fw-bold" disabled="@(!response.HasPreviousPage)" @onclick="PrevPage">
+                            <i class="bi bi-arrow-left"></i> Anterior
+                        </button>
+
+                        <span class="fw-bold page-info text-secondary">Página @response.CurrentPage de @response.TotalPages | Total: @response.TotalItems Productos</span>
+
+                        <button class="btn btn-outline-secondary px-3 py-2 fw-bold" disabled="@(!response.HasNextPage)" @onclick="NextPage">
+                            Siguiente <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-4 shadow" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Error:</strong> @errorMessage
+                </div>
+            }
+
+        </div>
+
+        @if (mostrarModalEliminar && productoAEliminar != null)
+        {
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    <div class="modal-header-delete">
+                        <h5 class="m-0 text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">¿Estás seguro que deseas eliminar este producto?</p>
+                        <div class="alert alert-warning d-inline-block p-2 mt-2">
+                            <strong>@productoAEliminar.Nombre</strong>
+                        </div>
+                        <p class="text-danger small mt-3 mb-0">Esta acción no se puede deshacer.</p>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancelar" @onclick="CerrarModalEliminar">Cancelar</button>
+                        <button type="button" class="btn-continuar" @onclick="EliminarProducto"> <i class="bi bi-trash me-1"></i> Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+
+    <div id="successAlert" class="success-alert hidden">
+        <div class="alert-box">
+            <div class="alert-icon" id="alertIcon">🔔</div>
+            <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+        </div>
+    </div>
 
 </div>
 
 <style>
-    .titulo-principal { color: #0d161f; letter-spacing: 1px; }
-    .main-content-card { background-color: white !important; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .card-empresa { border-radius: 14px; transition: transform .2s ease-in-out, box-shadow .2s ease-in-out; box-shadow: 0 0 10px rgba(131,130,130,0.3); }
-    .card-empresa:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-    .btn-icon-lg { width: 40px; height: 40px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:1.1rem; padding:0; }
-    .pagination-footer { padding: 15px 0; }
-    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
-    .modal-content { background: white; border-radius:15px; width:100%; max-width:400px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
-    .modal-header-delete { background:#dc3545; color:white; padding:15px 20px; text-align:center; }
-    .modal-body { padding:20px; text-align:center; }
-    .modal-actions { display:flex; gap:10px; padding:20px; justify-content:center; }
-    .btn-continuar { background:#dc3545; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; }
-    .btn-cancelar { background:#6c757d; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; }
-    .alert-icon { font-size:1.8rem; color:#ffcc00; }
+    .titulo-principal {
+        color: #0d161f;
+        letter-spacing: 1px;
+    }
+
+    .main-content-card {
+        background-color: white !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .card-empresa {
+        border-radius: 14px;
+        transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+        box-shadow: 0 0 10px rgba(131,130,130,0.3);
+    }
+
+        .card-empresa:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+    .btn-icon-lg {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        padding: 0;
+    }
+
+    .pagination-footer {
+        padding: 15px 0;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 400px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .modal-header-delete {
+        background: #dc3545;
+        color: white;
+        padding: 15px 20px;
+        text-align: center;
+    }
+
+    .modal-body {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        padding: 20px;
+        justify-content: center;
+    }
+
+    .btn-continuar {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .btn-cancelar {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    /* Alert (successAlert) styles - ensure hidden actually hides */
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+        pointer-events: none;
+    }
+
+    .success-alert.show {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    .success-alert.hidden {
+        opacity: 0;
+        transform: translateY(-20px);
+        pointer-events: none;
+    }
+
+    .alert-box {
+        background: #fff;
+        border-radius: 20px;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .alert-icon {
+        font-size: 1.6rem;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #222;
+    }
 </style>
 
+<script>
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+        const icon = document.getElementById("alertIcon");
+
+        icon.textContent = "🔔";
+        icon.style.color = "#ffcc00";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => { alert.classList.remove("show"); alert.classList.add("hidden"); }, 3000);
+    }
+
+    function showErrorAlert(message) {
+        const alert = document.getElementById("successAlert");
+        const text = document.getElementById("alertMessage");
+        const icon = document.getElementById("alertIcon");
+
+        icon.textContent = "❌";
+        icon.style.color = "#e63946";
+
+        text.textContent = message;
+        alert.classList.remove("hidden");
+        alert.classList.add("show");
+
+        setTimeout(() => { alert.classList.remove("show"); alert.classList.add("hidden"); }, 3000);
+    }
+</script>
+
 @code {
+
+    // Plan verification
+    private bool bloquearVista = false;
+    private PlanService.PlanVerificacionResult? verificacion;
+
     private ProductoResponsePaginada? response;
     private bool cargando = true;
     private int currentPage = 0;
@@ -177,6 +366,22 @@
             asociadoId = id.Value;
 
             await CargarProductos();
+
+            verificacion = await PlanService.VerificarPlanAsociadoAutenticadoAsync(asociadoId);
+
+            if (!verificacion.TienePlanActivo)
+            {
+                bloquearVista = true;
+                await JS.InvokeVoidAsync("showErrorAlert", verificacion.Mensaje ?? "Debes contratar un plan para crear categorías.");
+
+            }
+            else
+            {
+                bloquearVista = false;
+                await JS.InvokeVoidAsync("showCustomAlert", $"Plan activo.");
+            }
+
+
         }
         catch (Exception ex)
         {
