@@ -68,11 +68,6 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
 
-        <button class="btn btn-crear"
-                @onclick='() => Nav.NavigateTo("/organizacion-crear")'>
-            <i class="bi bi-plus-circle"></i> Crear Organización
-        </button>
-
         <div class="d-flex align-items-center gap-2">
             <label class="fw-semibold">Mostrar:</label>
             <select class="form-select form-select-sm w-auto" @onchange="CambiarPageSize">
@@ -128,7 +123,8 @@
                             <td>
                                 @if (!string.IsNullOrEmpty(org.foto))
                                 {
-                                    <img src="@org.foto" alt="foto" style="width:48px;height:48px;border-radius:6px;object-fit:cover;" />
+                                    <!-- Mostrar imagen Base64 desde DB -->
+                                    <img src="data:image/jpeg;base64,@org.foto" alt="foto" style="width:48px;height:48px;border-radius:6px;object-fit:cover;" />
                                 }
                             </td>
                             <td>@(Nombreroles.ContainsKey(org.idRol.ToString()) ? Nombreroles[org.idRol.ToString()] : org.idRol.ToString())</td>
