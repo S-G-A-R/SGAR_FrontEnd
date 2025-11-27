@@ -8,21 +8,30 @@
 
 <nav class="navbar navbar-light bg-white shadow-sm">
     <div class="container-fluid">
-        <!-- Botón menú offcanvas -->
-        <button class="navbar-toggler p-2 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
         <!-- Logo SGAR -->
         <a class="navbar-brand d-flex align-items-center" href="/">
             <img src="css/sgarLetra.png" alt="SGAR" width="90" height="30" class="me-2" href="/" />
         </a>
-
+        
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <AuthorizeView>
+                <Authorized>
+                    <!-- Botón para canvas-->
+                    <li class="nav-item">
+                        <a role="button" data-bs-toggle="offcanvas" aria-controls="offcanvasNavbar" href="#offcanvasNavbar">
+                            <span class="navbar-toggler-icon"></span>
+                        </a>
+                    </li>
+                </Authorized>
+            </AuthorizeView>
+        </ul>
         <!-- Dropdown Iniciar Sesión -->
         <div class="ms-auto">
             <AuthorizeView>
 
                 <Authorized>
+
+
                     <div class="btn-group">
                         <button type="button" class="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown" aria-expanded="false">
                             <span class="d-none d-md-inline fw-bold">
@@ -122,23 +131,23 @@
                 <ul class="navbar-nav flex-column">
 
                     <AuthorizeView Roles="Ciudadano">
-                        <li class="nav-item"><NavLink class="nav-link" href="/menuC">Menú Ciudadano</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="/MenuCiudadano">Menú Ciudadano</NavLink></li>
                     </AuthorizeView>
 
                     <AuthorizeView Roles="Operador">
-                        <li class="nav-item"><NavLink class="nav-link" href="/menuOp">Menú Operador</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="/MenuOperador">Menú Operador</NavLink></li>
                     </AuthorizeView>
 
                     <AuthorizeView Roles="Organizacion">
-                        <li class="nav-item"><NavLink class="nav-link" href="/menuOrg">Menú Organización</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="/MenuOrganizcion">Menú Organización</NavLink></li>
                     </AuthorizeView>
 
                     <AuthorizeView Roles="Asociado">
-                        <li class="nav-item"><NavLink class="nav-link" href="/menuAso">Menú Asociado</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="/MenuAsociado">Menú Asociado</NavLink></li>
                     </AuthorizeView>
 
                     <AuthorizeView Roles="Administrador">
-                        <li class="nav-item"><NavLink class="nav-link" href="/administrador/menuAdmin">Menú Administrador</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="/MenuAdmin">Menú Administrador</NavLink></li>
                     </AuthorizeView>
 
                     <li class="nav-item"><NavLink class="nav-link" href="/">Inicio</NavLink></li>
