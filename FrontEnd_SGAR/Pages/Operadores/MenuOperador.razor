@@ -8,7 +8,7 @@
         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body" @onclick="Error">
+                    <div class="card-body" @onclick='() => Navigation.NavigateTo("/horarios")'>
                         <NavLink class="card-link w-25">
                             <i class="bi bi-calendar2-week-fill" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
                         </NavLink>
@@ -22,7 +22,7 @@
         </div>
 
         <!-- Mantenimiento -->
-        <div class="col">
+@*         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
                     <div class="card-body" @onclick="Error">
@@ -36,13 +36,13 @@
                 <img src="css/orejaIz.png" alt="Oreja izquierda" class="oreja oreja-izquierda">
                 <img src="css/orejaDe.png" alt="Oreja derecha" class="oreja oreja-derecha">
             </div>
-        </div>
+        </div> *@
 
         <!-- Ubicación -->
         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body" @onclick="Error">
+                    <div class="card-body" @onclick='() => Navigation.NavigateTo("/ubicacion")'>
                         <NavLink class="card-link w-50">
                             <i class="bi bi-geo-alt-fill" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
                         </NavLink>

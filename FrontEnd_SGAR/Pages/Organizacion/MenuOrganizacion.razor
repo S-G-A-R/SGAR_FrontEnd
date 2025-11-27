@@ -8,7 +8,7 @@
         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body" @onclick="Error">
+                    <div class="card-body" @onclick='() => Navigation.NavigateTo("/index-organizacion")'>
                         <NavLink class="card-link w-25" href="/horarios">
                             <i class="bi bi-people-fill" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
                         </NavLink>
@@ -25,7 +25,7 @@
         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body" @onclick="Error">
+                    <div class="card-body" @onclick='() => Navigation.NavigateTo("/vehiculos")'>
                         <NavLink class="card-link w-50" href="/mantenimiento">
                             <i class="bi bi-truck" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
                         </NavLink>
@@ -42,7 +42,7 @@
         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body" @onclick="Error">
+                    <div class="card-body" @onclick='() => Navigation.NavigateTo("/index-horarios")'>
                         <NavLink class="card-link w-50" href="/ubicacion">
                             <i class="bi bi-calendar2-week-fill" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
                         </NavLink>
@@ -63,7 +63,7 @@
         <div class="col">
             <div class="contenedor-tarjeta">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body" @onclick="Error">
+                    <div class="card-body" @onclick='() => Navigation.NavigateTo("/menu-formularios")'>
                         <NavLink class="card-link w-25">
                             <i class="bi bi-file-earmark-richtext-fill" style="font-size: 3rem; color: ThreeDDarkShadow"></i>
                         </NavLink>
