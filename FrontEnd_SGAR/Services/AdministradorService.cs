@@ -1,5 +1,6 @@
 ﻿using FrontEnd_SGAR.DTOs;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace FrontEnd_SGAR.Services
 {
@@ -28,6 +29,20 @@ namespace FrontEnd_SGAR.Services
             }
         }
 
+        // Obtener usuario por ID
+        public async Task<User?> ObtenerUsuarioPorIdAsync(int id)
+        {
+            try
+            {
+                return await _http.GetFromJsonAsync<User>($"ApiSeguridad/api/user/{id}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Administrador] Error ObtenerUsuarioPorId: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task<List<Rol>> ObtenerRolAsync()
         {
             try
@@ -42,6 +57,39 @@ namespace FrontEnd_SGAR.Services
             }
         }
 
+        // Actualiza el rol de usuario usando el DTO que contiene Id e idRol
+        public async Task<(bool Exito, string Mensaje)> ActualizarRolUsuarioAsync(DTOs.userRequestRol modelo)
+        {
+            try
+            {
+                var resp = await _http.PutAsJsonAsync($"ApiSeguridad/api/user/{modelo.Id}/role", modelo);
+                if (resp.IsSuccessStatusCode)
+                {
+                    return (true, "Rol actualizado correctamente.");
+                }
+
+                var content = await resp.Content.ReadAsStringAsync();
+                try
+                {
+                    var rm = JsonSerializer.Deserialize<ResponseMessage>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return (false, rm?.message ?? content);
+                }
+                catch
+                {
+                    return (false, content);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Administrador] Error ActualizarRolUsuarioAsync: {ex.Message}");
+                return (false, $"Error interno: {ex.Message}");
+            }
+        }
+
+        public class ResponseMessage
+        {
+            public string? message { get; set; }
+        }
 
     }
 }
