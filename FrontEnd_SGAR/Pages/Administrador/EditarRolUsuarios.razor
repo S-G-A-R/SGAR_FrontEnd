@@ -1,0 +1,212 @@
+﻿@page "/editar-rol-usuarios/{id:int}"
+@using FrontEnd_SGAR.DTOs
+@using FrontEnd_SGAR.Services
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject AdministradorService AdministradorService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<link href="css/registro-organizacion.css" rel="stylesheet" />
+
+<div class="registro-container">
+    <div class="registro-card">
+        <h3><i class="bi bi-pencil-square me-2"></i>Editar rol de usuario</h3>
+        <hr />
+
+        @if (isLoading)
+        {
+            <p class="text-center"><em>Cargando datos del usuario...</em></p>
+        }
+        else if (errorMessage != null)
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+        else
+        {
+            <div class="mb-3">
+                <label class="form-label">Usuario:</label>
+                <div><strong>@usuarioDisplay</strong></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Rol actual:</label>
+                <div>
+                    @if (isAdmin)
+                    {
+                        <span class="badge bg-success">Administrador</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@currentRoleName</span>
+                    }
+                </div>
+            </div>
+
+            <div class="botones mt-4">
+                <div class="contenedor-boton">
+                    <button class="boton-mapacheAceptar" @onclick="ConvertirAAdministrador" disabled="@isAdmin">
+                        Actualizar
+                    </button>
+                    <img src="css/orejaIz.png" class="oreja oreja-izquierda" />
+                    <img src="css/orejaIz.png" class="oreja oreja-derecha" />
+                </div>
+
+                <button type="button" class="btn-cancelar mt-2" @onclick="Cancelar">Cancelar</button>
+            </div>
+        }
+
+
+        <div id="successAlert" class="success-alert hidden">
+            <div class="alert-box">
+                <div class="alert-icon">🔔</div>
+                <div class="alert-text" id="alertMessage">Mensaje por defecto</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .success-alert {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        opacity: 0;
+    }
+
+        .success-alert.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        .success-alert.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .alert-box {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        animation: ring 0.6s ease-in-out;
+    }
+
+    .alert-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    @@keyframes ring {
+        0% {
+            transform: rotate(0);
+        }
+
+        25% {
+            transform: rotate(10deg);
+        }
+
+        50% {
+            transform: rotate(-10deg);
+        }
+
+        75% {
+            transform: rotate(10deg);
+        }
+
+        100% {
+            transform: rotate(0);
+        }
+    }
+</style>
+
+
+<script>
+    function showCustomAlert(message) {
+        const alert = document.getElementById("successAlert"); if (!alert) return; const text = document.getElementById("alertMessage"); alert.querySelector(".alert-icon").textContent = "🔔"; alert.querySelector(".alert-icon").style.color = "#ffcc00"; text.textContent = message; alert.classList.remove("hidden"); alert.classList.add("show"); setTimeout(() => { alert.classList.remove("show"); alert.classList.add("hidden"); }, 3000);
+    }
+    function showErrorAlert(message) { const alert = document.getElementById("successAlert"); if (!alert) return; const text = document.getElementById("alertMessage"); alert.querySelector(".alert-icon").textContent = "❌"; alert.querySelector(".alert-icon").style.color = "#e63946"; text.textContent = message; alert.classList.remove("hidden"); alert.classList.add("show"); setTimeout(() => { alert.classList.remove("show"); alert.classList.add("hidden"); }, 3000); }
+</script>
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    private DTOs.userRequestRol modelo = new DTOs.userRequestRol();
+    private List<Rol> roles = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    // UI helpers
+    private bool isAdmin = false;
+    private string currentRoleName = "Sin rol";
+    private string usuarioDisplay = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            roles = await AdministradorService.ObtenerRolAsync();
+            var user = await AdministradorService.ObtenerUsuarioPorIdAsync(id);
+            if (user == null)
+            {
+                errorMessage = "No se encontró el usuario especificado.";
+                return;
+            }
+
+            modelo = new DTOs.userRequestRol { Id = user.Id, idRol = user.idRol };
+            usuarioDisplay = $"{user.Nombre} {user.Apellido} (ID: {user.Id})";
+            isAdmin = user.idRol == 4;
+            currentRoleName = roles.FirstOrDefault(r => r.Id == user.idRol)?.NombreRol ?? user.idRol.ToString();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error cargando datos: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ConvertirAAdministrador()
+    {
+        if (isAdmin) return;
+        // set admin role
+        modelo.idRol = 4;
+        try
+        {
+            var resultado = await AdministradorService.ActualizarRolUsuarioAsync(modelo);
+            if (resultado.Exito)
+            {
+                await JS.InvokeVoidAsync("showCustomAlert", resultado.Mensaje ?? "Rol actualizado correctamente.");
+                await Task.Delay(800);
+                Nav.NavigateTo("/Administrador-index");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("showErrorAlert", resultado.Mensaje ?? "No se pudo actualizar el rol.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("showErrorAlert", $"Error: {ex.Message}");
+        }
+    }
+
+    private void Cancelar() => Nav.NavigateTo("/Administrador-index");
+}

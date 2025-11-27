@@ -53,6 +53,17 @@ namespace FrontEnd_SGAR.DTOs
         public int idRol { get; set; }
     }
 
+    public class userRequestRol
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("idRol")]
+        public int idRol { get; set; }
+
+    }
+
+
     public class Rol
     {
         [JsonPropertyName("id")]
