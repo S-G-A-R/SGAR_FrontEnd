@@ -98,8 +98,8 @@
     else
     {
         <div class="table-responsive shadow-sm rounded-3">
-            <table class="table custom-table">
-                <thead>
+            <table class="table table-hover custom-table">
+                <thead class="table-dark">
                     <tr>
                         <th>ID</th>
                         <th>Nombre</th>
@@ -112,30 +112,27 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var org in displayedUsers)
+                    @foreach (var user in displayedUsers)
                     {
                         <tr>
-                            <td>@org.Id</td>
-                            <td>@org.Nombre</td>
-                            <td>@org.Apellido</td>
-                            <td>@org.Telefono</td>
-                            <td>@org.Email</td>
+                            <td>@user.Id</td>
+                            <td>@user.Nombre</td>
+                            <td>@user.Apellido</td>
+                            <td>@user.Telefono</td>
+                            <td>@user.Email</td>
                             <td>
-                                @if (!string.IsNullOrEmpty(org.foto))
+                                @if (!string.IsNullOrEmpty(user.foto))
                                 {
                                     <!-- Mostrar imagen Base64 desde DB -->
-                                    <img src="data:image/jpeg;base64,@org.foto" alt="foto" style="width:48px;height:48px;border-radius:6px;object-fit:cover;" />
+                                    <img src="data:image/jpeg;base64,@user.foto" alt="foto" style="width:48px;height:48px;border-radius:6px;object-fit:cover;" />
                                 }
                             </td>
-                            <td>@(Nombreroles.ContainsKey(org.idRol.ToString()) ? Nombreroles[org.idRol.ToString()] : org.idRol.ToString())</td>
-                            <td class="text-center">
-                                <div class="btn-group gap-1">
-                                    <button class="btn btn-sm btn-outline-warning" title="Editar" @onclick="() => Editar(org.Id)">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
+                            <td>@(Nombreroles.ContainsKey(user.idRol.ToString()) ? Nombreroles[user.idRol.ToString()] : user.idRol.ToString())</td>
 
-                                    <button class="btn btn-sm btn-outline-danger" title="Eliminar" @onclick="() => Eliminar(org.Id)">
-                                        <i class="bi bi-trash3-fill"></i>
+                            <td>
+                                <div class="d-flex align-items-center gap-2 justify-content-center">
+                                    <button class="btn btn-warning btn-icon-lg" title="Editar" @onclick="() => Editar(user.Id)">
+                                        <i class="bi bi-pencil"></i>
                                     </button>
                                 </div>
                             </td>
@@ -305,6 +302,35 @@
             color: white;
             transform: scale(1.05);
         }
+
+    .btn-icon:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #0d6efd33;
+    }
+
+    .btn-view {
+        color: #0dcaf0;
+    }
+
+        .btn-view:hover {
+            background: #e3f7fc;
+        }
+
+    .btn-edit {
+        color: #ffc107;
+    }
+
+        .btn-edit:hover {
+            background: #fffbe6;
+        }
+
+    .btn-delete {
+        color: #dc3545;
+    }
+
+        .btn-delete:hover {
+            background: #f8d7da;
+        }
 </style>
 
 
@@ -426,11 +452,11 @@
 
     private void Editar(int id)
     {
-        Nav.NavigateTo($"/organizacion-editar/{id}");
+        Nav.NavigateTo($"/editar-rol-usuarios/{id}");
     }
 
-    private async Task Eliminar(int id)
+    /*private async Task Eliminar(int id)
     {
         await JS.InvokeVoidAsync("alert", $"Eliminar usuario {id} (no implementado)");
-    }
+    }*/
 }
